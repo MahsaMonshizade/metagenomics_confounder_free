@@ -1,216 +1,238 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
+import pandas as pd
 import numpy as np
-import nibabel as nib
-import scipy.ndimage
+import random
+import tqdm
+
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import mean_squared_error, r2_score
-import os
-import sys
-import argparse
-import glob
-import dcor
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from dataset import MicroDataset
 
-# Data augmentation function
-# def augment_by_transformation(data, age, sex, n):
-#     augment_scale = 1
 
-#     if n <= data.shape[0]:
-#         return data, age, sex
-#     else:
-#         raw_n = data.shape[0]
-#         m = n - raw_n
-#         new_data = np.zeros((m, data.shape[1], data.shape[2], data.shape[3], 1))
-#         for i in range(0, m):
-#             idx = np.random.randint(0, raw_n)
-#             new_age = age[idx]
-#             new_sex = sex[idx]
-#             new_data[i] = data[idx].copy()
-#             new_data[i, :, :, :, 0] = scipy.ndimage.rotate(new_data[i, :, :, :, 0], np.random.uniform(-0.5, 0.5), axes=(1, 0), reshape=False)
-#             new_data[i, :, :, :, 0] = scipy.ndimage.rotate(new_data[i, :, :, :, 0], np.random.uniform(-0.5, 0.5), axes=(0, 2), reshape=False)
-#             new_data[i, :, :, :, 0] = scipy.ndimage.rotate(new_data[i, :, :, :, 0], np.random.uniform(-0.5, 0.5), axes=(1, 2), reshape=False)
-#             new_data[i, :, :, :, 0] = scipy.ndimage.shift(new_data[i, :, :, :, 0], np.random.uniform(-0.5, 0.5))
+def get_lr(optimizer):
+	for param_group in optimizer.param_groups:
+		return param_group['lr']
 
-#             age = np.append(age, new_age)
-#             sex = np.append(sex, new_sex)
+def train_step(model, loader, optimizer, device): 
+	criterion_age = nn.CrossEntropyLoss()
+	criterion_gender = nn.BCELoss()
+	criterion_bmi = nn.CrossEntropyLoss()
+	criterion_bodysite = nn.CrossEntropyLoss()
+	criterion_disease = nn.CrossEntropyLoss()
 
-#         # Output an example
-#         array_img = nib.Nifti1Image(np.squeeze(new_data[3, :, :, :, 0]), np.diag([1, 1, 1, 1]))
-#         filename = 'augmented_example.nii.gz'
-#         nib.save(array_img, filename)
+	with tqdm(total=len(loader)) as bar:
+		for step, batch in enumerate(loader): 
+			_, spec, age, gender, bmi, bodysite, disease = batch
 
-#         data = np.concatenate((data, new_data), axis=0)
-#         return data, age, sex
+			batch_size = len(age)
+			age_size = max(1,torch.sum(~torch.isnan(age)).item())
+			gender_size = max(1, torch.sum(~torch.isnan(gender)).item())
+			bmi_size = max(1, torch.sum(~torch.isnan(bmi)).item())
+			bodysite_size = max(1, torch.sum(~torch.isnan(bodysite)).item())
 
-# Loss functions
-def inv_mse(y_true, y_pred):
-    mse_value = torch.sum((y_true - y_pred) ** 2)
-    return -mse_value
+			spec = spec.type(torch.cuda.FloatTensor).to(device)
 
-def correlation_coefficient_loss(y_true, y_pred):
-    x = y_true
-    y = y_pred
-    mx = torch.mean(x)
-    my = torch.mean(y)
-    xm, ym = x - mx, y - my
-    r_num = torch.sum(xm * ym)
-    r_den = torch.sqrt(torch.sum(xm ** 2) * torch.sum(ym ** 2)) + 1e-5
-    r = r_num / r_den
-    r = torch.clamp(r, -1.0, 1.0)
-    return torch.square(r)
+			age = age.type(torch.cuda.FloatTensor).to(device)
+			invalid_age = torch.isnan(age)
+			age_dim = age.size(1)
 
-class Regressor(nn.Module):
-    def __init__(self, latent_dim=16):
-        super(Regressor, self).__init__()
-        self.fc1 = nn.Linear(1024, latent_dim * 4)
-        self.fc2 = nn.Linear(latent_dim * 4, latent_dim * 2)
-        self.fc3 = nn.Linear(latent_dim * 2, 1)
+			gender = gender.type(torch.cuda.FloatTensor).to(device)
+			invalid_gender = torch.isnan(gender)
 
-    def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = self.fc3(x)
-        return x
+			bmi = bmi.type(torch.cuda.FloatTensor).to(device)
+			invalid_bmi = torch.isnan(bmi)
+			bmi_dim = bmi.size(1)
 
-class Encoder(nn.Module):
-    def __init__(self, ft_bank_baseline=16):
-        super(Encoder, self).__init__()
-        self.conv1 = nn.Conv3d(1, ft_bank_baseline, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm3d(ft_bank_baseline)
-        self.pool1 = nn.MaxPool3d(2)
+			bodysite = bodysite.type(torch.cuda.FloatTensor).to(device)
+			invalid_bodysite = torch.isnan(bodysite)
+			bodysite_dim = bodysite.size(1)
 
-        self.conv2 = nn.Conv3d(ft_bank_baseline, ft_bank_baseline * 2, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm3d(ft_bank_baseline * 2)
-        self.pool2 = nn.MaxPool3d(2)
+			disease = disease.type(torch.cuda.FloatTensor).to(device)
+			invalid_disease = torch.isnan(disease)
+			disease_dim = disease.size(1)
+			
+			optimizer.zero_grad()
+			model.train()
+			
+			pred_age, pred_gender, pred_bmi, pred_bodysite, pred_disease = model(spec, age, gender, bmi, bodysite)
+			
+			loss = criterion_age(pred_age[~invalid_age].view(-1, age_dim), age[~invalid_age].view(-1, age_dim)) * (batch_size/age_size) + \
+					criterion_gender(pred_gender[~invalid_gender], gender[~invalid_gender]) * (batch_size/gender_size) + \
+					criterion_bmi(pred_bmi[~invalid_bmi].view(-1, bmi_dim), bmi[~invalid_bmi].view(-1, bmi_dim)) * (batch_size/bmi_size) + \
+					criterion_bodysite(pred_bodysite[~invalid_bodysite].view(-1, bodysite_dim), bodysite[~invalid_bodysite].view(-1, bodysite_dim)) * (batch_size/bodysite_size) + \
+					criterion_disease(pred_disease[~invalid_disease].view(-1, disease_dim), disease[~invalid_disease].view(-1, disease_dim)) 
+					
+			
+			loss.backward()
 
-        self.conv3 = nn.Conv3d(ft_bank_baseline * 2, ft_bank_baseline * 4, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm3d(ft_bank_baseline * 4)
-        self.pool3 = nn.MaxPool3d(2)
+			bar.set_description('Train')
+			bar.set_postfix(lr=get_lr(optimizer), loss=loss.item())
+			bar.update(1)
 
-        self.conv4 = nn.Conv3d(ft_bank_baseline * 4, ft_bank_baseline * 2, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm3d(ft_bank_baseline * 2)
-        self.pool4 = nn.MaxPool3d(2)
+			optimizer.step()
+	return 
 
-    def forward(self, x):
-        x = self.pool1(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool2(F.relu(self.bn2(self.conv2(x))))
-        x = self.pool3(F.relu(self.bn3(self.conv3(x))))
-        x = self.pool4(F.relu(self.bn4(self.conv4(x))))
-        x = torch.flatten(x, start_dim=1)
-        return x
 
-class Classifier(nn.Module):
-    def __init__(self, input_dim=1024, latent_dim=16, l2_reg=0.1):
-        super(Classifier, self).__init__()
-        self.fc1 = nn.Linear(input_dim, latent_dim * 4)
-        self.fc2 = nn.Linear(latent_dim * 4, latent_dim * 2)
-        self.fc3 = nn.Linear(latent_dim * 2, 1)
+def eval_step(model, loader, device): 
+	model.eval()
 
-    def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = self.fc3(x)
-        return x
+	ages, pred_ages = [], []
+	genders, pred_genders = [], []
+	bmis, pred_bmis = [], []
+	bodysites, pred_bodysites = [], []
+	diseases, pred_diseases = [], []
+	
+	sample_ids = []
+	
+	with tqdm(total=len(loader)) as bar:
+		for _, batch in enumerate(loader): 
 
-class GAN:
-    def __init__(self, lr=0.0002, ft_bank_baseline=16, latent_dim=16):
-        self.lr = lr
+			sample_id, spec, age, gender, bmi, bodysite, disease = batch
 
-        self.regressor = Regressor().to(device)
-        self.encoder = Encoder().to(device)
-        self.classifier = Classifier().to(device)
+			spec = spec.type(torch.cuda.FloatTensor).to(device)
 
-        self.optimizer_regressor = optim.Adam(self.regressor.parameters(), lr=self.lr)
-        self.optimizer_encoder = optim.Adam(self.encoder.parameters(), lr=self.lr)
-        self.optimizer_classifier = optim.Adam(self.classifier.parameters(), lr=self.lr)
+			age = age.type(torch.cuda.FloatTensor).to(device)
+			invalid_age = torch.isnan(age)
 
-    def train(self, epochs, training, testing, testing_raw, batch_size=64, fold=0):
-        train_data_aug, train_dx_aug, train_age_aug, train_sex_aug = training
-        test_data_aug, test_dx_aug, test_age_aug, test_sex_aug = testing
-        test_data, test_dx, test_age, test_sex = testing_raw
+			gender = gender.type(torch.cuda.FloatTensor).to(device)
+			invalid_gender = torch.isnan(gender)
 
-        dc_age = np.zeros((int(epochs / 10) + 1,))
-        min_dc = 0
-        for epoch in range(epochs):
-            # Select a random batch of images
-            idx_perm = np.random.permutation(int(train_data_aug.shape[0] / 2))
-            ctrl_idx = idx_perm[:batch_size]
-            idx_perm = np.random.permutation(int(train_data_aug.shape[0] / 2))
-            idx = idx_perm[:int(batch_size / 2)]
-            idx = np.concatenate((idx, idx + int(train_data_aug.shape[0] / 2)))
+			bmi = bmi.type(torch.cuda.FloatTensor).to(device)
+			invalid_bmi = torch.isnan(bmi)
 
-            training_feature_batch = torch.tensor(train_data_aug[idx]).float().to(device)
-            dx_batch = torch.tensor(train_dx_aug[idx]).float().to(device)
-            age_batch = torch.tensor(train_age_aug[idx]).float().to(device)
+			bodysite = bodysite.type(torch.cuda.FloatTensor).to(device)
+			invalid_bodysite = torch.isnan(bodysite)
 
-            training_feature_ctrl_batch = torch.tensor(train_data_aug[ctrl_idx]).float().to(device)
-            age_ctrl_batch = torch.tensor(train_age_aug[ctrl_idx]).float().to(device)
+			disease = disease.type(torch.cuda.FloatTensor).to(device)
+			invalid_disease = torch.isnan(disease)
 
-            # Train regressor
-            encoded_feature_ctrl_batch = self.encoder(training_feature_ctrl_batch[:, :32, :, :, :])
-            r_loss = F.mse_loss(self.regressor(encoded_feature_ctrl_batch), age_ctrl_batch)
-            self.optimizer_regressor.zero_grad()
-            r_loss.backward()
-            self.optimizer_regressor.step()
+			with torch.no_grad():
+				pred_age, pred_gender, pred_bmi, pred_bodysite, pred_disease = model(spec, age, gender, bmi, bodysite)
 
-            # Train distiller
-            g_loss = correlation_coefficient_loss(self.regressor(encoded_feature_ctrl_batch), age_ctrl_batch)
-            self.optimizer_encoder.zero_grad()
-            g_loss.backward()
-            self.optimizer_encoder.step()
+			bar.set_description('Eval')
+			bar.update(1)
 
-            # Train encoder & classifier
-            c_loss = F.binary_cross_entropy_with_logits(self.classifier(self.encoder(training_feature_batch[:, :32, :, :, :])), dx_batch)
-            self.optimizer_encoder.zero_grad()
-            self.optimizer_classifier.zero_grad()
-            c_loss.backward()
-            self.optimizer_encoder.step()
-            self.optimizer_classifier.step()
+			age_dim = age.size(1)
+			ages.append(age[~invalid_age].view(-1, age_dim).detach().cpu())
+			pred_ages.append(pred_age[~invalid_age].view(-1, age_dim).detach().cpu())
 
-            # Flip & re-do everything
-            training_feature_batch = torch.tensor(np.flip(training_feature_batch.cpu().numpy(), 1)).float().to(device)
-            training_feature_ctrl_batch = torch.tensor(np.flip(training_feature_ctrl_batch.cpu().numpy(), 1)).float().to(device)
+			genders.append(gender[~invalid_gender].detach().cpu())
+			pred_genders.append(pred_gender[~invalid_gender].detach().cpu())
 
-            encoded_feature_ctrl_batch = self.encoder(training_feature_ctrl_batch[:, :32, :, :, :])
-            r_loss = F.mse_loss(self.regressor(encoded_feature_ctrl_batch), age_ctrl_batch)
-            self.optimizer_regressor.zero_grad()
-            r_loss.backward()
-            self.optimizer_regressor.step()
+			bmi_dim = bmi.size(1)
+			bmis.append(bmi[~invalid_bmi].view(-1, bmi_dim).detach().cpu())
+			pred_bmis.append(pred_bmi[~invalid_bmi].view(-1, bmi_dim).detach().cpu())
 
-            g_loss = correlation_coefficient_loss(self.regressor(encoded_feature_ctrl_batch), age_ctrl_batch)
-            self.optimizer_encoder.zero_grad()
-            g_loss.backward()
-            self.optimizer_encoder.step()
+			bodysite_dim = bodysite.size(1)
+			bodysites.append(bodysite[~invalid_bodysite].view(-1, bodysite_dim).detach().cpu())
+			pred_bodysites.append(pred_bodysite[~invalid_bodysite].view(-1, bodysite_dim).detach().cpu())
 
-            c_loss = F.binary_cross_entropy_with_logits(self.classifier(self.encoder(training_feature_batch[:, :32, :, :, :])), dx_batch)
-            self.optimizer_encoder.zero_grad()
-            self.optimizer_classifier.zero_grad()
-            c_loss.backward()
-            self.optimizer_encoder.step()
-            self.optimizer_classifier.step()
+			disease_dim = disease.size(1)
+			diseases.append(disease[~invalid_disease].view(-1, disease_dim).detach().cpu())
+			pred_diseases.append(pred_disease[~invalid_disease].view(-1, disease_dim).detach().cpu())
 
-            # Log the result
-            if epoch % 10 == 0:
-                test_feature = torch.tensor(test_data[:, :32, :, :, :]).float().to(device)
-                encoded_feature_test = self.encoder(test_feature)
-                pred = self.regressor(encoded_feature_test).cpu().detach().numpy()
-                print(f"Epoch {epoch}: MSE: {mean_squared_error(test_age, pred)}, R^2: {r2_score(test_age, pred)}")
+			sample_ids = sample_ids + list(sample_id)
 
-                if epoch % 50 == 0:
-                    pred = np.squeeze(pred)
-                    dc_age[int(epoch / 10)] = dcor.distance_correlation_sqr(pred, test_age)
-                    if dc_age[int(epoch / 10)] >= min_dc:
-                        min_dc = dc_age[int(epoch / 10)]
-                        np.save(f'model/min_pred_{fold}.npy', pred)
-                        np.save(f'model/min_test_{fold}.npy', test_age)
-                        torch.save(self.encoder.state_dict(), f'model/encoder_{fold}.pth')
-                        torch.save(self.regressor.state_dict(), f'model/regressor_{fold}.pth')
-                        torch.save(self.classifier.state_dict(), f'model/classifier_{fold}.pth')
+	ages = torch.cat(ages, dim = 0)
+	pred_ages = torch.cat(pred_ages, dim = 0)
 
-def train_model(epochs, training, testing, testing_raw, ft_bank_baseline=16, lr=0.0002, latent_dim=16, fold=0):
-    gan = GAN(lr=lr, ft_bank_baseline=ft_bank_baseline, latent_dim=latent_dim)
-    gan.train(epochs, training, testing, testing_raw, fold=fold)
+	genders = torch.cat(genders, dim = 0)
+	pred_genders = torch.cat(pred_genders, dim = 0)
+
+	bmis = torch.cat(bmis, dim = 0)
+	pred_bmis = torch.cat(pred_bmis, dim = 0)
+
+	bodysites = torch.cat(bodysites, dim = 0)
+	pred_bodysites = torch.cat(pred_bodysites, dim = 0)
+
+	diseases = torch.cat(diseases, dim = 0)
+	pred_diseases = torch.cat(pred_diseases, dim = 0)
+
+	return sample_ids, ages, pred_ages, genders, pred_genders, bmis, pred_bmis, bodysites, pred_bodysites, diseases, pred_diseases
+
+
+
+if __name__ == "__main__":
+	device = torch.device("cuda:" + str(0)) if torch.cuda.is_available() else torch.device("cpu")
+
+    # 0. Settings
+	# seed = 42
+	# torch.manual_seed(seed)
+	# np.random.seed(seed)
+	# random.seed(seed)
+
+	# model settings: 
+	metadatas = ['BMI', 'gender', 'age', 'bodysite', 'phenotype']
+	df_relative_abundance = pd.read_csv('Data/relative_abundance.csv', index_col=0)
+	species = df_relative_abundance.columns.values.tolist()
+	print('species num:', len(species)-1)
+
+	metadata_df = pd.read_csv('Data/metadata.csv')
+	print('meta-data:', list(metadata_df.columns))
+	in_dim = len(species) 
+	
+	bodysite_num = len(list(set(metadata_df['BodySite'].values.tolist())))
+	print('bodysite num:', bodysite_num)
+	disease_num = len(list(set(metadata_df['disease'].values.tolist())))
+	print('disease num:', disease_num)
+
+	# training settings: 
+	lr = 0.0001
+	batch_size = 64
+	epoch_num = 100
+	early_stop_step = 20
+	k_fold = 5
+	
+	# check the directory
+
+	# checkpoint_dir = "/".join(args.checkpoint_path.split('/')[:-1])
+	# records_dir = "/".join(args.records_path.split('/')[:-1])
+
+	# --------------- K-Fold Validation --------------- # 
+	print('Loading the dataset...')
+	# print(species)
+	species_dict = {k: i for i, k in enumerate(species)}
+	df_relative_abundance = pd.read_csv('Data/relative_abundance.csv')
+	dataset = MicroDataset(data=df_relative_abundance, metadata=metadata_df, species_dict=species_dict, output='./NetworkInput/')
+	assert len(dataset.get_disease_dict()) - 1 == disease_num, "Setting and metadata are not match, disease_num={}, \
+															but there are {} diseases in metadata".format(disease_num, len(dataset.get_disease_dict)-1)# split the indices into k-fold
+    # split the indices into k-fold
+	indices = list(range(len(dataset)))
+	skf = StratifiedKFold(n_splits=k_fold, shuffle=True, random_state=42)
+	for fold_i, (train_indices, valid_indices) in enumerate(skf.split(np.expand_dims(np.array(indices, dtype=int), axis=1), np.array(dataset.diseases_idx, dtype=int))): 
+		print('\n# --------------- Fold-{} --------------- #'.format(fold_i))
+		# modify the checkpoint_path and resume_path by k-fold
+		# resume_path_foldi = args.resume_path.replace('.pt', '_fold{}.pt'.format(str(fold_i)))
+		# checkpoint_path_foldi = args.checkpoint_path.replace('.pt', '_fold{}.pt'.format(str(fold_i)))
+		# refresh the values used to control early stop
+		early_stop_patience = 0
+		best_disease_acc = 0
+
+		# 1. Model 
+		print('Establishing the model...')
+		device = torch.device("cuda:" + str(device)) if torch.cuda.is_available() else torch.device("cpu")
+		print(f'Device: {device}')
+		model = MicroKPNN_MTL(species, in_dim, bodysite_num, disease_num)
+		num_params = sum(p.numel() for p in model.parameters())
+		print(f'{str(model)} #Params: {num_params}')
+		model.to(device)
+
+		# 2. Data
+		print('# Train: {}, # Val: {}'.format(len(train_indices), len(valid_indices)))
+
+		train_sampler = torch.utils.data.SubsetRandomSampler(train_indices)
+		valid_sampler = torch.utils.data.SubsetRandomSampler(valid_indices)
+		train_loader = torch.utils.data.DataLoader(dataset,
+													batch_size=batch_size,
+													shuffle=False,
+													num_workers=0,
+													drop_last=True,
+													sampler=train_sampler)
+		val_loader = torch.utils.data.DataLoader(dataset,
+													batch_size=batch_size,
+													shuffle=False,
+													num_workers=0,
+													drop_last=True,
+													sampler=valid_sampler)
+
