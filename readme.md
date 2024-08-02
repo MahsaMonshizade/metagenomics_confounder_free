@@ -9,3 +9,5 @@ conda install conda-forge::tqdm
 ```
 
 search for gan implementation in pytorch
+
+I just realize my training has all women. what if we make another train and test or change the confounder to age. I'll go with First option
