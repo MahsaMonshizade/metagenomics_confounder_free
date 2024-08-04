@@ -1,0 +1,385 @@
+run_id,BodySite,our_project_id,sex,host_age,BMI,country,instrument_model,disease
+SRR8909084,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909085,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909086,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909087,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909088,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909089,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909090,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909091,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909092,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909093,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909094,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909095,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909096,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909097,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909098,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909099,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909100,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909101,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909102,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909103,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909104,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D006262
+SRR8909105,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909106,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909107,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909108,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909109,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909110,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909111,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909112,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909124,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909125,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909126,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909127,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909128,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909129,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909130,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909131,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D006262
+SRR8909132,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909133,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909134,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909135,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909136,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909137,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909138,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909139,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909140,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909141,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909142,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909143,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909144,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909145,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909146,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909147,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909148,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909149,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909150,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909151,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909153,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909154,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909155,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909156,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909157,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909158,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909159,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909160,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909161,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909162,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909163,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909164,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909165,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909166,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909167,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909177,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909178,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909179,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909180,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909181,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909182,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909183,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909185,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909186,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909187,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909188,Vagina,SRP192722,Female,Middle Aged,Healthy Weight,USA,Illumina,D006262
+SRR8909495,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909496,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909497,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909498,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909538,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909539,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909540,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909541,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909542,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909543,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909544,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909545,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909546,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909547,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909548,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909549,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909550,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909551,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909552,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909553,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909554,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909563,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909564,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909565,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909566,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909588,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909589,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909591,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909592,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909593,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909594,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909595,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909596,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909597,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909598,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909599,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909600,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909601,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909602,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909603,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909604,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909605,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909606,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909607,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909608,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909609,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909610,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909611,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909612,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909629,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909630,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909631,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909632,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909633,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909634,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909635,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909636,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909637,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909638,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909639,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909640,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909641,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909642,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909643,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909848,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909849,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909850,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909851,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909852,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909853,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909854,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909855,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909856,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909857,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909858,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909859,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909860,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909861,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909862,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909863,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8909885,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909886,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909887,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909888,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909889,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909890,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909891,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909892,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909893,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909894,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909895,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909896,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909897,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909898,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909911,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909912,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909913,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8909914,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909915,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8909916,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D006262
+SRR8910236,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910237,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910238,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910239,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910241,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910454,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910455,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910456,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910457,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910458,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910459,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910471,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910472,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910473,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910474,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910475,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910476,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910478,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910479,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910480,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910481,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910482,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910483,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910484,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910485,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910487,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910488,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910490,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910491,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910492,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910494,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910495,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910500,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910501,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910503,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910504,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910505,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910506,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910507,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910508,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910514,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910541,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910559,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910560,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910561,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910563,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910564,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910566,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910667,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910668,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910669,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910670,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910678,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910679,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910680,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910681,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910682,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D006262
+SRR8910683,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910684,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910685,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910686,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910705,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910715,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D006262
+SRR8910716,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910717,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910718,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910719,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910720,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910721,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910722,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910723,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910724,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910732,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910733,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910734,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910735,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910736,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910737,Vagina,SRP192722,Female,Middle Aged,Underweight,USA,Illumina,D047928
+SRR8910738,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910739,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910740,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910741,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910742,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910743,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910744,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910745,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910746,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910747,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910748,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910749,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910774,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910775,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910776,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910777,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910778,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910779,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910780,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910781,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910782,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910783,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910784,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910785,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910786,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910787,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910788,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910789,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910790,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910794,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910796,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910797,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910798,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910799,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910800,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910801,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910802,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910803,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910804,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910805,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910806,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910807,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910808,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910809,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910810,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910811,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910812,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910813,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910847,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910848,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910849,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910850,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910851,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910852,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910853,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910854,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910855,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910856,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910857,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910858,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910859,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910860,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910861,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910862,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910864,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910865,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910866,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910867,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910868,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910869,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910870,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910871,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910872,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910873,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910874,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910875,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910876,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910877,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910878,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910879,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910880,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910881,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910882,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910883,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910884,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910885,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910887,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910888,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910889,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910890,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910891,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910892,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910893,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910894,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910895,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910896,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910897,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910898,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910899,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910900,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910901,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910902,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910903,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910904,Vagina,SRP192722,Female,Young Adult,Underweight,USA,Illumina,D047928
+SRR8910905,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910907,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910908,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910909,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910910,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910911,Vagina,SRP192722,Female,Young Adult,Healthy Weight,USA,Illumina,D047928
+SRR8910912,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D047928
+SRR8910913,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910914,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910916,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D047928
+SRR8910917,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D047928
+SRR8910918,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910919,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910920,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910921,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D047928
+SRR8910923,Vagina,SRP192722,Female,Middle Aged,Overweight,USA,Illumina,D047928
+SRR8910924,Vagina,SRP192722,Female,Young Adult,Obesity,USA,Illumina,D047928
+SRR8910926,Vagina,SRP192722,Female,Middle Aged,Obesity,USA,Illumina,D047928
+SRR8910928,Vagina,SRP192722,Female,Young Adult,Overweight,USA,Illumina,D047928
