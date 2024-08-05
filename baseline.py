@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 
 def one_hot(idx, num_classes):
     """
@@ -153,6 +154,9 @@ class GAN:
 
         self.lr = 0.0002
         self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), self.lr)
+        # Initialize the scheduler
+        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.7)
+
         
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
         """
@@ -197,7 +201,7 @@ if __name__ == "__main__":
     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
     metadata = pd.read_csv('Data/new_train_metadata.csv')
     gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
-    gan_cf.train(epochs=500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
+    gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
     
     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
     test_metadata = pd.read_csv('Data/new_test_metadata.csv')

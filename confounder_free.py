@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
+
 
 def one_hot(idx, num_classes):
     """
@@ -161,15 +164,21 @@ class GAN:
             nn.ReLU(),
             nn.BatchNorm1d(16),
             nn.Linear(16, 1),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
-        self.disease_classifier_loss = nn.BCELoss()
 
-        self.lr = 0.0002
+        self.disease_classifier_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([3]))
+        # self.disease_classifier_loss = nn.BCELoss(pos_weight=3)
+
+        self.lr = 0.001
         self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), self.lr)
         self.optimizer_distiller = optim.Adam(self.encoder.parameters(), self.lr)
         self.optimizer_classification_age = optim.Adam(self.age_classifier.parameters(), self.lr)
 
+         # Initialize the scheduler
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
+
+       
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
         """
         Trains the GAN model for a specified number of epochs.
@@ -180,6 +189,8 @@ class GAN:
             metadata (pd.DataFrame): DataFrame with metadata.
             batch_size (int): Number of samples per batch.
         """
+        best_acc = 0
+        early_stop_step = 20
         for epoch in range(epochs):
             training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size)
 
@@ -217,9 +228,25 @@ class GAN:
             prediction_scores = self.disease_classifier(encoded_feature_batch)
             c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
             c_loss.backward()
+            pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
+            disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
             self.optimizer.step()
+            self.scheduler.step(disease_acc) # ReduceLROnPlateau
+
+            if disease_acc>best_acc:
+                best_acc = disease_acc
+                early_stop_patience = 0
+            # else:
+            #     early_stop_patience += 1
+            # if early_stop_patience == early_stop_step:
+            #     break
 
             print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}")
+            if epoch % 100 == 0:
+
+                test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+                test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+                self.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
 
     def evaluate(self, relative_abundance, metadata, batch_size):
         """
@@ -233,14 +260,16 @@ class GAN:
         training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, True)
         encoded_feature_batch = self.encoder(training_feature_batch)
         prediction_scores = self.disease_classifier(encoded_feature_batch)
+        pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
+        disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
         c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
-        print(f"c_loss: {c_loss.item()}")
+        print(f"test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
 
 if __name__ == "__main__":
     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
     metadata = pd.read_csv('Data/new_train_metadata.csv')
     gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
-    gan_cf.train(epochs=500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
+    gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
     
     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
