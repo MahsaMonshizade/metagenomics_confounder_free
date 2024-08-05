@@ -112,7 +112,7 @@ def correlation_coefficient_loss(y_true, y_pred):
 class GAN:
     def __init__(self, input_dim):
         """
-        Initializes the GAN with an encoder, age classifier, and disease classifier.
+        Initializes the mlp with an encoder, and disease classifier.
         
         Args:
             input_dim (int): Dimension of the input features.

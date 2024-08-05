@@ -7,27 +7,14 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvi
 conda install pandas numpy scikit-learn
 conda install conda-forge::tqdm
 conda install -c conda-forge matplotlib
+conda install anaconda::seaborn
 ```
+to dos:
 
+1. follow the toy example visualization
+2. try to make the models better  e.g. by using schedule for learning rate
+3. make age into regression instead of classification
+4. try to realize why did you decide not to use the train and test from previous project (if you think you can use it write code for it)
+5. See if you can have few metadata at the same time for confounders
+6. Use more metrics for training and evaluation such as accuracy
 
-
-August 2nd 2024
-
-I just realized that my training dataset consists entirely of women. To address this, we have two options: create new training and test datasets, or change the confounder to age. I'll proceed with the first option.
-
-After conducting a thorough exploratory data analysis (EDA), I determined that my current dataset does not contain any diseases featured in multiple projects with sufficient metadata to use as a confounder. The only disease identified was preterm birth (D047928), with age considered as a confounder. However, upon reviewing the literature, I realized that age directly impacts this phenotype.
-
-to do:
-1. it's okay to use preterm data as well
-2. try to use ibdmdb dataset since they come from 4 or 5 different sources and use gender as confounder
-3. clean my code and add comments
-
-August 3rd 2024
-
-I added a new train and new test data for disease binary classification and confounder is age.
-
-to do:
-1. have a baseline
-2. clean the code
-3. add comments
-4. make the performance better and check the accuracy as well
