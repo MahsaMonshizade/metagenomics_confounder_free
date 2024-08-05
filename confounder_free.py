@@ -219,7 +219,7 @@ class GAN:
             g_loss.backward()
             self.optimizer_distiller.step()
 
-            for param in self.age_classifier_loss.parameters():
+            for param in self.age_classifier.parameters():
                 param.requires_grad = True
 
             # Train encoder & classifier
