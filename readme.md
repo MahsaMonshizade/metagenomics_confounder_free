@@ -4,16 +4,23 @@ conda :
 conda create --name confounder_free python=3.8
 conda activate confounder_free
 conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
-conda install pandas numpy scikit-learn
-conda install conda-forge::tqdm
-conda install -c conda-forge matplotlib
-conda install anaconda::seaborn
+conda install pandas numpy scikit-learn tqdm
+conda install matplotlib seaborn 
 ```
 
 I used scheduler just like one we have in microkpnn-mt
 
-I use weighted bce loss for imbalance data but it just made the results worse.
+I use weighted bce loss for imbalance data but it just made the results worse. 
 
+*YH: Now the models converge, but the hyperparameters, especially the learning rate of each training process, still need careful refinement. I did the following: (1) corrected the sampling to balance the dataset in diseases; (2) implemented weight initialization functions for both models; (3) adjusted the learning rate and added a scheduler for each optimizer. Please ensure there is no data leakage between the training and test sets.* 
+
+train: 
+
+```bash
+python baseline.py
+
+python confounder_free.py
+```
 
 to dos:
 
