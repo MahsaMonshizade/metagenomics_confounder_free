@@ -8,26 +8,48 @@ conda install pandas numpy scikit-learn
 conda install conda-forge::tqdm
 conda install -c conda-forge matplotlib
 conda install anaconda::seaborn
+conda install conda-forge::optuna
 ```
 
-I used scheduler just like one we have in microkpnn-mt
+# Addressing Confounder Effects in Microbiome Studies
 
-I use weighted bce loss for imbalance data but it just made the results worse.
+## Overview
+
+Confounding variables can obscure the true relationships in microbiome research. This project focuses on:
+
+## Objectives
+
+1. **Enhancing Model Generalizability:** Improve model robustness to ensure it works well across different datasets with varying metadata.
+   
+2. **Identifying True Biomarkers:** Discover true biomarkers that affect host phenotypes without confounding influences.
+
+## Goals
+
+Our aim is to improve the accuracy and reliability of microbiome studies by effectively handling confounder effects.
 
 
-to dos:
 
-1. follow the toy example visualization
-2. try to make the models better  e.g. by using schedule for learning rate
-3. make age into regression instead of classification
-4. try to realize why did you decide not to use the train and test from previous project (if you think you can use it write code for it)
-5. See if you can have few metadata at the same time for confounders
-6. Use more metrics for training and evaluation such as accuracy
 
-7. make sure baseline has the same optimizer, architecture and etc as confounder_free model
+## To-Do List
 
-8. we could use the new architecture of neural networks (KAN): https://arxiv.org/abs/2404.19756
+- [ ] Find projects for train and test dataset that has different distribution for metadata (e.g. gender), and focus on bindary classification
 
-9. they fixec the database and I have access to the database again. I can download the data and do the preprocessing from the begining [https://mbodymap.microbiome.cloud/#/health&diseases]
+- [ ] follow the toy example visualization
+
+- [ ] See if you can have few metadata at the same time for confounders
+
+- [ ] Use more metrics for training and evaluation such as accuracy
+
+- [ ] make sure baseline has the same optimizer, architecture and etc as confounder_free model
+
+- [ ] we could use the new architecture of neural networks (KAN): https://arxiv.org/abs/2404.19756 [optional]
+
+- [ ] they fixed the database and I have access to the database again. I can download the data and do the preprocessing from the begining [https://mbodymap.microbiome.cloud/#/health&diseases]
 
 random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks it's a good idea to do that for metagenomics
+
+
+
+
+
+

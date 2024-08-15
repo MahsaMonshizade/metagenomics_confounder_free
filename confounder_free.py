@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
+import optuna
 
 def one_hot(idx, num_classes):
     """
@@ -113,15 +114,13 @@ def correlation_coefficient_loss(y_true, y_pred):
     return torch.tensor(r ** 2, requires_grad=True)
 
 class GAN:
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, latent_dim=128, lr=0.0001, dropout_rate=0.3, pos_weight=3):
         """
         Initializes the GAN with an encoder, age classifier, and disease classifier.
         
         Args:
             input_dim (int): Dimension of the input features.
         """
-        latent_dim = 128
-        
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 2048),
             nn.ReLU(),
@@ -138,7 +137,6 @@ class GAN:
             nn.Linear(256, latent_dim),
             nn.ReLU()
         )
-
         self.age_classifier = nn.Sequential(
             nn.Linear(latent_dim, 64),
             nn.ReLU(),
@@ -164,19 +162,17 @@ class GAN:
             nn.ReLU(),
             nn.BatchNorm1d(16),
             nn.Linear(16, 1),
-            # nn.Sigmoid()
         )
 
-        self.disease_classifier_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([3]))
-        # self.disease_classifier_loss = nn.BCELoss(pos_weight=3)
+        self.disease_classifier_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]))
 
-        self.lr = 0.001
-        self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), self.lr)
-        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), self.lr)
-        self.optimizer_classification_age = optim.Adam(self.age_classifier.parameters(), self.lr)
+        self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr)
+        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr)
+        self.optimizer_classification_age = optim.Adam(self.age_classifier.parameters(), lr)
 
-         # Initialize the scheduler
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
+        self.scheduler_distiller = lr_scheduler.ReduceLROnPlateau(self.optimizer_distiller, mode='min', factor=0.5, patience=5)
+        self.scheduler_classification_age = lr_scheduler.ReduceLROnPlateau(self.optimizer_classification_age, mode='min', factor=0.5, patience=5)
 
        
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
@@ -190,7 +186,8 @@ class GAN:
             batch_size (int): Number of samples per batch.
         """
         best_acc = 0
-        early_stop_step = 20
+        early_stop_step = 30
+        early_stop_patience = 0
         for epoch in range(epochs):
             training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size)
 
@@ -236,12 +233,12 @@ class GAN:
             if disease_acc>best_acc:
                 best_acc = disease_acc
                 early_stop_patience = 0
-            # else:
-            #     early_stop_patience += 1
-            # if early_stop_patience == early_stop_step:
-            #     break
+            else:
+                early_stop_patience += 1
+            if early_stop_patience == early_stop_step:
+                break
 
-            print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}")
+            print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}, disease_acc: {disease_acc}")
             if epoch % 100 == 0:
 
                 test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
@@ -265,12 +262,41 @@ class GAN:
         c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
         print(f"test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+#     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
+#     metadata = pd.read_csv('Data/new_train_metadata.csv')
+#     gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
+#     gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
+    
+#     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+#     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+#     gan_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+
+# Objective function for Optuna
+def objective(trial):
     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
     metadata = pd.read_csv('Data/new_train_metadata.csv')
-    gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
-    gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
+    latent_dim = trial.suggest_int('latent_dim', 64, 256)
+    lr = trial.suggest_loguniform('lr', 1e-5, 1e-3)
+    dropout_rate = trial.suggest_uniform('dropout_rate', 0.1, 0.5)
+    pos_weight = trial.suggest_int('pos_weight', 1, 5)
+    
+    gan_model = GAN(input_dim=relative_abundance.shape[1] - 1, latent_dim=latent_dim, lr=lr, dropout_rate=dropout_rate, pos_weight=pos_weight)
+    
+    epochs = 500
+    
+    gan_model.train(epochs, relative_abundance, metadata, batch_size=64)
     
     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
-    gan_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+    
+    accuracy = gan_model.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+    
+    return accuracy
+
+# Hyperparameter optimization with Optuna
+study = optuna.create_study(direction="maximize")
+study.optimize(objective, n_trials=50)
+
+# Print the best hyperparameters
+print("Best hyperparameters found: ", study.best_params)
