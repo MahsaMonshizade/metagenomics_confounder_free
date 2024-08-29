@@ -34,6 +34,13 @@ Our aim is to improve the accuracy and reliability of microbiome studies by effe
 
 - [ ] Find projects for train and test dataset that has different distribution for metadata (e.g. gender), and focus on bindary classification
 
+--> I tried to get the samples for gut microbiome from Mbodysample database; Large intestine, Small intestine and stomache; But it's not good because there is no phenotype that exists in 2 different projects and mostly just gender was available
+
+--> GMrepo relativeve abundance info: #please note the abundance statistics, i.e. mean, median and sd were calculated in samples in which the corresponding taxons were detected.
+#please consult our web site for more details.
+
+https://evolgeniusteam.github.io/gmrepodocumentation/usage/downloaddatafromgmrepo/
+
 - [ ] follow the toy example visualization
 
 - [ ] See if you can have few metadata at the same time for confounders
