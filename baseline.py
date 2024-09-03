@@ -225,40 +225,40 @@ class GAN:
         c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
         print(f"test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
 
-# if __name__ == "__main__":
-#     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
-#     metadata = pd.read_csv('Data/new_train_metadata.csv')
-#     gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
-#     gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
-    
-#     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
-#     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
-#     gan_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
-
-def objective(trial):
-    relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
-    metadata = pd.read_csv('Data/new_train_metadata.csv')
-    latent_dim = trial.suggest_int('latent_dim', 64, 256)
-    lr = trial.suggest_loguniform('lr', 1e-5, 1e-3)
-    dropout_rate = trial.suggest_uniform('dropout_rate', 0.1, 0.5)
-    pos_weight = trial.suggest_int('pos_weight', 1, 5)
-    
-    gan_model = GAN(input_dim=relative_abundance.shape[1] - 1, latent_dim=latent_dim, lr=lr, dropout_rate=dropout_rate, pos_weight=pos_weight)
-    
-    epochs = 500
-    
-    gan_model.train(epochs, relative_abundance, metadata, batch_size=64)
+if __name__ == "__main__":
+    relative_abundance = pd.read_csv('GMrepo/filtered_relative_abundance_IBD.csv')
+    metadata = pd.read_csv('Data/filtered_metadata_IBDs.csv')
+    gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
+    gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
     
     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
-    
-    accuracy = gan_model.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
-    
-    return accuracy
+    gan_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
 
-# Hyperparameter optimization with Optuna
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=50)
+# def objective(trial):
+#     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
+#     metadata = pd.read_csv('Data/new_train_metadata.csv')
+#     latent_dim = trial.suggest_int('latent_dim', 64, 256)
+#     lr = trial.suggest_loguniform('lr', 1e-5, 1e-3)
+#     dropout_rate = trial.suggest_uniform('dropout_rate', 0.1, 0.5)
+#     pos_weight = trial.suggest_int('pos_weight', 1, 5)
+    
+#     gan_model = GAN(input_dim=relative_abundance.shape[1] - 1, latent_dim=latent_dim, lr=lr, dropout_rate=dropout_rate, pos_weight=pos_weight)
+    
+#     epochs = 500
+    
+#     gan_model.train(epochs, relative_abundance, metadata, batch_size=64)
+    
+#     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+#     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+    
+#     accuracy = gan_model.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+    
+#     return accuracy
 
-# Print the best hyperparameters
-print("Best hyperparameters found: ", study.best_params)
+# # Hyperparameter optimization with Optuna
+# study = optuna.create_study(direction="maximize")
+# study.optimize(objective, n_trials=50)
+
+# # Print the best hyperparameters
+# print("Best hyperparameters found: ", study.best_params)

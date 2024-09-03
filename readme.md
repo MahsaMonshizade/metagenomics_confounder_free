@@ -29,6 +29,7 @@ Our aim is to improve the accuracy and reliability of microbiome studies by effe
 
 
 
+For now please run baseline2 both for train_v2 and train v3 version (train v2 is imbalanced labels and v3 is balance labels )
 
 ## To-Do List
 
