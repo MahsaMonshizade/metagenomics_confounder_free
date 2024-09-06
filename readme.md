@@ -4,37 +4,60 @@ conda :
 conda create --name confounder_free python=3.8
 conda activate confounder_free
 conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
-conda install pandas numpy scikit-learn tqdm
-conda install matplotlib seaborn 
+conda install pandas numpy scikit-learn
+conda install conda-forge::tqdm
+conda install -c conda-forge matplotlib
+conda install anaconda::seaborn
+conda install conda-forge::optuna
 ```
 
-I used scheduler just like one we have in microkpnn-mt
+# Addressing Confounder Effects in Microbiome Studies
 
-I use weighted bce loss for imbalance data but it just made the results worse. 
+## Overview
 
-*YH: Now the models converge, but the hyperparameters, especially the learning rate of each training process, still need careful refinement. I did the following: (1) corrected the sampling to balance the dataset in diseases; (2) implemented weight initialization functions for both models; (3) adjusted the learning rate and added a scheduler for each optimizer. Please ensure there is no data leakage between the training and test sets.* 
+Confounding variables can obscure the true relationships in microbiome research. This project focuses on:
 
-train: 
+## Objectives
 
-```bash
-python baseline.py
+1. **Enhancing Model Generalizability:** Improve model robustness to ensure it works well across different datasets with varying metadata.
+   
+2. **Identifying True Biomarkers:** Discover true biomarkers that affect host phenotypes without confounding influences.
 
-python confounder_free.py
-```
+## Goals
 
-to dos:
+Our aim is to improve the accuracy and reliability of microbiome studies by effectively handling confounder effects.
 
-1. follow the toy example visualization
-2. try to make the models better  e.g. by using schedule for learning rate
-3. make age into regression instead of classification
-4. try to realize why did you decide not to use the train and test from previous project (if you think you can use it write code for it)
-5. See if you can have few metadata at the same time for confounders
-6. Use more metrics for training and evaluation such as accuracy
 
-7. make sure baseline has the same optimizer, architecture and etc as confounder_free model
 
-8. we could use the new architecture of neural networks (KAN): https://arxiv.org/abs/2404.19756
+For now please run baseline2 both for train_v2 and train v3 version (train v2 is imbalanced labels and v3 is balance labels )
 
-9. they fixec the database and I have access to the database again. I can download the data and do the preprocessing from the begining [https://mbodymap.microbiome.cloud/#/health&diseases]
+## To-Do List
+
+- [ ] Find projects for train and test dataset that has different distribution for metadata (e.g. gender), and focus on bindary classification
+
+--> I tried to get the samples for gut microbiome from Mbodysample database; Large intestine, Small intestine and stomache; But it's not good because there is no phenotype that exists in 2 different projects and mostly just gender was available
+
+--> GMrepo relativeve abundance info: #please note the abundance statistics, i.e. mean, median and sd were calculated in samples in which the corresponding taxons were detected.
+#please consult our web site for more details.
+
+https://evolgeniusteam.github.io/gmrepodocumentation/usage/downloaddatafromgmrepo/
+
+- [ ] follow the toy example visualization
+
+- [ ] See if you can have few metadata at the same time for confounders
+
+- [ ] Use more metrics for training and evaluation such as accuracy
+
+- [ ] make sure baseline has the same optimizer, architecture and etc as confounder_free model
+
+- [ ] we could use the new architecture of neural networks (KAN): https://arxiv.org/abs/2404.19756 [optional]
+
+- [ ] they fixed the database and I have access to the database again. I can download the data and do the preprocessing from the begining [https://mbodymap.microbiome.cloud/#/health&diseases]
 
 random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks it's a good idea to do that for metagenomics
+
+
+
+
+
+

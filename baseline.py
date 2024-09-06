@@ -7,6 +7,9 @@ import torch.nn.init as init
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
+import optuna
+
+
 def one_hot(idx, num_classes):
 	"""
 	Creates a one-hot encoded vector for a given index.
@@ -108,35 +111,55 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
 	
 	return training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease
 
+def correlation_coefficient_loss(y_true, y_pred):
+    """
+    Computes a custom loss function based on the correlation coefficient.
+    
+    Args:
+        y_true (array-like): Ground truth values.
+        y_pred (array-like): Predicted values.
+        
+    Returns:
+        torch.Tensor: Loss value computed as the square of the correlation coefficient.
+    """
+    y_true, y_pred = np.array(y_true, dtype=np.float32), np.array(y_pred, dtype=np.float32)
+    
+    mx, my = np.mean(y_true), np.mean(y_pred)
+    xm, ym = y_true - mx, y_pred - my
+    r_num = np.sum(xm * ym)
+    r_den = np.sqrt(np.sum(xm ** 2) * np.sum(ym ** 2)) + 1e-5
+    
+    r = r_num / r_den
+    r = np.clip(r, -1.0, 1.0)
+    
+    return torch.tensor(r ** 2, requires_grad=True)
 
-
-class NonGAN(nn.Module): 
-	def __init__(self, input_dim):
-		super(NonGAN, self).__init__()
-		"""
-		Initializes the NonGAN with an encoder and a disease classifier.
-		
-		Args:
-			input_dim (int): Dimension of the input features.
-		"""
-		latent_dim = 128
-		
-		self.encoder = nn.Sequential(
-			nn.Linear(input_dim, 2048),
-			nn.ReLU(),
-			nn.BatchNorm1d(2048),
-			nn.Linear(2048, 1024),
-			nn.ReLU(),
-			nn.BatchNorm1d(1024),
-			nn.Linear(1024, 512),
-			nn.ReLU(),
-			nn.BatchNorm1d(512),
-			nn.Linear(512, 256),
-			nn.ReLU(),
-			nn.BatchNorm1d(256),
-			nn.Linear(256, latent_dim),
-			nn.ReLU()
-		)
+class GAN:
+    def __init__(self, input_dim, latent_dim=128, lr=0.0001, dropout_rate=0.3, pos_weight=3):
+        """
+        Initializes the GAN with an encoder, age classifier, and disease classifier.
+        
+        Args:
+            input_dim (int): Dimension of the input features.
+        """
+        latent_dim = 128
+        
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, 2048),
+            nn.ReLU(),
+            nn.BatchNorm1d(2048),
+            nn.Linear(2048, 1024),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.BatchNorm1d(512),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.BatchNorm1d(256),
+            nn.Linear(256, latent_dim),
+            nn.ReLU()
+        )
 
 		self.disease_classifier = nn.Sequential(
 			nn.Linear(latent_dim, 64),
@@ -156,82 +179,101 @@ class NonGAN(nn.Module):
 		self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), self.lr)
 		self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
 
-		self._initialize_weights()
+       
+    def train(self, epochs, relative_abundance, metadata, batch_size=64):
+        """
+        Trains the GAN model for a specified number of epochs.
+        
+        Args:
+            epochs (int): Number of training epochs.
+            relative_abundance (pd.DataFrame): DataFrame with relative abundance values.
+            metadata (pd.DataFrame): DataFrame with metadata.
+            batch_size (int): Number of samples per batch.
+        """
+        best_acc = 0
+        early_stop_step = 20
+        early_stop_patience = 0
+        for epoch in range(epochs):
+            training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size)
 
-	def _initialize_weights(self):
-		"""
-		Initializes weights of the model using Xavier initialization.
-		"""
-		for m in self.modules():
-			if isinstance(m, nn.Linear):
-				init.xavier_uniform_(m.weight)
-				if m.bias is not None:
-					init.zeros_(m.bias)
-					
-	def train(self, epochs, relative_abundance, metadata, batch_size=64): 
-		"""
-		Trains the NonGAN model for a specified number of epochs.
-		
-		Args:
-			epochs (int): Number of training epochs.
-			relative_abundance (pd.DataFrame): DataFrame with relative abundance values.
-			metadata (pd.DataFrame): DataFrame with metadata.
-			batch_size (int): Number of samples per batch.
-		"""
-		best_acc = 0
-		early_stop_patience = 0
-		early_stop_step = 30
-		for epoch in range(epochs): 
-			training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size)
-			
-			self.optimizer.zero_grad()
-			encoded_feature_batch = self.encoder(training_feature_batch)
-			prediction_scores = self.disease_classifier(encoded_feature_batch)
-			c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
-			c_loss.backward()
-			pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
-			disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
-			self.optimizer.step()
-			self.scheduler.step(disease_acc)
 
-			if disease_acc > best_acc:
-				best_acc = disease_acc
-				early_stop_patience = 0
-			else:
-				early_stop_patience += 1
-				# YH: for debugging
-				# print(f"Early stopping patience: {early_stop_patience} / {early_stop_step}, learning rate: {self.optimizer.param_groups[0]['lr']}")
+            # Train encoder & classifier
+            self.optimizer.zero_grad()
+            encoded_feature_batch = self.encoder(training_feature_batch)
+            prediction_scores = self.disease_classifier(encoded_feature_batch)
+            c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
+            c_loss.backward()
+            pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
+            disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
+            self.optimizer.step()
+            self.scheduler.step(disease_acc) # ReduceLROnPlateau
 
-			if early_stop_patience == early_stop_step:
-				break
+            if disease_acc>best_acc:
+                best_acc = disease_acc
+                early_stop_patience = 0
+            else:
+                early_stop_patience += 1
+            if early_stop_patience == early_stop_step:
+                break
 
-			print(f"Epoch {epoch + 1}/{epochs}, c_loss: {c_loss.item()}, accuracy: {disease_acc}")
-			if epoch % 100 == 99: 
-				self.evaluate(pd.read_csv('Data/new_test_relative_abundance.csv'), pd.read_csv('Data/new_test_metadata.csv'), batch_size=batch_size)
-	
-	def evaluate(self, relative_abundance, metadata, batch_size):
-		"""
-		Evaluates the trained NonGAN model on test data.
-		
-		Args:
-			relative_abundance (pd.DataFrame): DataFrame with relative abundance values.
-			metadata (pd.DataFrame): DataFrame with metadata.
-			batch_size (int): Number of samples for evaluation.
-		"""
-		training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, True)
-		encoded_feature_batch = self.encoder(training_feature_batch)
-		prediction_scores = self.disease_classifier(encoded_feature_batch)
-		pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
-		disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
-		c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
-		print(f"Test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
+            print(f"Epoch {epoch + 1}/{epochs}, c_loss: {c_loss.item()}")
+            if epoch % 100 == 0:
+
+                test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+                test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+                self.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+
+    def evaluate(self, relative_abundance, metadata, batch_size):
+        """
+        Evaluates the trained GAN model on test data.
+        
+        Args:
+            relative_abundance (pd.DataFrame): DataFrame with relative abundance values.
+            metadata (pd.DataFrame): DataFrame with metadata.
+            batch_size (int): Number of samples for evaluation.
+        """
+        training_feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, True)
+        encoded_feature_batch = self.encoder(training_feature_batch)
+        prediction_scores = self.disease_classifier(encoded_feature_batch)
+        pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
+        disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
+        c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
+        print(f"test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
 
 if __name__ == "__main__":
-	relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
-	metadata = pd.read_csv('Data/new_train_metadata.csv')
-	NonGAN_cf = NonGAN(input_dim=relative_abundance.shape[1] - 1)
-	NonGAN_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=256)
-	
-	test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
-	test_metadata = pd.read_csv('Data/new_test_metadata.csv')
-	NonGAN_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+    relative_abundance = pd.read_csv('GMrepo/filtered_relative_abundance_IBD.csv')
+    metadata = pd.read_csv('Data/filtered_metadata_IBDs.csv')
+    gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
+    gan_cf.train(epochs=1500, relative_abundance=relative_abundance, metadata=metadata, batch_size=64)
+    
+    test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+    test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+    gan_cf.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+
+# def objective(trial):
+#     relative_abundance = pd.read_csv('Data/new_train_relative_abundance.csv')
+#     metadata = pd.read_csv('Data/new_train_metadata.csv')
+#     latent_dim = trial.suggest_int('latent_dim', 64, 256)
+#     lr = trial.suggest_loguniform('lr', 1e-5, 1e-3)
+#     dropout_rate = trial.suggest_uniform('dropout_rate', 0.1, 0.5)
+#     pos_weight = trial.suggest_int('pos_weight', 1, 5)
+    
+#     gan_model = GAN(input_dim=relative_abundance.shape[1] - 1, latent_dim=latent_dim, lr=lr, dropout_rate=dropout_rate, pos_weight=pos_weight)
+    
+#     epochs = 500
+    
+#     gan_model.train(epochs, relative_abundance, metadata, batch_size=64)
+    
+#     test_relative_abundance = pd.read_csv('Data/new_test_relative_abundance.csv')
+#     test_metadata = pd.read_csv('Data/new_test_metadata.csv')
+    
+#     accuracy = gan_model.evaluate(relative_abundance=test_relative_abundance, metadata=test_metadata, batch_size=test_metadata.shape[0])
+    
+#     return accuracy
+
+# # Hyperparameter optimization with Optuna
+# study = optuna.create_study(direction="maximize")
+# study.optimize(objective, n_trials=50)
+
+# # Print the best hyperparameters
+# print("Best hyperparameters found: ", study.best_params)
