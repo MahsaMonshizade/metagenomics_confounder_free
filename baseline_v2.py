@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
@@ -74,8 +75,22 @@ class SimpleNN(nn.Module):
         self.fc4 = nn.Linear(64, 1)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.5)
-        self.sigmoid = nn.Sigmoid()
+        # self.sigmoid = nn.Sigmoid()
+        self._initialize_weights()
     
+    def _initialize_weights(self):
+        # Initialize Linear layers with He initialization
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                init.kaiming_uniform_(m.weight, nonlinearity='relu')
+                if m.bias is not None:
+                    init.zeros_(m.bias)
+            
+            # Initialize BatchNorm layers
+            elif isinstance(m, nn.BatchNorm1d):
+                init.ones_(m.weight)
+                init.zeros_(m.bias)
+
     def forward(self, x):
         x = self.relu(self.b1(self.fc1(x)))
         x = self.dropout(x)
@@ -93,7 +108,8 @@ model = SimpleNN(input_size)
 # Loss and optimizer
 # criterion = nn.BCEWithLogitsLoss()
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # Added L2 regularization
+# optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # Added L2 regularization
+optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
 
 # Track metrics
 train_accuracies, val_accuracies = [], []
@@ -101,7 +117,7 @@ train_aucs, val_aucs = [], []
 train_losses, val_losses = [], []
 
 # Training loop
-num_epochs = 50
+num_epochs = 20
 for epoch in range(num_epochs):
     model.train()
     correct_predictions = 0
@@ -138,7 +154,7 @@ for epoch in range(num_epochs):
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Train Accuracy: {accuracy:.4f}, Train AUC: {auc:.4f}')
 
-    if epoch == 49:
+    if epoch == num_epochs - 1: # Print the last epoch
         print('hiii')
         print(labels)
         print('pred')
@@ -173,7 +189,7 @@ for epoch in range(num_epochs):
     val_aucs.append(val_auc)
     val_losses.append(val_loss)
     
-    print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}')
+    print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}\n')
 
 # Plotting training and validation metrics
 epochs = range(1, num_epochs + 1)

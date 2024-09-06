@@ -31,6 +31,8 @@ Our aim is to improve the accuracy and reliability of microbiome studies by effe
 
 For now please run baseline2 both for train_v2 and train v3 version (train v2 is imbalanced labels and v3 is balance labels )
 
+*YH: baseline_v2 is great. I decreased the learning rate to 0.0001 and added parameter initialization in the model to avoid local optimization. The performance.png looks slightly better now, where the test accuracy and AUC do not tremor. Please note that the model is overfitting after about 10 epochs. We can address this later. Also, I wrote baseline_v2_kfold to check the data. Everthing looks good.* 
+
 ## To-Do List
 
 - [ ] Find projects for train and test dataset that has different distribution for metadata (e.g. gender), and focus on bindary classification
