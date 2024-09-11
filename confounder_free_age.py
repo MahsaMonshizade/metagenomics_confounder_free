@@ -288,7 +288,7 @@ class GAN:
         print(f"test result --> accuracy: {disease_acc}, c_loss: {c_loss.item()}")
 
 if __name__ == "__main__":
-    relative_abundance = pd.read_csv('GMrepo_data/train_relative_abundance_IBD_v5.csv')
+    relative_abundance = pd.read_csv('GMrepo_data/train_relative_abundance_IBD_balanced.csv')
     # Separate 'loaded_uid' and other columns
     loaded_uid = relative_abundance['loaded_uid']  # Save the 'loaded_uid' column
     X = relative_abundance.drop(columns=['loaded_uid']).values  # Drop 'loaded_uid' for transformation
@@ -315,7 +315,7 @@ if __name__ == "__main__":
     # Optionally, reorder columns if you want 'loaded_uid' at the start
     X_clr_df = X_clr_df[['loaded_uid'] + list(X_clr_df.columns[:-1])]
    
-    metadata = pd.read_csv('GMrepo_data/train_metadata_IBD_v5.csv')
+    metadata = pd.read_csv('GMrepo_data/train_metadata_IBD_balanced.csv')
     gan_cf = GAN(input_dim=relative_abundance.shape[1] - 1)
     gan_cf.train(epochs=1, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
     

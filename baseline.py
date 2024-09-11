@@ -5,9 +5,22 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
 import numpy as np
+import random
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
 import matplotlib.pyplot as plt
+
+
+def set_seed(seed):
+    """Set seed for reproducibility."""
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using GPU
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
 
 # Load data
 relative_abundance = pd.read_csv('GMrepo_data/train_relative_abundance_IBD_balanced.csv')
@@ -59,23 +72,38 @@ train_dataset = AbundanceDataset(X_train_tensor, y_train_tensor)
 val_dataset = AbundanceDataset(X_val_tensor, y_val_tensor)
 
 # Create DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+train_dataloader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=256, shuffle=False)
 
 # Define the neural network model
 class SimpleNN(nn.Module):
     def __init__(self, input_size):
         super(SimpleNN, self).__init__()
-        self.fc1 = nn.Linear(input_size, 1024)
-        self.b1 = nn.BatchNorm1d(1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.b2 = nn.BatchNorm1d(256)
-        self.fc3 = nn.Linear(256, 64)
-        self.b3 = nn.BatchNorm1d(64)
-        self.fc4 = nn.Linear(64, 1)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.5)
-        # self.sigmoid = nn.Sigmoid()
+        # self.fc1 = nn.Linear(input_size, 512)
+        # self.b1 = nn.BatchNorm1d(512)
+        # self.fc2 = nn.Linear(512, 16)
+        # self.b2 = nn.BatchNorm1d(16)
+        # self.fc3 = nn.Linear(16, 1)
+        # self.relu = nn.ReLU()
+        # self.dropout = nn.Dropout(0.3)
+        self.nn = nn.Sequential(
+            nn.Linear(input_size, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 128),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Linear(64, 16),
+            nn.BatchNorm1d(16),
+            nn.ReLU(),
+            nn.Linear(16, 1)
+        )
         self._initialize_weights()
     
     def _initialize_weights(self):
@@ -92,13 +120,12 @@ class SimpleNN(nn.Module):
                 init.zeros_(m.bias)
 
     def forward(self, x):
-        x = self.relu(self.b1(self.fc1(x)))
-        x = self.dropout(x)
-        x = self.relu(self.b2(self.fc2(x)))
-        x = self.dropout(x)
-        x = self.relu(self.b3(self.fc3(x)))
-        x = self.fc4(x)
-        # x =  self.sigmoid(self.fc4(x))  # No Sigmoid here for BCEWithLogitsLoss
+        # x = self.relu(self.b1(self.fc1(x)))
+        # x = self.dropout(x)
+        # x = self.relu(self.b2(self.fc2(x)))
+        # x = self.dropout(x)
+        # x = self.fc3(x)
+        x = self.nn(x)
         return x
 
 # Initialize the model
@@ -106,18 +133,21 @@ input_size = X_train_tensor.shape[1]
 model = SimpleNN(input_size)
 
 # Loss and optimizer
-# criterion = nn.BCEWithLogitsLoss()
 criterion = nn.BCEWithLogitsLoss()
-# optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)  # Added L2 regularization
-optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=0.00001)
 
 # Track metrics
 train_accuracies, val_accuracies = [], []
 train_aucs, val_aucs = [], []
 train_losses, val_losses = [], []
 
+# Early stopping parameters
+patience = 10  # Number of epochs to wait for improvement
+best_val_loss = float('inf')
+patience_counter = 0
+
 # Training loop
-num_epochs = 100
+num_epochs = 50
 for epoch in range(num_epochs):
     model.train()
     correct_predictions = 0
@@ -154,12 +184,6 @@ for epoch in range(num_epochs):
     
     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Train Accuracy: {accuracy:.4f}, Train AUC: {auc:.4f}')
 
-    if epoch == num_epochs - 1: # Print the last epoch
-        print('hiii')
-        print(labels)
-        print('pred')
-        print(predicted)
-        print('bye')
 
     # Validation loop
     model.eval()
@@ -191,22 +215,37 @@ for epoch in range(num_epochs):
     
     print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}\n')
 
-# Plotting training and validation metrics
-epochs = range(1, num_epochs + 1)
+    # Early Stopping Check
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        patience_counter = 0
+        # Save the best model
+        torch.save(model.state_dict(), 'best_model.pth')
+    else:
+        patience_counter += 1
+        if patience_counter >= patience:
+            print("Early stopping triggered.")
+            break
+
+## Determine the number of epochs actually run
+num_epochs_run = len(train_losses)
+
+# Adjust the range for plotting
+epochs = range(1, num_epochs_run + 1)
 
 plt.figure(figsize=(14, 8))
 
 plt.subplot(2, 1, 1)
-plt.plot(epochs, train_accuracies, 'b', label='Train Accuracy')
-plt.plot(epochs, val_accuracies, 'r', label='Validation Accuracy')
+plt.plot(epochs, train_accuracies[:num_epochs_run], 'b', label='Train Accuracy')
+plt.plot(epochs, val_accuracies[:num_epochs_run], 'r', label='Validation Accuracy')
 plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 plt.title('Accuracy over Epochs')
 plt.legend()
 
 plt.subplot(2, 1, 2)
-plt.plot(epochs, train_aucs, 'b', label='Train AUC')
-plt.plot(epochs, val_aucs, 'r', label='Validation AUC')
+plt.plot(epochs, train_aucs[:num_epochs_run], 'b', label='Train AUC')
+plt.plot(epochs, val_aucs[:num_epochs_run], 'r', label='Validation AUC')
 plt.xlabel('Epochs')
 plt.ylabel('AUC')
 plt.title('AUC over Epochs')

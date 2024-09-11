@@ -10,8 +10,8 @@ from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 
 # Load data
-relative_abundance = pd.read_csv('GMrepo_data/train_relative_abundance_IBD_v3.csv')
-metadata = pd.read_csv('GMrepo_data/train_metadata_IBD_v3.csv')
+relative_abundance = pd.read_csv('GMrepo_data/train_relative_abundance_IBD_balanced .csv')
+metadata = pd.read_csv('GMrepo_data/train_metadata_IBD_balanced.csv')
 
 # Map disease labels to numeric values
 disease_dict = {'D006262': 0, 'D043183': 1}

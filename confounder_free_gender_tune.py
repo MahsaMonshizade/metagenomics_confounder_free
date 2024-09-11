@@ -1,14 +1,14 @@
-import numpy as np
-import pandas as pd
-import random
+import optuna
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
-import optuna
-
+import numpy as np
+import pandas as pd
+import random
+import json
 
 def set_seed(seed):
     """Set seed for reproducibility."""
@@ -19,12 +19,10 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-
 def clr_transformation(X):
     """Perform CLR (Centered Log-Ratio) transformation on the data."""
     geometric_mean = np.exp(np.mean(np.log(X), axis=1))
     return np.log(X / geometric_mean[:, np.newaxis])
-
 
 def load_and_transform_data(file_path):
     """Load data from CSV, apply CLR transformation, and return transformed DataFrame with 'loaded_uid'."""
@@ -37,7 +35,6 @@ def load_and_transform_data(file_path):
     X_clr_df['loaded_uid'] = loaded_uid
     return X_clr_df[['loaded_uid'] + list(X_clr_df.columns[:-1])]
 
-
 def preprocess_metadata(metadata):
     """Converts categorical metadata into numeric and one-hot encoded features."""
     disease_dict = {'D006262': 0, 'D043183': 1}
@@ -45,7 +42,6 @@ def preprocess_metadata(metadata):
     metadata['disease_numeric'] = metadata['disease'].map(disease_dict)
     metadata['gender_numeric'] = metadata['sex'].map(gender_dict)
     return metadata
-
 
 def create_batch(relative_abundance, metadata, batch_size, is_test=False):
     """Creates a batch of data by sampling from the metadata and relative abundance data."""
@@ -86,7 +82,6 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
     return (training_feature_ctrl_batch, metadata_ctrl_batch_gender, 
             training_feature_batch, metadata_batch_disease)
 
-
 def correlation_coefficient_loss(y_true, y_pred):
     """Computes a custom loss function based on the correlation coefficient."""
     y_true, y_pred = np.array(y_true, dtype=np.float32), np.array(y_pred, dtype=np.float32)
@@ -97,60 +92,57 @@ def correlation_coefficient_loss(y_true, y_pred):
     r = np.clip(r_num / r_den, -1.0, 1.0)
     return torch.tensor(r ** 2, requires_grad=True)
 
-
 class GAN:
-    def __init__(self, input_dim, latent_dim=128, lr=0.0002, dropout_rate=0.3, pos_weight=2):
-        """Initializes the GAN with an encoder, gender classifier, and disease classifier."""
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-            nn.Linear(1024, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(),
-            nn.Linear(512, 256),
-            nn.BatchNorm1d(256),
-            nn.ReLU(),
-            nn.Linear(256, latent_dim),
-            nn.BatchNorm1d(latent_dim),
-            nn.ReLU()
-        )
-        self.gender_classification = nn.Sequential(
-           nn.Linear(latent_dim, 64),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-             nn.Linear(32, 16),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Linear(16, 1)
-        )
-        self.gender_classification_loss = nn.BCEWithLogitsLoss()
+    def __init__(self, input_dim, trial, latent_dim=128, dropout_rate=0.3):
+        """Initializes the GAN with encoder and classifiers, and uses Optuna to tune layers and learning rates."""
+        # Define hyperparameters to tune
+        n_layers_encoder = trial.suggest_int("n_layers_encoder", 2, 4)
+        n_units_encoder = [trial.suggest_int(f"n_units_encoder_l{i}", 128, 1024) for i in range(n_layers_encoder)]
+        n_layers_classifier = trial.suggest_int("n_layers_classifier", 2, 4)
+        n_units_classifier = [trial.suggest_int(f"n_units_classifier_l{i}", 16, 128) for i in range(n_layers_classifier)]
 
-        self.disease_classifier = nn.Sequential(
-            nn.Linear(latent_dim, 64),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-             nn.Linear(32, 16),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Linear(16, 1)
-        )
+        # Learning rates
+        lr_encoder = trial.suggest_loguniform("lr_encoder", 1e-5, 1e-1)
+        lr_classifier = trial.suggest_loguniform("lr_classifier", 1e-5, 1e-1)
+
+        # Encoder
+        encoder_layers = []
+        for i in range(n_layers_encoder):
+            encoder_layers.append(nn.Linear(input_dim if i == 0 else n_units_encoder[i-1], n_units_encoder[i]))
+            encoder_layers.append(nn.BatchNorm1d(n_units_encoder[i]))
+            encoder_layers.append(nn.ReLU())
+            encoder_layers.append(nn.Dropout(dropout_rate))
+        encoder_layers.append(nn.Linear(n_units_encoder[-1], latent_dim))
+        self.encoder = nn.Sequential(*encoder_layers)
+
+        # Gender Classifier
+        gender_layers = []
+        for i in range(n_layers_classifier):
+            gender_layers.append(nn.Linear(latent_dim if i == 0 else n_units_classifier[i-1], n_units_classifier[i]))
+            gender_layers.append(nn.BatchNorm1d(n_units_classifier[i]))
+            gender_layers.append(nn.ReLU())
+            gender_layers.append(nn.Dropout(dropout_rate))
+        gender_layers.append(nn.Linear(n_units_classifier[-1], 1))
+        self.gender_classification = nn.Sequential(*gender_layers)
+
+        # Disease Classifier
+        disease_layers = []
+        for i in range(n_layers_classifier):
+            disease_layers.append(nn.Linear(latent_dim if i == 0 else n_units_classifier[i-1], n_units_classifier[i]))
+            disease_layers.append(nn.BatchNorm1d(n_units_classifier[i]))
+            disease_layers.append(nn.ReLU())
+            disease_layers.append(nn.Dropout(dropout_rate))
+        disease_layers.append(nn.Linear(n_units_classifier[-1], 1))
+        self.disease_classifier = nn.Sequential(*disease_layers)
+
+        self.gender_classification_loss = nn.BCEWithLogitsLoss()
         self.disease_classifier_loss = nn.BCEWithLogitsLoss()
 
         # Optimizers
-        self.optimizer = optim.Adam(
-            list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr
-        )
-        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr)
-        self.optimizer_classification_gender = optim.Adam(self.gender_classification.parameters(), lr)
+        self.optimizer = optim.Adam(list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr=lr_encoder)
+        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr=lr_encoder)
+        self.optimizer_classification_gender = optim.Adam(self.gender_classification.parameters(), lr=lr_classifier)
 
-        # Schedulers
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
         self.scheduler_distiller = lr_scheduler.ReduceLROnPlateau(self.optimizer_distiller, mode='min', factor=0.5, patience=5)
         self.scheduler_classification_gender = lr_scheduler.ReduceLROnPlateau(self.optimizer_classification_gender, mode='min', factor=0.5, patience=5)
@@ -214,107 +206,80 @@ class GAN:
 
             print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}, disease_acc: {disease_acc}")
 
-            
-            self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t = 'eval')
-            self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t = 'train')
+            self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t='eval')
+            self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t='train')
 
     def evaluate(self, relative_abundance, metadata, batch_size, t):
         """Evaluates the trained GAN model on test data."""
         # Create batches
-        feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, True)
-    
+        feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, is_test=True)
+
         # Get encoded features
         encoded_feature_batch = self.encoder(feature_batch)
-    
+
         # Get prediction scores (probabilities)
         prediction_scores = self.disease_classifier(encoded_feature_batch)
-    
+
         # Convert probabilities to predicted classes
         pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
-    
+
         # Calculate accuracy
         disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
-    
+
         # Calculate classifier loss
         c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
-    
+
         # Calculate AUC
-        if len(np.unique(metadata_batch_disease)) > 1:
-            auc = roc_auc_score(metadata_batch_disease.view(-1, 1), prediction_scores.detach().numpy())
-            print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}, AUC: {auc}")
-        else:
-            print("Cannot compute ROC AUC as only one class is present.")
-        # auc = roc_auc_score(metadata_batch_disease.view(-1, 1), prediction_scores.detach().numpy())
-    
+        auc = roc_auc_score(metadata_batch_disease.view(-1, 1), prediction_scores.detach().numpy())
+
         # Print results
-            print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}")
+        print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}, AUC: {auc}")
 
-if __name__ == "__main__":
-    set_seed(42)
+        return disease_acc, auc
 
-    # Load and transform training data
+def objective(trial):
+    # Load and transform data
     file_path = 'GMrepo_data/train_relative_abundance_IBD_balanced.csv'
     metadata_file_path = 'GMrepo_data/train_metadata_IBD_balanced.csv'
     X_clr_df = load_and_transform_data(file_path)
     metadata = pd.read_csv(metadata_file_path)
 
-    # X_clr_df_train, X_clr_df_val, train_metadata, val_metadata = train_test_split(X_clr_df, metadata, test_size=0.2, random_state=42)
+    # Split into train and validation sets
+    X_clr_df_train, X_clr_df_val, train_metadata, val_metadata = train_test_split(X_clr_df, metadata, test_size=0.2, random_state=42)
 
     # Initialize and train GAN
-    gan = GAN(input_dim=X_clr_df.shape[1] - 1)
-    gan.train(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
+    gan = GAN(input_dim=X_clr_df.shape[1] - 1, trial=trial)
+    gan.train(epochs=50, relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=64)  # Train on 50 epochs for tuning speed
 
-    # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    # Validation performance (accuracy/AUC)
+    disease_acc, auc = gan.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t='eval')
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test')
+    # Optuna tries to minimize the objective, so we return the negative of the accuracy or AUC
+    return -disease_acc  # or use auc if that's your primary metric
 
+if __name__ == "__main__":
+    set_seed(42)
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_1.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_1.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    # Optuna Study
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=50)  # Adjust number of trials as needed
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_1')
+    # Display and Save the Best Trial
+    print("Best trial:")
+    trial = study.best_trial
+    print(f"Value: {trial.value}")
+    print("Params:")
+    for key, value in trial.params.items():
+        print(f"{key}: {value}")
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_2.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_2.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    # Save best trial's parameters to a JSON file
+    best_params = {
+        'value': trial.value,
+        'params': trial.params
+    }
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_2')
+    # Save to a file
+    with open("best_hyperparameters.json", "w") as f:
+        json.dump(best_params, f, indent=4)
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_3.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_3.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
-
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_3')
-
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_4.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_4.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
-
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_4')
-
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_5.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_5.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
-
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_5')
+    print("Best hyperparameters saved to 'best_hyperparameters.json'.")
