@@ -150,7 +150,8 @@ def inv_correlation_coefficient_loss(y_true, y_pred):
     r = torch.clamp(r, min=-1.0, max=1.0)
     
     # Return 1 minus the squared correlation coefficient
-    return 1 - r ** 2
+    # return 1 - r ** 2 # this may raise gradient vanishing problem
+    return 1 - torch.abs(r)
 
 
 
@@ -268,8 +269,10 @@ class GAN:
             g_loss = inv_correlation_coefficient_loss(metadata_ctrl_batch_gender, predicted_gender)
             # criterion = nn.BCEWithLogitsLoss()
             # g_loss = criterion(predicted_gender, metadata_ctrl_batch_gender.view(-1, 1))
+
+            
             g_loss.backward()
-            for param in self.encoder.parameters():
+            for param in self.encoder.parameters(): 
                 if not param.requires_grad:
                     print("Parameter does not require gradients:", param)
 
