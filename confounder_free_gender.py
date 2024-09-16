@@ -5,9 +5,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
+import torch.nn.init as init
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 import optuna
+
 
 
 def set_seed(seed):
@@ -154,7 +156,7 @@ def inv_correlation_coefficient_loss(y_true, y_pred):
 
 
 class GAN:
-    def __init__(self, input_dim, latent_dim=128, lr=0.0002, dropout_rate=0.3, pos_weight=2):
+    def __init__(self, input_dim, latent_dim=128, lr=0.01, dropout_rate=0.3, pos_weight=2):
         """Initializes the GAN with an encoder, gender classifier, and disease classifier."""
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 1024),
@@ -210,6 +212,13 @@ class GAN:
         self.scheduler_distiller = lr_scheduler.ReduceLROnPlateau(self.optimizer_distiller, mode='min', factor=0.5, patience=5)
         self.scheduler_classification_gender = lr_scheduler.ReduceLROnPlateau(self.optimizer_classification_gender, mode='min', factor=0.5, patience=5)
 
+    # Custom weight initialization function
+    def init_weights(m):
+        if isinstance(m, nn.Linear):
+            init.xavier_uniform_(m.weight)  # Xavier initialization for weights
+            if m.bias is not None:
+                init.zeros_(m.bias)  # Initialize biases to zero
+    
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
         """Trains the GAN model for a specified number of epochs."""
         best_acc = 0
@@ -233,7 +242,7 @@ class GAN:
             gender_prediction = self.gender_classification(encoded_feature_ctrl_batch)
             r_loss = self.gender_classification_loss(gender_prediction, metadata_ctrl_batch_gender.view(-1, 1))
             r_loss.backward()
-            initial_params = [param.clone() for param in self.encoder.parameters()]
+            # initial_params = [param.clone() for param in self.encoder.parameters()]
 
             self.optimizer_classification_gender.step()
 
@@ -286,6 +295,11 @@ class GAN:
             #     print(f"{name}: {param}")
             initial_params_dist = {name: param.clone() for name, param in self.encoder.named_parameters()}
 
+
+
+            # # Clip gradients to avoid vanishing or exploding
+            # # Here, we clip the gradient norm to a maximum value of 1.0
+            # torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), max_norm=1.0)
             self.optimizer_distiller.step()
 
             # Print parameters after the step

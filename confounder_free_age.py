@@ -98,7 +98,7 @@ def inv_mse(y_true, y_pred):
 
 
 class GAN:
-    def __init__(self, input_dim, latent_dim=128, lr=0.0002, dropout_rate=0.3, pos_weight=2):
+    def __init__(self, input_dim, latent_dim=128, lr=0.01, dropout_rate=0.3, pos_weight=2):
         """Initializes the GAN with an encoder, age regressor, and disease classifier."""
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 1024),

@@ -137,7 +137,7 @@ model = SimpleNN(input_size)
 
 # Loss and optimizer
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.00001)
+optimizer = optim.Adam(model.parameters(), lr=0.01)
 
 # Track metrics
 train_accuracies, val_accuracies = [], []
