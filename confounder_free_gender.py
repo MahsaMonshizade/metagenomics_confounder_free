@@ -182,8 +182,6 @@ class GAN:
             r_loss = self.gender_classification_loss(gender_prediction, metadata_ctrl_batch_gender.view(-1, 1))
             r_loss.backward()
 
-
-
             self.optimizer_classification_gender.step()
 
            
