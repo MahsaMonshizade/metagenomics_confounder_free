@@ -87,15 +87,37 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
             training_feature_batch, metadata_batch_disease)
 
 
+# def correlation_coefficient_loss(y_true, y_pred):
+#     """Computes a custom loss function based on the correlation coefficient."""
+#     y_true, y_pred = np.array(y_true, dtype=np.float32), np.array(y_pred, dtype=np.float32)
+#     mx, my = np.mean(y_true), np.mean(y_pred)
+#     xm, ym = y_true - mx, y_pred - my
+#     r_num = np.sum(xm * ym)
+#     r_den = np.sqrt(np.sum(xm ** 2) * np.sum(ym ** 2)) + 1e-5
+#     r = np.clip(r_num / r_den, -1.0, 1.0)
+#     return torch.tensor(r ** 2, requires_grad=True)
+
+
 def correlation_coefficient_loss(y_true, y_pred):
     """Computes a custom loss function based on the correlation coefficient."""
-    y_true, y_pred = np.array(y_true, dtype=np.float32), np.array(y_pred, dtype=np.float32)
-    mx, my = np.mean(y_true), np.mean(y_pred)
-    xm, ym = y_true - mx, y_pred - my
-    r_num = np.sum(xm * ym)
-    r_den = np.sqrt(np.sum(xm ** 2) * np.sum(ym ** 2)) + 1e-5
-    r = np.clip(r_num / r_den, -1.0, 1.0)
-    return torch.tensor(r ** 2, requires_grad=True)
+    # Ensure inputs are of type float
+    y_true = y_true.float()
+    y_pred = y_pred.float()
+    
+    # Compute means
+    mean_y_true = torch.mean(y_true)
+    mean_y_pred = torch.mean(y_pred)
+    
+    # Compute covariance and variances
+    covariance = torch.sum((y_true - mean_y_true) * (y_pred - mean_y_pred))
+    variance_y_true = torch.sum((y_true - mean_y_true) ** 2)
+    variance_y_pred = torch.sum((y_pred - mean_y_pred) ** 2)
+    
+    # Compute correlation coefficient
+    correlation = covariance / (torch.sqrt(variance_y_true * variance_y_pred) + 1e-5)
+    
+    # Return 1 minus the squared correlation coefficient as loss
+    return 1 - correlation ** 2
 
 
 class GAN:
@@ -147,7 +169,7 @@ class GAN:
         self.optimizer = optim.Adam(
             list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr
         )
-        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr)
+        self.optimizer_distiller = optim.Adam(list(self.encoder.parameters()) + list(self.gender_classification.parameters()), lr)
         self.optimizer_classification_gender = optim.Adam(self.gender_classification.parameters(), lr)
 
         # Schedulers
@@ -163,9 +185,6 @@ class GAN:
         
         X_clr_df_train, X_clr_df_val, train_metadata, val_metadata = train_test_split(relative_abundance, metadata, test_size=0.2, random_state=42)
 
-
-        
-
         for epoch in range(epochs):
             # Create batches
             training_feature_ctrl_batch, metadata_ctrl_batch_gender, training_feature_batch, metadata_batch_disease = create_batch(
@@ -175,18 +194,26 @@ class GAN:
 
             # Train gender classifier
             self.optimizer_classification_gender.zero_grad()
-            for param in self.encoder.parameters():
-                param.requires_grad = False
+            # for param in self.encoder.parameters():
+            #     param.requires_grad = False
             encoded_feature_ctrl_batch = self.encoder(training_feature_ctrl_batch)
             gender_prediction = self.gender_classification(encoded_feature_ctrl_batch)
             r_loss = self.gender_classification_loss(gender_prediction, metadata_ctrl_batch_gender.view(-1, 1))
             r_loss.backward()
+            initial_params = [param.clone() for param in self.encoder.parameters()]
 
             self.optimizer_classification_gender.step()
 
+            # for i, param in enumerate(self.encoder.parameters()):
+            #     if not torch.equal(initial_params[i], param):
+            #         print(f"Parameter {i} updated")
+            #     else:
+            #         print(f"Parameter {i} did not update")
+
+
            
-            for param in self.encoder.parameters():
-                param.requires_grad = True
+            # for param in self.encoder.parameters():
+            #     param.requires_grad = True
 
             
 
@@ -196,17 +223,23 @@ class GAN:
                 param.requires_grad = False
             encoder_features = self.encoder(training_feature_ctrl_batch)
             predicted_gender = self.gender_classification(encoder_features)
-            g_loss = correlation_coefficient_loss(metadata_ctrl_batch_gender, predicted_gender.detach())
-            print('hiiii')
-            print(g_loss)
+            g_loss = correlation_coefficient_loss(metadata_ctrl_batch_gender, predicted_gender)
+            # criterion = nn.BCEWithLogitsLoss()
+            # g_loss = criterion(predicted_gender, metadata_ctrl_batch_gender.view(-1, 1))
             g_loss.backward()
 
 
-            for name, param in self.gender_classification.named_parameters():
-                if param.grad is None:
-                    print(f"Parameter {name} has no gradient.")
-                else:
-                    print(f"Parameter {name} gradient norm: {param.grad.norm()}")
+            # for name, param in self.gender_classification.named_parameters():
+            #     if param.grad is None:
+            #         print(f"Parameter {name} has no gradient.")
+            #     else:
+            #         print(f"Parameter {name} gradient norm: {param.grad.norm()}")\
+
+            # for name, param in self.encoder.named_parameters():
+            #     if param.grad is None:
+            #         print(f"Parameter {name} has no gradient.")
+            #     else:
+            #         print(f"Parameter {name} gradient norm: {param.grad.norm()}")
 
 
 
@@ -214,7 +247,7 @@ class GAN:
             # print("Before optimizer step:")
             # for name, param in self.encoder.named_parameters():
             #     print(f"{name}: {param}")
-            initial_params = [param.clone() for param in self.gender_classification.parameters()]
+            initial_params_dist = [param.clone() for param in self.encoder.parameters()]
 
             self.optimizer_distiller.step()
 
@@ -224,11 +257,11 @@ class GAN:
             #     print(f"{name}: {param}")
 
             # Check if the parameters have updated
-            for i, param in enumerate(self.gender_classification.parameters()):
-                if not torch.equal(initial_params[i], param):
+            for i, param in enumerate(self.encoder.parameters()):
+                if not torch.equal(initial_params_dist[i], param):
                     print(f"Parameter {i} updated")
                 else:
-                    print(f"Parameter {i} did not update")
+                    print(f"Parameter {i} did not update_dist")
 
             for param in self.gender_classification.parameters():
                 param.requires_grad = True
