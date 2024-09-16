@@ -40,7 +40,7 @@ def load_and_transform_data(file_path):
 
 def preprocess_metadata(metadata):
     """Converts categorical metadata into numeric and one-hot encoded features."""
-    disease_dict = {'D006262': 0, 'D043183': 1}
+    disease_dict = {'D006262': 0, 'D003093': 1}
     gender_dict = {'Male': 0, 'Female': 1}
     metadata['disease_numeric'] = metadata['disease'].map(disease_dict)
     metadata['gender_numeric'] = metadata['sex'].map(gender_dict)
@@ -158,16 +158,20 @@ class GAN:
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
         """Trains the GAN model for a specified number of epochs."""
         best_acc = 0
-        early_stop_step = 30
+        early_stop_step = 10
         early_stop_patience = 0
         
         X_clr_df_train, X_clr_df_val, train_metadata, val_metadata = train_test_split(relative_abundance, metadata, test_size=0.2, random_state=42)
+
+
+        
 
         for epoch in range(epochs):
             # Create batches
             training_feature_ctrl_batch, metadata_ctrl_batch_gender, training_feature_batch, metadata_batch_disease = create_batch(
                 X_clr_df_train, train_metadata, batch_size
             )
+
 
             # Train gender classifier
             self.optimizer_classification_gender.zero_grad()
@@ -177,9 +181,16 @@ class GAN:
             gender_prediction = self.gender_classification(encoded_feature_ctrl_batch)
             r_loss = self.gender_classification_loss(gender_prediction, metadata_ctrl_batch_gender.view(-1, 1))
             r_loss.backward()
+
+
+
             self.optimizer_classification_gender.step()
+
+           
             for param in self.encoder.parameters():
                 param.requires_grad = True
+
+            
 
             # Train distiller
             self.optimizer_distiller.zero_grad()
@@ -188,8 +199,39 @@ class GAN:
             encoder_features = self.encoder(training_feature_ctrl_batch)
             predicted_gender = self.gender_classification(encoder_features)
             g_loss = correlation_coefficient_loss(metadata_ctrl_batch_gender, predicted_gender.detach())
+            print('hiiii')
+            print(g_loss)
             g_loss.backward()
+
+
+            for name, param in self.gender_classification.named_parameters():
+                if param.grad is None:
+                    print(f"Parameter {name} has no gradient.")
+                else:
+                    print(f"Parameter {name} gradient norm: {param.grad.norm()}")
+
+
+
+            # Print parameters before the step
+            # print("Before optimizer step:")
+            # for name, param in self.encoder.named_parameters():
+            #     print(f"{name}: {param}")
+            initial_params = [param.clone() for param in self.gender_classification.parameters()]
+
             self.optimizer_distiller.step()
+
+            # Print parameters after the step
+            # print("After optimizer step:")
+            # for name, param in self.encoder.named_parameters():
+            #     print(f"{name}: {param}")
+
+            # Check if the parameters have updated
+            for i, param in enumerate(self.gender_classification.parameters()):
+                if not torch.equal(initial_params[i], param):
+                    print(f"Parameter {i} updated")
+                else:
+                    print(f"Parameter {i} did not update")
+
             for param in self.gender_classification.parameters():
                 param.requires_grad = True
 
@@ -253,8 +295,8 @@ if __name__ == "__main__":
     set_seed(42)
 
     # Load and transform training data
-    file_path = 'GMrepo_data/train_relative_abundance_IBD_balanced.csv'
-    metadata_file_path = 'GMrepo_data/train_metadata_IBD_balanced.csv'
+    file_path = 'GMrepo_data/UC_relative_abundance_metagenomics_train.csv'
+    metadata_file_path = 'GMrepo_data/UC_metadata_metagenomics_train.csv'
     X_clr_df = load_and_transform_data(file_path)
     metadata = pd.read_csv(metadata_file_path)
 
@@ -265,8 +307,8 @@ if __name__ == "__main__":
     gan.train(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
 
     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD.csv'
+    test_file_path = 'GMrepo_data/UC_relative_abundance_metagenomics_test_balanced.csv'
+    test_metadata_file_path = 'GMrepo_data/UC_metadata_metagenomics_test_balanced.csv'
     X_clr_df_test = load_and_transform_data(test_file_path)
     test_metadata = pd.read_csv(test_metadata_file_path)
 
@@ -274,47 +316,47 @@ if __name__ == "__main__":
     gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test')
 
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_1.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_1.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    #  # Load and transform test data
+    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_1.csv'
+    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_1.csv'
+    # X_clr_df_test = load_and_transform_data(test_file_path)
+    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_1')
+    # # Evaluate GAN on test data
+    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_1')
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_2.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_2.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    #  # Load and transform test data
+    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_2.csv'
+    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_2.csv'
+    # X_clr_df_test = load_and_transform_data(test_file_path)
+    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_2')
+    # # Evaluate GAN on test data
+    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_2')
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_3.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_3.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    #  # Load and transform test data
+    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_3.csv'
+    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_3.csv'
+    # X_clr_df_test = load_and_transform_data(test_file_path)
+    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_3')
+    # # Evaluate GAN on test data
+    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_3')
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_4.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_4.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    #  # Load and transform test data
+    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_4.csv'
+    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_4.csv'
+    # X_clr_df_test = load_and_transform_data(test_file_path)
+    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_4')
+    # # Evaluate GAN on test data
+    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_4')
 
-     # Load and transform test data
-    test_file_path = 'GMrepo_data/test_relative_abundance_IBD_5.csv'
-    test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_5.csv'
-    X_clr_df_test = load_and_transform_data(test_file_path)
-    test_metadata = pd.read_csv(test_metadata_file_path)
+    #  # Load and transform test data
+    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_5.csv'
+    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_5.csv'
+    # X_clr_df_test = load_and_transform_data(test_file_path)
+    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # Evaluate GAN on test data
-    gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_5')
+    # # Evaluate GAN on test data
+    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_5')

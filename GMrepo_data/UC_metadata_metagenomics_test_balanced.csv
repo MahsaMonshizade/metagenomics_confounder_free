@@ -1,0 +1,129 @@
+uid,accession_id,data_type,tool_used,results_version,last_updated,QCStatus_x,QCMessage,project_id,run_id,experiment_type,instrument_model,nr_reads_sequenced,host_age,sex,BMI,country,longitude,latitude,disease,QCStatus_y
+5466,SRR2142192,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142192,metagenomics,Illumina HiSeq 2000,7847702.0,,,,United States of America,,,D003093,1.0
+5468,SRR2142183,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142183,metagenomics,Illumina HiSeq 2000,15896780.0,,,,United States of America,,,D003093,1.0
+5470,SRR2142189,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142189,metagenomics,Illumina MiSeq,17275139.0,,,,United States of America,,,D003093,1.0
+5473,SRR2142191,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142191,metagenomics,Illumina HiSeq 2000,21597213.0,,,,United States of America,,,D003093,1.0
+5475,SRR2142195,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142195,metagenomics,Illumina HiSeq 2000,11168758.0,,,,United States of America,,,D003093,1.0
+5476,SRR2142190,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142190,metagenomics,Illumina HiSeq 2000,26927513.0,,,,United States of America,,,D003093,1.0
+5479,SRR2142196,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142196,metagenomics,Illumina HiSeq 2000,15828131.0,,,,United States of America,,,D003093,1.0
+5480,SRR2142193,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142193,metagenomics,Illumina HiSeq 2000,44825750.0,,,,United States of America,,,D003093,1.0
+5482,SRR2142199,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142199,metagenomics,Illumina HiSeq 2000,7533040.0,,,,United States of America,,,D003093,1.0
+5483,SRR2142200,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142200,metagenomics,Illumina HiSeq 2000,7133575.0,,,,United States of America,,,D003093,1.0
+5486,SRR2142203,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142203,metagenomics,Illumina MiSeq,8696037.0,,,,United States of America,,,D003093,1.0
+5488,SRR2142207,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142207,metagenomics,Illumina HiSeq 2000,3820731.0,,,,United States of America,,,D003093,1.0
+5490,SRR2142206,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142206,metagenomics,Illumina MiSeq,7537833.0,,,,United States of America,,,D003093,1.0
+5491,SRR2142205,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142205,metagenomics,Illumina MiSeq,12019309.0,,,,United States of America,,,D003093,1.0
+5493,SRR2142211,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142211,metagenomics,Illumina MiSeq,16428229.0,,,,United States of America,,,D003093,1.0
+5494,SRR2142210,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142210,metagenomics,Illumina MiSeq,14595818.0,,,,United States of America,,,D003093,1.0
+5495,SRR2142213,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142213,metagenomics,Illumina MiSeq,13894686.0,,,,United States of America,,,D003093,1.0
+5496,SRR2142212,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142212,metagenomics,Illumina MiSeq,13538637.0,,,,United States of America,,,D003093,1.0
+5500,SRR2142214,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142214,metagenomics,Illumina MiSeq,18720352.0,,,,United States of America,,,D003093,1.0
+5502,SRR2142219,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142219,metagenomics,Illumina MiSeq,15360244.0,,,,United States of America,,,D003093,1.0
+5505,SRR2142222,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142222,metagenomics,Illumina HiSeq 2000,14348051.0,,,,United States of America,,,D003093,1.0
+5506,SRR2142223,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142223,metagenomics,Illumina HiSeq 2000,4829103.0,,,,United States of America,,,D003093,1.0
+5509,SRR2142230,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142230,metagenomics,Illumina HiSeq 2000,6049267.0,,,,United States of America,,,D003093,1.0
+5515,SRR2142226,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA285502,SRR2142226,metagenomics,Illumina HiSeq 2000,28273603.0,,,,United States of America,,,D003093,1.0
+30641,SRR5983438,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983438,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30644,SRR5983429,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983429,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30647,SRR5983273,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983273,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30649,SRR5983402,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983402,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30651,SRR5983425,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983425,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30657,SRR5947820,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947820,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30658,SRR5983454,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983454,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30661,SRR5983336,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983336,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30668,SRR5983315,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983315,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30679,SRR5947872,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947872,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30686,SRR5983455,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983455,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30687,SRR5983380,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983380,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30689,SRR5983274,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983274,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30692,SRR5983476,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983476,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30697,SRR5983483,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983483,Metagenomics,Illumina HiSeq 2000,,25.0,Female,,The United States of America,,,D003093,1.0
+30698,SRR5983432,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983432,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30700,SRR5983265,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983265,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30701,SRR5983456,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983456,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30704,SRR5947845,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947845,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30708,SRR5983345,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983345,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30713,SRR5983457,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983457,Metagenomics,Illumina HiSeq 2000,,13.0,Male,,The United States of America,,,D003093,1.0
+30715,SRR5983481,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983481,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30742,SRR5983352,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983352,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30755,SRR5983435,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983435,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30757,SRR5983390,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983390,Metagenomics,Illumina HiSeq 2000,15774877.0,15.0,Female,,United States of America,,,D006262,1.0
+30760,SRR5983329,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983329,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30764,SRR5983453,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983453,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30779,SRR5983280,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983280,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30781,SRR5947871,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947871,Metagenomics,Illumina HiSeq 2000,19313151.0,15.0,Female,,United States of America,,,D006262,1.0
+30788,SRR5983267,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983267,Metagenomics,Illumina HiSeq 2000,33089707.0,32.0,Female,,United States of America,,,D006262,1.0
+30791,SRR5947850,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947850,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30797,SRR5947828,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947828,Metagenomics,Illumina HiSeq 2000,12056965.0,15.0,Female,,United States of America,,,D006262,1.0
+30804,SRR5983433,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983433,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30809,SRR5983268,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983268,Metagenomics,Illumina HiSeq 2000,13262812.0,56.0,Male,,United States of America,,,D003093,1.0
+30810,SRR5983408,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983408,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30811,SRR5983482,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983482,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30816,SRR5983421,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983421,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30818,SRR5983372,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983372,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30826,SRR5983478,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983478,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30830,SRR5983484,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983484,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30846,SRR5983376,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983376,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30855,SRR5983359,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983359,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30857,SRR5983430,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983430,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30861,SRR5947810,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947810,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30870,SRR5983451,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983451,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30872,SRR5947864,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947864,Metagenomics,Illumina HiSeq 2000,10939278.0,15.0,Female,,United States of America,,,D006262,1.0
+30874,SRR5983350,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983350,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30875,SRR5947822,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947822,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30880,SRR5983473,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983473,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30882,SRR5947831,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947831,Metagenomics,Illumina HiSeq 2000,14045538.0,15.0,Female,,United States of America,,,D006262,1.0
+30883,SRR5983349,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983349,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30885,SRR5983366,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983366,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30896,SRR5983404,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983404,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30906,SRR5983485,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983485,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30910,SRR5983379,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983379,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30912,SRR5983449,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983449,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30918,SRR5983294,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983294,Metagenomics,Illumina HiSeq 2000,8945613.0,26.0,Female,,United States of America,,,D003093,1.0
+30920,SRR5983420,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983420,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30927,SRR5983461,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983461,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30928,SRR5983276,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983276,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30932,SRR5983382,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983382,Metagenomics,Illumina HiSeq 2000,9109355.0,,Male,,United States of America,,,D003093,1.0
+30933,SRR5983354,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983354,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30935,SRR5983363,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983363,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30953,SRR5983290,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983290,Metagenomics,Illumina HiSeq 2000,,0.0,Male,,The United States of America,,,D006262,1.0
+30958,SRR5983424,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983424,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30960,SRR5983466,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983466,Metagenomics,Illumina HiSeq 2000,11649087.0,13.0,Male,,United States of America,,,D003093,1.0
+30961,SRR5983356,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983356,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30968,SRR5983301,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983301,Metagenomics,Illumina HiSeq 2000,16808540.0,29.0,Male,,United States of America,,,D006262,1.0
+30969,SRR5947879,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5947879,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+30973,SRR5983348,metagenomics,metaphlan ver2.0,0.1,2019-01-01 00:00:00,1,,PRJNA389280,SRR5983348,Metagenomics,Illumina HiSeq 2000,,0.0,Female,,The United States of America,,,D006262,1.0
+52356,SRR6876225,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA438164,SRR6876225,Metagenomics,NextSeq 500,1226723.0,,,,United States of America,-85.39,42.58,D003093,1.0
+52384,SRR6876205,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA438164,SRR6876205,Metagenomics,NextSeq 500,560832.0,,,,United States of America,-85.39,42.58,D003093,1.0
+52669,SRR060116,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR060116,Metagenomics,Illumina Genome Analyzer II,6924379.0,,Male,,,,,D003093,1.0
+52677,SRR5548089,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548089,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52684,SRR5548110,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548110,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52710,SRR5548213,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548213,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52712,SRR5548290,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548290,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52714,SRR5548266,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548266,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52716,SRR5548282,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548282,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52718,SRR5548275,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548275,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52724,SRR5548358,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548358,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52726,SRR5548347,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548347,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52732,SRR5548387,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548387,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52733,SRR5548383,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548383,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52739,SRR5548395,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548395,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52740,SRR5548391,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548391,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52761,SRR5548453,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548453,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52764,SRR5548498,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548498,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52765,SRR5548518,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548518,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52779,SRR5548561,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548561,Metagenomics,Illumina HiSeq 1000,,,Female,,,,,D003093,1.0
+52787,SRR5548587,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548587,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52788,SRR5548580,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548580,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52789,SRR5548583,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548583,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52792,SRR5548610,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548610,Metagenomics,Illumina HiSeq 1000,,,Female,,,,,D003093,1.0
+52798,SRR5548618,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548618,Metagenomics,Illumina HiSeq 1000,,,Female,,,,,D003093,1.0
+52806,SRR5548660,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548660,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52808,SRR5548645,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548645,Metagenomics,Illumina HiSeq 1000,,,Female,,,,,D003093,1.0
+52812,SRR5548667,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548667,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52814,SRR5548703,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548703,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52819,SRR5548691,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548691,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52820,SRR5548684,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548684,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52824,SRR5548735,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548735,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52849,SRR5548931,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548931,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
+52853,SRR5548936,metagenomics,metaphlan ver2.0,0.1,2019-06-21 16:04:46,1,,PRJNA50637,SRR5548936,Metagenomics,Illumina HiSeq 1000,,,Male,,,,,D003093,1.0
