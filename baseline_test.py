@@ -165,4 +165,5 @@ test_accuracies.append(test_accuracy)
 test_aucs.append(test_auc)
 test_losses.append(test_loss)
     
-print(f'test Loss: {test_loss:.4f}, test Accuracy: {test_accuracy:.4f}, test AUC: {test_auc:.4f}\n')
+# print(f'test Loss: {test_loss:.4f}, test Accuracy: {test_accuracy:.4f}, test AUC: {test_auc:.4f}\n')
+print(f"test result --> Accuracy: {test_accuracy:.4f}, Loss: {test_loss:.4f}, AUC: {test_auc:.4f}")

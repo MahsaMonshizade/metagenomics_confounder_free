@@ -43,6 +43,8 @@ If the magnitude of gradients is close to the optimizer's threshold for change, 
 Bias Correction in Adam:
 The Adam optimizer uses bias correction for the running estimates of gradient moments. This correction might affect weight and bias parameters differently depending on the gradient history and the specific iteration.
 *
+
+*MM: when I just removed confounders using correlation coefficient directly on features I got better results comparing to this adversarial approach*
 /// try to add waight initialization
 ## To-Do List
 
@@ -72,5 +74,57 @@ random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks
 
 
 
+results so far:
+### confounder_free_age_linear_correlation results:
+```
+train result --> Accuracy: 0.9785330948121646, Loss: 0.07159556448459625, AUC: 0.9989710144927536
+
+eval result --> Accuracy: 0.9428571428571428, Loss: 0.18021175265312195, AUC: 0.96775
+```
+For balanced test dataset:
+```
+test result --> Accuracy: 0.765625, Loss: 0.668499231338501, AUC: 0.909423828125
+```
+For non balanced test dataset:
+```
+test result --> Accuracy: 0.5757575757575758, Loss: 1.5847922563552856, AUC: 0.7847118263473054
+```
+
+### confounder_free_age results:
+
+```
+train result --> Accuracy: 0.962432915921288, Loss: 0.14968928694725037, AUC: 0.9909710144927536
+
+eval result --> Accuracy: 0.9285714285714286, Loss: 0.20735128223896027, AUC: 0.9784999999999999
+```
+For balanced test dataset:
+```
+test result --> Accuracy: 0.734375, Loss: 0.5888912081718445, AUC: 0.882080078125
+```
+For non balanced test dataset:
+```
+test result --> Accuracy: 0.5800865800865801, Loss: 1.1535238027572632, AUC: 0.8347679640718562
+```
 
 
+### baseline results:
+```
+train result --> Accuracy: 1.0000, Loss: 0.0019, AUC: 1.0000
+eval result --> Accuracy: 0.9476, Loss: 0.1531, AUC: 0.9954
+```
+For balanced test dataset:
+```
+test result --> Accuracy: 0.7344, Loss: 0.9605, AUC: 0.8418
+```
+For non balanced test dataset:
+```
+test result --> Accuracy: 0.6667, Loss: 1.3016, AUC: 0.7856
+```
+
+### Results Summary
+
+| Model                            | Train (Accuracy, Loss, AUC)           | Eval (Accuracy, Loss, AUC)           | Test (Balanced) (Accuracy, Loss, AUC) | Test (Non-balanced) (Accuracy, Loss, AUC) |
+|-----------------------------------|---------------------------------------|--------------------------------------|----------------------------------------|--------------------------------------------|
+| **confounder_free_age_linear_correlation** | 0.9785, 0.0716, 0.9990                | 0.9429, 0.1802, 0.9678               | **0.7656**, **0.6685**, **0.9094**                 | 0.5758, 1.5848, 0.7847                     |
+| **confounder_free_age**           | 0.9624, 0.1497, 0.9910                | 0.9286, 0.2074, 0.9785               | 0.7344, 0.5889, 0.8821                 | 0.5801, 1.1535, 0.8348                     |
+| **baseline**                      | **1.0000**, **0.0019**, **1.0000**                | **0.9476**, **0.1531**, **0.9954**               | 0.7344, 0.9605, 0.8418                 | 0.6667, 1.3016, 0.7856                     |

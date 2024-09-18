@@ -150,7 +150,7 @@ best_val_loss = float('inf')
 patience_counter = 0
 
 # Training loop
-num_epochs = 50
+num_epochs = 1500
 for epoch in range(num_epochs):
     model.train()
     correct_predictions = 0
@@ -185,8 +185,8 @@ for epoch in range(num_epochs):
     train_aucs.append(auc)
     train_losses.append(epoch_loss)
     
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Train Accuracy: {accuracy:.4f}, Train AUC: {auc:.4f}')
-
+    # print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Train Accuracy: {accuracy:.4f}, Train AUC: {auc:.4f}')
+    print(f"Epoch [{epoch+1}/{num_epochs}] train result --> Accuracy: {accuracy:.4f}, Loss: {epoch_loss:.4f}, AUC: {auc:.4f}")
 
     # Validation loop
     model.eval()
@@ -216,8 +216,8 @@ for epoch in range(num_epochs):
     val_aucs.append(val_auc)
     val_losses.append(val_loss)
     
-    print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}\n')
-
+    # print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}\n')
+    print(f"eval result --> Accuracy: {val_accuracy:.4f}, Loss: {val_loss:.4f}, AUC: {val_auc:.4f}")
     # Early Stopping Check
     if val_loss < best_val_loss:
         best_val_loss = val_loss
@@ -255,4 +255,4 @@ plt.title('AUC over Epochs')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig('performance.png')
+plt.savefig('plots/baseline_performance.png')

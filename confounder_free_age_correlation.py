@@ -88,32 +88,16 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
 
 
 
-def correlation_coefficient_loss(y_true, y_pred):
+def correlation_coefficient_loss(x, y):
    
-    # mx = torch.mean(y_true)
-    # my = torch.mean(y_pred)
+    mean_x = torch.mean(x)
+    mean_y = torch.mean(y)
+    covariance = torch.mean((x - mean_x) * (y - mean_y))
+    std_x = torch.std(x)
+    std_y = torch.std(y)
+    return (covariance / (std_x * std_y))**2
 
-    # # Center the variables
-    # xm = y_true - mx
-    # ym = y_pred - my
 
-    # # Compute the numerator and denominator for Pearson correlation
-    # r_num = torch.sum(xm * ym)
-    # r_den = torch.sqrt(torch.sum(xm ** 2) * torch.sum(ym ** 2)) + 1e-5  # Adding a small epsilon to avoid division by zero
-
-    # # Calculate Pearson correlation coefficient
-    # r = r_num / r_den
-    # r = torch.clamp(r, min=-1.0, max=1.0)
-
-    # return r**2
-   
-    mean_x = torch.mean(y_true)
-    mean_y = torch.mean(y_pred)
-    covariance = torch.mean((y_true - mean_x) * (y_pred - mean_y))
-    std_x = torch.std(y_true)
-    std_y = torch.std(y_pred)
-    eps = 1e-5
-    return (covariance / (std_x * std_y)+eps)**2
 
 
 
@@ -226,7 +210,7 @@ class GAN(nn.Module):
                 param.requires_grad = False
             encoder_features = self.encoder(training_feature_ctrl_batch)
             predicted_age = self.age_regressor(encoder_features)
-            g_loss = correlation_coefficient_loss(metadata_ctrl_batch_age.view(-1,1), predicted_age)
+            g_loss = correlation_coefficient_loss(encoder_features, metadata_ctrl_batch_age.view(-1,1))
             g_loss.backward()
 
             initial_params_dist = {name: param.clone() for name, param in self.encoder.named_parameters()}
@@ -276,32 +260,38 @@ class GAN(nn.Module):
     def plot_losses(self, r_losses, g_losses, c_losses):
         """Plots r_loss, g_loss, and c_loss over epochs."""
         plt.figure(figsize=(12, 6))
+        # plt.plot(r_losses, label='r_loss', color='r')
         plt.plot(g_losses, label='g_loss', color='g')
         print(g_losses)
+        # plt.plot(c_losses, label='c_loss', color='b')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title('Training Losses Over Epochs')
         plt.legend()
         plt.grid(True)
-        plt.savefig('plots/confounder_free_age_gloss.png')
+        plt.savefig('plots/confounder_free_age_linear_correlation_gloss.png')
 
         plt.figure(figsize=(12, 6))
         plt.plot(r_losses, label='r_loss', color='r')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.title('Training Losses Over Epochs')
-        plt.legend()
-        plt.grid(True)
-        plt.savefig('plots/confounder_free_age_rloss.png')
-
-        plt.figure(figsize=(12, 6))
+        # plt.plot(g_losses, label='g_loss', color='g')
         plt.plot(c_losses, label='c_loss', color='b')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title('Training Losses Over Epochs')
         plt.legend()
         plt.grid(True)
-        plt.savefig('plots/confounder_free_age_closs.png')
+        plt.savefig('plots/confounder_free_age_linear_correlation_rloss.png')
+
+        plt.figure(figsize=(12, 6))
+        # plt.plot(r_losses, label='r_loss', color='r')
+        # plt.plot(g_losses, label='g_loss', color='g')
+        plt.plot(c_losses, label='c_loss', color='b')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training Losses Over Epochs')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig('plots/confounder_free_age_linear_correlation_closs.png')
 
     def evaluate(self, relative_abundance, metadata, batch_size, t):
         """Evaluates the trained GAN model on test data."""
