@@ -9,6 +9,7 @@ import torch.nn.init as init
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 import optuna
+import matplotlib.pyplot as plt
 
 
 
@@ -100,65 +101,68 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
 #     return torch.tensor(r ** 2, requires_grad=True)
 
 
-# def inv_correlation_coefficient_loss(y_true, y_pred):
-#     """Computes a custom loss function based on the correlation coefficient."""
-#     # Ensure inputs are of type float
-#     y_true = y_true.float()
-#     y_pred = y_pred.float()
-    
-#     # Compute means
-#     mean_y_true = torch.mean(y_true)
-#     mean_y_pred = torch.mean(y_pred)
-    
-#     # Compute covariance and variances
-#     covariance = torch.sum((y_true - mean_y_true) * (y_pred - mean_y_pred))
-#     variance_y_true = torch.sum((y_true - mean_y_true) ** 2)
-#     variance_y_pred = torch.sum((y_pred - mean_y_pred) ** 2)
-    
-#     # Compute correlation coefficient
-#     correlation = covariance / (torch.sqrt(variance_y_true * variance_y_pred) + 1e-5)
-    
-#     # Return 1 minus the squared correlation coefficient as loss
-#     return 1 - correlation ** 2
-
-
 def inv_correlation_coefficient_loss(y_true, y_pred):
-    x = y_true
-    y = y_pred
-    
+    """Computes a custom loss function based on the correlation coefficient."""
     # Ensure inputs are of type float
-    x = x.float()
-    y = y.float()
+    y_true = y_true.float()
+    y_pred = y_pred.float()
     
     # Compute means
-    mx = torch.mean(x)
-    my = torch.mean(y)
-    
-    # Compute xm and ym
-    xm = x - mx
-    ym = y - my
+    mean_y_true = torch.mean(y_true)
+    mean_y_pred = torch.mean(y_pred)
     
     # Compute covariance and variances
-    covariance = torch.sum(xm * ym)
-    variance_x = torch.sum(xm ** 2)
-    variance_y = torch.sum(ym ** 2)
+    covariance = torch.sum((y_true - mean_y_true) * (y_pred - mean_y_pred))
+    print(covariance)
+    variance_y_true = torch.sum((y_true - mean_y_true) ** 2)
+    variance_y_pred = torch.sum((y_pred - mean_y_pred) ** 2)
     
     # Compute correlation coefficient
-    r = covariance / (torch.sqrt(variance_x * variance_y) + 1e-5)
+    correlation = covariance / (torch.sqrt(variance_y_true * variance_y_pred) + 1e-5)
     
-    # Clamp correlation coefficient to [-1, 1]
-    r = torch.clamp(r, min=-1.0, max=1.0)
+    # Return 1 minus the squared correlation coefficient as loss
+    return correlation ** 2
+
+
+# def inv_correlation_coefficient_loss(y_true, y_pred):
+#     x = y_true
+#     y = y_pred
     
-    # Return 1 minus the squared correlation coefficient
-    # return 1 - r ** 2 # this may raise gradient vanishing problem
-    return 1 - torch.abs(r)
+#     # Ensure inputs are of type float
+#     x = x.float()
+#     y = y.float()
+    
+#     # Compute means
+#     mx = torch.mean(x)
+#     my = torch.mean(y)
+    
+#     # Compute xm and ym
+#     xm = x - mx
+#     ym = y - my
+    
+#     # Compute covariance and variances
+#     covariance = torch.sum(xm * ym)
+#     variance_x = torch.sum(xm ** 2)
+#     variance_y = torch.sum(ym ** 2)
+    
+#     # Compute correlation coefficient
+#     r = covariance / (torch.sqrt(variance_x * variance_y) + 1e-5)
+    
+#     # Clamp correlation coefficient to [-1, 1]
+#     r = torch.clamp(r, min=-1.0, max=1.0)
+    
+#     # Return 1 minus the squared correlation coefficient
+#     # return 1 - r ** 2 # this may raise gradient vanishing problem
+#     return 1 - torch.abs(r)
 
 
 
 
-class GAN:
+class GAN(nn.Module):
     def __init__(self, input_dim, latent_dim=128, lr=0.01, dropout_rate=0.3, pos_weight=2):
         """Initializes the GAN with an encoder, gender classifier, and disease classifier."""
+        super(GAN, self).__init__()
+
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, 1024),
             nn.BatchNorm1d(1024),
@@ -180,7 +184,7 @@ class GAN:
             nn.Linear(64, 32),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-             nn.Linear(32, 16),
+            nn.Linear(32, 16),
             nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.Linear(16, 1)
@@ -213,12 +217,18 @@ class GAN:
         self.scheduler_distiller = lr_scheduler.ReduceLROnPlateau(self.optimizer_distiller, mode='min', factor=0.5, patience=5)
         self.scheduler_classification_gender = lr_scheduler.ReduceLROnPlateau(self.optimizer_classification_gender, mode='min', factor=0.5, patience=5)
 
-    # Custom weight initialization function
-    def init_weights(m):
-        if isinstance(m, nn.Linear):
-            init.xavier_uniform_(m.weight)  # Xavier initialization for weights
-            if m.bias is not None:
-                init.zeros_(m.bias)  # Initialize biases to zero
+        # self.initialize_weights()
+
+    def initialize_weights(self):
+        """Initialize weights using Kaiming initialization for layers with ReLU."""
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                init.kaiming_normal_(m.weight, nonlinearity='relu')
+                if m.bias is not None:
+                    init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm1d):
+                init.ones_(m.weight)
+                init.zeros_(m.bias)
     
     def train(self, epochs, relative_abundance, metadata, batch_size=64):
         """Trains the GAN model for a specified number of epochs."""
@@ -228,37 +238,24 @@ class GAN:
         
         X_clr_df_train, X_clr_df_val, train_metadata, val_metadata = train_test_split(relative_abundance, metadata, test_size=0.2, random_state=42)
 
+        # Lists to store losses
+        r_losses = []
+        g_losses = []
+        c_losses = []
+
         for epoch in range(epochs):
             # Create batches
             training_feature_ctrl_batch, metadata_ctrl_batch_gender, training_feature_batch, metadata_batch_disease = create_batch(
                 X_clr_df_train, train_metadata, batch_size
             )
 
-
             # Train gender classifier
             self.optimizer_classification_gender.zero_grad()
-            # for param in self.encoder.parameters():
-            #     param.requires_grad = False
             encoded_feature_ctrl_batch = self.encoder(training_feature_ctrl_batch)
             gender_prediction = self.gender_classification(encoded_feature_ctrl_batch)
             r_loss = self.gender_classification_loss(gender_prediction, metadata_ctrl_batch_gender.view(-1, 1))
             r_loss.backward()
-            # initial_params = [param.clone() for param in self.encoder.parameters()]
-
             self.optimizer_classification_gender.step()
-
-            # for i, param in enumerate(self.encoder.parameters()):
-            #     if not torch.equal(initial_params[i], param):
-            #         print(f"Parameter {i} updated")
-            #     else:
-            #         print(f"Parameter {i} did not update")
-
-
-           
-            # for param in self.encoder.parameters():
-            #     param.requires_grad = True
-
-            
 
             # Train distiller
             self.optimizer_distiller.zero_grad()
@@ -267,61 +264,8 @@ class GAN:
             encoder_features = self.encoder(training_feature_ctrl_batch)
             predicted_gender = self.gender_classification(encoder_features)
             g_loss = inv_correlation_coefficient_loss(metadata_ctrl_batch_gender, predicted_gender)
-            # criterion = nn.BCEWithLogitsLoss()
-            # g_loss = criterion(predicted_gender, metadata_ctrl_batch_gender.view(-1, 1))
-
-            
             g_loss.backward()
-            for param in self.encoder.parameters(): 
-                if not param.requires_grad:
-                    print("Parameter does not require gradients:", param)
-
-
-
-            for name, param in self.encoder.named_parameters():
-                if param.grad is None:
-                    print(f"Parameter {name} has no gradient.")
-                else:
-                    print(f"Parameter {name} gradient norm: {param.grad.norm()}")
-
-            # for name, param in self.encoder.named_parameters():
-            #     if param.grad is None:
-            #         print(f"Parameter {name} has no gradient.")
-            #     else:
-            #         print(f"Parameter {name} gradient norm: {param.grad.norm()}")
-
-
-
-            # Print parameters before the step
-            # print("Before optimizer step:")
-            # for name, param in self.encoder.named_parameters():
-            #     print(f"{name}: {param}")
-            initial_params_dist = {name: param.clone() for name, param in self.encoder.named_parameters()}
-
-
-
-            # # Clip gradients to avoid vanishing or exploding
-            # # Here, we clip the gradient norm to a maximum value of 1.0
-            # torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), max_norm=1.0)
             self.optimizer_distiller.step()
-
-            # Print parameters after the step
-            # print("After optimizer step:")
-            # for name, param in self.encoder.named_parameters():
-            #     print(f"{name}: {param}")
-
-            # Check if the parameters have updated
-            # Assuming initial_params_dist is a dictionary mapping parameter names to their initial values
-            
-
-            # Compare current parameters to their initial values
-            for name, param in self.encoder.named_parameters():
-                if not torch.equal(initial_params_dist[name], param):
-                    print(f"Parameter {name} updated")
-                else:
-                    print(f"Parameter {name} did not update")
-
-
             for param in self.gender_classification.parameters():
                 param.requires_grad = True
 
@@ -336,19 +280,39 @@ class GAN:
             self.optimizer.step()
             self.scheduler.step(disease_acc)
 
+            # Store losses
+            r_losses.append(r_loss.item())
+            g_losses.append(g_loss.item())
+            c_losses.append(c_loss.item())
+
             if disease_acc > best_acc:
                 best_acc = disease_acc
                 early_stop_patience = 0
             else:
                 early_stop_patience += 1
-            if early_stop_patience == early_stop_step:
-                break
 
             print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}, disease_acc: {disease_acc}")
 
-            
-            self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t = 'eval')
-            self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t = 'train')
+            self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t='eval')
+            self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t='train')
+
+        # Plot losses
+        self.plot_losses(r_losses, g_losses, c_losses)
+
+    def plot_losses(self, r_losses, g_losses, c_losses):
+        """Plots r_loss, g_loss, and c_loss over epochs."""
+        epochs = range(1, len(r_losses) + 1)
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(epochs, r_losses, label='r_loss', color='red')
+        plt.plot(epochs, g_losses, label='g_loss', color='blue')
+        plt.plot(epochs, c_losses, label='c_loss', color='green')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Losses Over Epochs')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("confounder_free_gender.png")
 
     def evaluate(self, relative_abundance, metadata, batch_size, t):
         """Evaluates the trained GAN model on test data."""
@@ -394,7 +358,8 @@ if __name__ == "__main__":
 
     # Initialize and train GAN
     gan = GAN(input_dim=X_clr_df.shape[1] - 1)
-    gan.train(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
+    gan.initialize_weights()
+    gan.train(epochs=150, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
 
     # Load and transform test data
     test_file_path = 'GMrepo_data/UC_relative_abundance_metagenomics_test_balanced.csv'

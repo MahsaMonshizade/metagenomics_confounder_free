@@ -22,8 +22,8 @@ def set_seed(seed):
 set_seed(42)
 
 # Load data
-relative_abundance = pd.read_csv('GMrepo_data/UC_relative_abundance_metagenomics_test_balanced.csv')
-metadata = pd.read_csv('GMrepo_data/UC_metadata_metagenomics_test_balanced.csv')
+relative_abundance = pd.read_csv('GMrepo_data/UC_relative_abundance_metagenomics_test.csv')
+metadata = pd.read_csv('GMrepo_data/UC_metadata_metagenomics_test.csv')
 
 # Map disease labels to numeric values
 disease_dict = {'D006262': 0, 'D003093': 1}
