@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import random
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
+from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report, accuracy_score, balanced_accuracy_score
 import matplotlib.pyplot as plt
 
 
@@ -137,7 +137,7 @@ model = SimpleNN(input_size)
 
 # Loss and optimizer
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.01)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Track metrics
 train_accuracies, val_accuracies = [], []
@@ -151,6 +151,7 @@ patience_counter = 0
 
 # Training loop
 num_epochs = 1500
+# Inside the training loop
 for epoch in range(num_epochs):
     model.train()
     correct_predictions = 0
@@ -159,15 +160,11 @@ for epoch in range(num_epochs):
     y_train_pred = []
     
     for inputs, labels in train_dataloader:
-        labels = labels.unsqueeze(1)  # Adjust shape for BCEWithLogitsLoss
+        labels = labels.unsqueeze(1)
         
         # Forward pass
         outputs = model(inputs)
         loss = criterion(outputs, labels)
-        predicted = torch.sigmoid(outputs).round()  # Apply sigmoid and round for binary prediction
-        correct_predictions += (predicted == labels).sum().item()
-        
-        # Backward pass and optimization
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -178,20 +175,19 @@ for epoch in range(num_epochs):
     
     # Calculate metrics for training
     epoch_loss = running_loss / len(train_dataset)
-    accuracy = correct_predictions / len(train_dataset)
+    y_train_pred_binary = np.round(y_train_pred)  # Convert to binary (0 or 1)
+    accuracy = balanced_accuracy_score(y_train_true, y_train_pred_binary)
     auc = roc_auc_score(y_train_true, y_train_pred)
     
     train_accuracies.append(accuracy)
     train_aucs.append(auc)
     train_losses.append(epoch_loss)
     
-    # print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}, Train Accuracy: {accuracy:.4f}, Train AUC: {auc:.4f}')
     print(f"Epoch [{epoch+1}/{num_epochs}] train result --> Accuracy: {accuracy:.4f}, Loss: {epoch_loss:.4f}, AUC: {auc:.4f}")
 
     # Validation loop
     model.eval()
     val_loss = 0.0
-    correct_val_predictions = 0
     y_val_true = []
     y_val_pred = []
     
@@ -201,22 +197,18 @@ for epoch in range(num_epochs):
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             val_loss += loss.item() * inputs.size(0)
-            
-            predicted = torch.sigmoid(outputs).round()
-            correct_val_predictions += (predicted == labels).sum().item()
-            
             y_val_true.extend(labels.cpu().numpy())
             y_val_pred.extend(torch.sigmoid(outputs).cpu().numpy())
 
     val_loss /= len(val_dataset)
-    val_accuracy = correct_val_predictions / len(val_dataset)
+    y_val_pred_binary = np.round(y_val_pred)  # Convert to binary (0 or 1)
+    val_accuracy = accuracy_score(y_val_true, y_val_pred_binary)
     val_auc = roc_auc_score(y_val_true, y_val_pred)
     
     val_accuracies.append(val_accuracy)
     val_aucs.append(val_auc)
     val_losses.append(val_loss)
     
-    # print(f'Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}, Validation AUC: {val_auc:.4f}\n')
     print(f"eval result --> Accuracy: {val_accuracy:.4f}, Loss: {val_loss:.4f}, AUC: {val_auc:.4f}")
     # Early Stopping Check
     if val_loss < best_val_loss:

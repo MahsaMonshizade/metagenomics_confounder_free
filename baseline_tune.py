@@ -172,7 +172,7 @@ print('Best hyperparameters: {}'.format(trial.params))
 
 # Save best hyperparameters to a file
 best_params = trial.params
-with open('best_hyperparameters.json', 'w') as f:
+with open('best_hyperparameters_baseline.json', 'w') as f:
     json.dump(best_params, f, indent=4)
 
 print("Best hyperparameters saved to 'best_hyperparameters.json'")

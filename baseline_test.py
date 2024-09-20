@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import random
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
+from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report, accuracy_score, balanced_accuracy_score, f1_score
 import matplotlib.pyplot as plt
 
 def set_seed(seed):
@@ -141,29 +141,33 @@ test_losses = []
 # Validation loop
 model.eval()
 test_loss = 0.0
-correct_test_predictions = 0
 y_test_true = []
 y_test_pred = []
 
 with torch.no_grad():
     for inputs, labels in test_dataloader:
-        labels = labels.unsqueeze(1)
+        labels = labels.unsqueeze(1)  # Add a dimension to labels for consistency
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         test_loss += loss.item() * inputs.size(0)
             
+        # Apply sigmoid and round for binary classification prediction
         predicted = torch.sigmoid(outputs).round()
-        correct_test_predictions += (predicted == labels).sum().item()
-            
+        
+        # Collect true and predicted labels for sklearn metrics
         y_test_true.extend(labels.cpu().numpy())
-        y_test_pred.extend(torch.sigmoid(outputs).cpu().numpy())
+        y_test_pred.extend(predicted.cpu().numpy())
+        
 test_loss /= len(test_dataset)
-test_accuracy = correct_test_predictions / len(test_dataset)
-test_auc = roc_auc_score(y_test_true, y_test_pred)
-    
-test_accuracies.append(test_accuracy)
-test_aucs.append(test_auc)
-test_losses.append(test_loss)
-    
-# print(f'test Loss: {test_loss:.4f}, test Accuracy: {test_accuracy:.4f}, test AUC: {test_auc:.4f}\n')
-print(f"test result --> Accuracy: {test_accuracy:.4f}, Loss: {test_loss:.4f}, AUC: {test_auc:.4f}")
+
+# Convert predictions and true values to numpy arrays for sklearn metrics
+y_test_true_np = np.array(y_test_true).flatten()
+y_test_pred_np = np.array(y_test_pred).flatten()
+
+# Use accuracy_score from sklearn
+test_accuracy_sklearn = balanced_accuracy_score(y_test_true_np, y_test_pred_np)
+test_auc = roc_auc_score(y_test_true_np, y_test_pred_np)
+test_f1 =f1_score(y_test_true_np, y_test_pred_np)
+
+print(f"Test result --> Accuracy: {test_accuracy_sklearn:.4f}, Loss: {test_loss:.4f}, AUC: {test_auc:.4f}, F1: {test_f1:.4f}")
+

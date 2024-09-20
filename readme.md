@@ -128,3 +128,15 @@ test result --> Accuracy: 0.6667, Loss: 1.3016, AUC: 0.7856
 | **confounder_free_age_linear_correlation** | 0.9785, 0.0716, 0.9990                | 0.9429, 0.1802, 0.9678               | **0.7656**, **0.6685**, **0.9094**                 | 0.5758, 1.5848, 0.7847                     |
 | **confounder_free_age**           | 0.9624, 0.1497, 0.9910                | 0.9286, 0.2074, 0.9785               | 0.7344, 0.5889, 0.8821                 | 0.5801, 1.1535, 0.8348                     |
 | **baseline**                      | **1.0000**, **0.0019**, **1.0000**                | **0.9476**, **0.1531**, **0.9954**               | 0.7344, 0.9605, 0.8418                 | 0.6667, 1.3016, 0.7856                     |
+
+
+GAN alone: Likely sufficient, as it should remove both linear and non-linear correlations.
+Linear correlation remover: May be useful as a check but could be redundant if the GAN is well-trained.
+
+**sep 20:**
+
+- for age I use inv_correlation_loss instead of mse and based on BR_net paper.
+- I also used z_score for age 
+- clean the confounder_free_age in the confounder_free_age_clean file
+
+

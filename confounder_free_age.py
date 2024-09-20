@@ -6,11 +6,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import torch.nn.init as init
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, balanced_accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 import torch.nn.functional as F
 import optuna
 import matplotlib.pyplot as plt
+import json
 
 def set_seed(seed):
     """Set seed for reproducibility."""
@@ -81,7 +82,7 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
     metadata_ctrl_batch = ctrl_metadata.loc[ctrl_idx]
 
     training_feature_ctrl_batch = torch.tensor(training_feature_ctrl_batch.values, dtype=torch.float32)
-    metadata_ctrl_batch_age = torch.tensor(metadata_ctrl_batch['host_age'].values, dtype=torch.float32)
+    metadata_ctrl_batch_age = torch.tensor(metadata_ctrl_batch['host_age_zscore'].values, dtype=torch.float32)
 
     return (training_feature_ctrl_batch, metadata_ctrl_batch_age, 
             training_feature_batch, metadata_batch_disease)
@@ -89,23 +90,6 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
 
 
 def correlation_coefficient_loss(y_true, y_pred):
-   
-    # mx = torch.mean(y_true)
-    # my = torch.mean(y_pred)
-
-    # # Center the variables
-    # xm = y_true - mx
-    # ym = y_pred - my
-
-    # # Compute the numerator and denominator for Pearson correlation
-    # r_num = torch.sum(xm * ym)
-    # r_den = torch.sqrt(torch.sum(xm ** 2) * torch.sum(ym ** 2)) + 1e-5  # Adding a small epsilon to avoid division by zero
-
-    # # Calculate Pearson correlation coefficient
-    # r = r_num / r_den
-    # r = torch.clamp(r, min=-1.0, max=1.0)
-
-    # return r**2
    
     mean_x = torch.mean(y_true)
     mean_y = torch.mean(y_pred)
@@ -117,8 +101,54 @@ def correlation_coefficient_loss(y_true, y_pred):
 
 
 
+# def correlation_coefficient_loss(y_true, y_pred):
+#     x = y_true
+#     y = y_pred
+#     mx = torch.mean(x)
+#     my = torch.mean(y)
+#     xm = x - mx
+#     ym = y - my
+#     r_num = torch.sum(xm * ym)
+#     r_den = torch.sqrt(torch.sum(xm ** 2) * torch.sum(ym ** 2))
+#     r = r_num / r_den
+
+#     # Clamp the correlation coefficient between -1 and 1
+#     r = torch.clamp(r, -1.0, 1.0)
+        
+#     return r ** 2
+
+
+def inv_correlation_coefficient_loss(y_true, y_pred):
+   
+    mean_x = torch.mean(y_true)
+    mean_y = torch.mean(y_pred)
+    covariance = torch.mean((y_true - mean_x) * (y_pred - mean_y))
+    std_x = torch.std(y_true)
+    std_y = torch.std(y_pred)
+    eps = 1e-5
+    return 1- (covariance / (std_x * std_y)+eps)**2
+
+
+
+# def inv_correlation_coefficient_loss(y_true, y_pred):
+#         x = y_true
+#         y = y_pred
+#         mx = torch.mean(x)
+#         my = torch.mean(y)
+#         xm = x - mx
+#         ym = y - my
+#         r_num = torch.sum(xm * ym)
+#         r_den = torch.sqrt(torch.sum(xm ** 2) * torch.sum(ym ** 2))
+#         r = r_num / r_den
+
+#         # Clamp the correlation coefficient between -1 and 1
+#         r = torch.clamp(r, -1.0, 1.0)
+        
+#         return 1 - r ** 2
+
+
 class GAN(nn.Module):
-    def __init__(self, input_dim, latent_dim=128, lr=0.01, dropout_rate=0.3, pos_weight=2):
+    def __init__(self, input_dim, latent_dim=128, lr_r=0.01, lr_g=0.01, lr_c=0.01):
         """Initializes the GAN with an encoder, age regressor, and disease classifier."""
         super(GAN, self).__init__()
 
@@ -137,17 +167,18 @@ class GAN(nn.Module):
             nn.ReLU()
         )
         self.age_regressor = nn.Sequential(
-           nn.Linear(latent_dim, 64),
+            nn.Linear(latent_dim, 64),
             nn.BatchNorm1d(64),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(64, 32),
             nn.BatchNorm1d(32),
-            nn.ReLU(),
-             nn.Linear(32, 16),
+            nn.Tanh(),
+            nn.Linear(32, 16),
             nn.BatchNorm1d(16),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(16, 1),
-            nn.ReLU()
+            # nn.Softplus()
+            # nn.ReLU()
         )
         self.age_regression_loss = nn.MSELoss()
 
@@ -162,16 +193,16 @@ class GAN(nn.Module):
             nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.Linear(16, 1),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
-        self.disease_classifier_loss = nn.BCELoss()
+        self.disease_classifier_loss = nn.BCEWithLogitsLoss()
 
         # Optimizers
         self.optimizer = optim.Adam(
-            list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr
+            list(self.encoder.parameters()) + list(self.disease_classifier.parameters()), lr_c
         )
-        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr)
-        self.optimizer_regression_age = optim.Adam(self.age_regressor.parameters(), lr)
+        self.optimizer_distiller = optim.Adam(self.encoder.parameters(), lr_g)
+        self.optimizer_regression_age = optim.Adam(self.age_regressor.parameters(), lr_r)
 
         # Schedulers
         self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=5)
@@ -205,14 +236,15 @@ class GAN(nn.Module):
             training_feature_ctrl_batch, metadata_ctrl_batch_age, training_feature_batch, metadata_batch_disease = create_batch(
                 X_clr_df_train, train_metadata, batch_size
             )
-
+            
             # Train age regressor
             self.optimizer_regression_age.zero_grad()
             for param in self.encoder.parameters():
                 param.requires_grad = False
             encoded_feature_ctrl_batch = self.encoder(training_feature_ctrl_batch)
             age_prediction = self.age_regressor(encoded_feature_ctrl_batch)
-            r_loss = self.age_regression_loss(metadata_ctrl_batch_age.view(-1,1), age_prediction)
+            print(metadata_ctrl_batch_age.view(-1,1))
+            r_loss = inv_correlation_coefficient_loss(metadata_ctrl_batch_age.view(-1,1), age_prediction)
             r_loss.backward()
             
             self.optimizer_regression_age.step()
@@ -225,6 +257,7 @@ class GAN(nn.Module):
             for param in self.age_regressor.parameters():
                 param.requires_grad = False
             encoder_features = self.encoder(training_feature_ctrl_batch)
+            
             predicted_age = self.age_regressor(encoder_features)
             g_loss = correlation_coefficient_loss(metadata_ctrl_batch_age.view(-1,1), predicted_age)
             g_loss.backward()
@@ -248,7 +281,7 @@ class GAN(nn.Module):
             c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
             c_loss.backward()
             pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
-            disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
+            disease_acc = balanced_accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
             self.optimizer.step()
             self.scheduler.step(disease_acc)
 
@@ -265,12 +298,14 @@ class GAN(nn.Module):
             if early_stop_patience == early_stop_step:
                 break
 
-            print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_loss: {g_loss.item()}, c_loss: {c_loss.item()}, disease_acc: {disease_acc}")
+            print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item()}, g_los: {g_loss.item()}, c_loss: {c_loss.item()}, disease_acc: {disease_acc}")
 
-            self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t='eval')
-            self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t='train')
+            eval_accuracy, eval_auc = self.evaluate(relative_abundance=X_clr_df_val, metadata=val_metadata, batch_size=val_metadata.shape[0], t='eval')
+            _, _ =self.evaluate(relative_abundance=X_clr_df_train, metadata=train_metadata, batch_size=train_metadata.shape[0], t='train')
 
         self.plot_losses(r_losses, g_losses, c_losses)
+
+        return eval_accuracy, eval_auc
 
 
     def plot_losses(self, r_losses, g_losses, c_losses):
@@ -307,32 +342,36 @@ class GAN(nn.Module):
         """Evaluates the trained GAN model on test data."""
         # Create batches
         feature_batch, metadata_batch_disease = create_batch(relative_abundance, metadata, batch_size, True)
-    
+
         # Get encoded features
         encoded_feature_batch = self.encoder(feature_batch)
-    
+
         # Get prediction scores (probabilities)
         prediction_scores = self.disease_classifier(encoded_feature_batch)
-    
+
         # Convert probabilities to predicted classes
         pred_tag = [1 if p > 0.5 else 0 for p in prediction_scores]
-    
+
         # Calculate accuracy
-        disease_acc = accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
-    
+        disease_acc = balanced_accuracy_score(metadata_batch_disease.view(-1, 1), pred_tag)
+
         # Calculate classifier loss
         c_loss = self.disease_classifier_loss(prediction_scores, metadata_batch_disease.view(-1, 1))
-    
+
         # Calculate AUC
         if len(np.unique(metadata_batch_disease)) > 1:
             auc = roc_auc_score(metadata_batch_disease.view(-1, 1), prediction_scores.detach().numpy())
             print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}, AUC: {auc}")
         else:
+            auc = None
             print("Cannot compute ROC AUC as only one class is present.")
-        # auc = roc_auc_score(metadata_batch_disease.view(-1, 1), prediction_scores.detach().numpy())
-    
+
+        # Calculate F1 score
+        f1 = f1_score(metadata_batch_disease.view(-1, 1), pred_tag)
+        
         # Print results
-            print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}")
+        print(f"{t} result --> Accuracy: {disease_acc}, Loss: {c_loss.item()}, AUC: {auc}, F1: {f1}")
+        return  disease_acc, auc
 
 if __name__ == "__main__":
     set_seed(42)
@@ -348,7 +387,7 @@ if __name__ == "__main__":
     # Initialize and train GAN
     gan = GAN(input_dim=X_clr_df.shape[1] - 1)
     gan.initialize_weights()
-    gan.train(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
+    gan.train(epochs=150, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
 
     # Load and transform test data
     test_file_path = 'GMrepo_data/UC_relative_abundance_metagenomics_test.csv'
@@ -360,47 +399,46 @@ if __name__ == "__main__":
     gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test')
 
 
-    #  # Load and transform test data
-    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_1.csv'
-    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_1.csv'
-    # X_clr_df_test = load_and_transform_data(test_file_path)
-    # test_metadata = pd.read_csv(test_metadata_file_path)
+# def objective(trial):
+#     # Define hyperparameters to be optimized
+#     # latent_dim = trial.suggest_categorical('latent_dim', [64, 128, 256])
 
-    # # Evaluate GAN on test data
-    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_1')
+#     lr_r = trial.suggest_categorical('lr_r', [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2])
+#     lr_g = trial.suggest_categorical('lr_g', [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2])
+#     lr_c = trial.suggest_categorical('lr_c', [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2])
 
-    #  # Load and transform test data
-    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_2.csv'
-    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_2.csv'
-    # X_clr_df_test = load_and_transform_data(test_file_path)
-    # test_metadata = pd.read_csv(test_metadata_file_path)
 
-    # # Evaluate GAN on test data
-    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_2')
+    
+#     # Initialize the model with the suggested parameters
+#     gan = GAN(input_dim=X_clr_df.shape[1] - 1, latent_dim=128, lr_r=lr_r, lr_g=lr_g, lr_c=lr_c )
+#     gan.initialize_weights()
+    
+#     # Train the model
+#     eval_accuracy, eval_auc = gan.train(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
+    
+#     # Objective to minimize (negative AUC for maximization)
+#     return eval_auc
 
-    #  # Load and transform test data
-    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_3.csv'
-    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_3.csv'
-    # X_clr_df_test = load_and_transform_data(test_file_path)
-    # test_metadata = pd.read_csv(test_metadata_file_path)
+# if __name__ == "__main__":
+#     set_seed(42)
 
-    # # Evaluate GAN on test data
-    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_3')
+#     # Load and transform training data
+#     file_path = 'GMrepo_data/UC_relative_abundance_metagenomics_train.csv'
+#     metadata_file_path = 'GMrepo_data/UC_metadata_metagenomics_train.csv'
+#     X_clr_df = load_and_transform_data(file_path)
+#     metadata = pd.read_csv(metadata_file_path)
 
-    #  # Load and transform test data
-    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_4.csv'
-    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_4.csv'
-    # X_clr_df_test = load_and_transform_data(test_file_path)
-    # test_metadata = pd.read_csv(test_metadata_file_path)
+#     # Create an Optuna study and optimize it
+#     study = optuna.create_study(direction='maximize')
+#     study.optimize(objective, n_trials=50)
 
-    # # Evaluate GAN on test data
-    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_4')
+#     # Save the best trial to a file
+#     best_trial = study.best_trial
+#     with open("best_trial.json", "w") as f:
+#         json.dump(best_trial.params, f, indent=4)
 
-    #  # Load and transform test data
-    # test_file_path = 'GMrepo_data/test_relative_abundance_IBD_5.csv'
-    # test_metadata_file_path = 'GMrepo_data/test_metadata_IBD_5.csv'
-    # X_clr_df_test = load_and_transform_data(test_file_path)
-    # test_metadata = pd.read_csv(test_metadata_file_path)
+#     print(f"Best trial saved: {best_trial.params}")
 
-    # # Evaluate GAN on test data
-    # gan.evaluate(relative_abundance=X_clr_df_test, metadata=test_metadata, batch_size=test_metadata.shape[0], t = 'test_5')
+
+
+   

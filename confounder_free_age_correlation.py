@@ -95,8 +95,8 @@ def correlation_coefficient_loss(x, y):
     covariance = torch.mean((x - mean_x) * (y - mean_y))
     std_x = torch.std(x)
     std_y = torch.std(y)
-    return (covariance / (std_x * std_y))**2
-
+    eps = 1e-5
+    return (covariance / (std_x * std_y) +eps)**2
 
 
 
