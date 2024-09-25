@@ -139,4 +139,17 @@ Linear correlation remover: May be useful as a check but could be redundant if t
 - I also used z_score for age 
 - clean the confounder_free_age in the confounder_free_age_clean file
 
+**sep 25**
+
+- clean code for age 
+
+(I beleive overfit happened for baseline)
+
+For test data
+
+| Metric                            | Baseline Model           | Confounder-Free Age Model    | 
+|-----------------------------------|---------------------------------------|--------------------------------------|
+| **Average Accuracy** | 0.5222 ± 0.0228              | 0.6610 ± 0.0538 |
+| **Average AUC**           | 0.5718 ± 0.0447                | 0.7602 ± 0.0412              | 
+| **Average F1 Score**                      | 0.6633 ± 0.0757                | 0.5990 ± 0.0931               | 
 

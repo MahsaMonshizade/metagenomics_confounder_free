@@ -1,24 +1,3 @@
-# /GMrepo_data/sample_to_run_info.txt
-# /GMrepo_data/samples_loaded.txt
-# /GMrepo_data/species_abundance.txt
-# /GMrepo_data/relative_abundance.csv
-# /GMrepo_data/filtered_relative_abundance.csv
-# /GMrepo_data/filtered_metadata.csv
-# /GMrepo_data/relative_abundance_IBD.csv
-# /GMrepo_data/metadata_IBD.csv
-# /GMrepo_data/train_relative_abundance_IBD.csv
-# /GMrepo_data/test_relative_abundance_IBD.csv
-# /GMrepo_data/train_relative_abundance_IBD_balanced.csv
-# /GMrepo_data/test_relative_abundance_IBD_1.csv
-# /GMrepo_data/test_relative_abundance_IBD_2.csv
-# /GMrepo_data/test_relative_abundance_IBD_3.csv
-# /GMrepo_data/test_relative_abundance_IBD_4.csv
-# /GMrepo_data/test_relative_abundance_IBD_5.csv
-# /GMrepo_data/test_metadata_IBD_1.csv
-# /GMrepo_data/test_metadata_IBD_2.csv
-# /GMrepo_data/test_metadata_IBD_3.csv
-# /GMrepo_data/test_metadata_IBD_4.csv
-# /GMrepo_data/test_metadata_IBD_5.csv
 /GMrepo_data_old
 /GMrepo_data/samples_loaded.txt
 /GMrepo_data/all_runs_metadata.tsv
@@ -28,3 +7,5 @@
 /GMrepo_data/UC_relative_abundance_metagenomics_train.csv
 /GMrepo_data/UC_relative_abundance_metagenomics.csv
 /GMrepo_data/UC_metadata_metagenomics.csv
+/models
+/baseline_models
