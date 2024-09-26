@@ -73,54 +73,6 @@ random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks
 
 
 
-
-results so far:
-### confounder_free_age_linear_correlation results:
-```
-train result --> Accuracy: 0.9785330948121646, Loss: 0.07159556448459625, AUC: 0.9989710144927536
-
-eval result --> Accuracy: 0.9428571428571428, Loss: 0.18021175265312195, AUC: 0.96775
-```
-For balanced test dataset:
-```
-test result --> Accuracy: 0.765625, Loss: 0.668499231338501, AUC: 0.909423828125
-```
-For non balanced test dataset:
-```
-test result --> Accuracy: 0.5757575757575758, Loss: 1.5847922563552856, AUC: 0.7847118263473054
-```
-
-### confounder_free_age results:
-
-```
-train result --> Accuracy: 0.962432915921288, Loss: 0.14968928694725037, AUC: 0.9909710144927536
-
-eval result --> Accuracy: 0.9285714285714286, Loss: 0.20735128223896027, AUC: 0.9784999999999999
-```
-For balanced test dataset:
-```
-test result --> Accuracy: 0.734375, Loss: 0.5888912081718445, AUC: 0.882080078125
-```
-For non balanced test dataset:
-```
-test result --> Accuracy: 0.5800865800865801, Loss: 1.1535238027572632, AUC: 0.8347679640718562
-```
-
-
-### baseline results:
-```
-train result --> Accuracy: 1.0000, Loss: 0.0019, AUC: 1.0000
-eval result --> Accuracy: 0.9476, Loss: 0.1531, AUC: 0.9954
-```
-For balanced test dataset:
-```
-test result --> Accuracy: 0.7344, Loss: 0.9605, AUC: 0.8418
-```
-For non balanced test dataset:
-```
-test result --> Accuracy: 0.6667, Loss: 1.3016, AUC: 0.7856
-```
-
 ### Results Summary
 
 | Model                            | Train (Accuracy, Loss, AUC)           | Eval (Accuracy, Loss, AUC)           | Test (Balanced) (Accuracy, Loss, AUC) | Test (Non-balanced) (Accuracy, Loss, AUC) |

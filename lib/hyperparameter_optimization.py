@@ -1,13 +1,13 @@
-# optuna_hyperparameter_optimization.py
-
 import os
 import json
 import optuna
 import pandas as pd
+import torch
+import torch.nn as nn  # Added import for torch.nn
 from data_processing import set_seed, load_and_transform_data
 from models import GAN
 
-def objective(trial):
+def objective(trial, X_clr_df, metadata):
     """Objective function for Optuna hyperparameter optimization."""
     # Define hyperparameters to be optimized
     latent_dim = trial.suggest_categorical('latent_dim', [64, 128, 256])
@@ -31,16 +31,22 @@ def objective(trial):
     )
     gan.initialize_weights()
     
-    # Train the model
-    eval_accuracy, eval_auc = gan.train_model(
-        epochs=1500,
-        relative_abundance=X_clr_df,
-        metadata=metadata,
-        batch_size=64
-    )
+    try:
+        # Train the model
+        eval_accuracy, eval_auc = gan.train_model(
+            epochs=150,
+            relative_abundance=X_clr_df,
+            metadata=metadata,
+            batch_size=64
+        )
+        
+        # Report the evaluation AUC to Optuna
+        return eval_auc
     
-    # Objective to maximize (evaluation AUC)
-    return eval_auc
+    except Exception as e:
+        # Handle exceptions and report a high loss to Optuna
+        print(f"An exception occurred: {e}")
+        return float('inf')  # Or a very low score if direction='maximize'
 
 def main():
     """Main function to run Optuna hyperparameter optimization."""
@@ -58,7 +64,7 @@ def main():
     
     # Create an Optuna study and optimize it
     study = optuna.create_study(direction='maximize')
-    study.optimize(objective, n_trials=50)
+    study.optimize(lambda trial: objective(trial, X_clr_df, metadata), n_trials=50)
     
     # Save the best trial to a file
     best_trial = study.best_trial

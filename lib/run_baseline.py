@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 from data_processing import set_seed, load_and_transform_data
-from baseline_model import BaselineModel
+from baseline_model import BaselineModel, train_baseline_model
 
 def main():
     """Main function to run the baseline model training."""
@@ -19,11 +19,11 @@ def main():
     X_clr_df = load_and_transform_data(file_path)
     metadata = pd.read_csv(metadata_file_path)
     
-    # Initialize and train the baseline model
-    input_dim = X_clr_df.shape[1] - 1
-    baseline_model = BaselineModel(input_dim=input_dim)
+   # Initialize Baseline model
+    baseline_model = BaselineModel(input_dim=X_clr_df.shape[1] - 1)
     baseline_model.initialize_weights()
-    baseline_model.train_model(epochs=1500, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
 
+    # Train Baseline model using the separate training function
+    train_baseline_model(baseline_model, epochs=150, relative_abundance=X_clr_df, metadata=metadata, batch_size=64)
 if __name__ == "__main__":
     main()

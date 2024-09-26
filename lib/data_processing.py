@@ -39,7 +39,7 @@ def preprocess_metadata(metadata):
     metadata['disease_numeric'] = metadata['disease'].map(disease_dict)
     return metadata
 
-def create_batch(relative_abundance, metadata, batch_size, is_test=False):
+def create_batch(relative_abundance, metadata, batch_size, is_test=False, device='cpu'):
     """
     Create a batch of data by sampling from the metadata and relative abundance data.
     """
@@ -58,8 +58,8 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
     training_feature_batch = training_feature_batch.drop(columns=['uid'])
 
     # Convert to tensors
-    training_feature_batch = torch.tensor(training_feature_batch.values, dtype=torch.float32)
-    metadata_batch_disease = torch.tensor(metadata_feature_batch['disease_numeric'].values, dtype=torch.float32)
+    training_feature_batch = torch.tensor(training_feature_batch.values, dtype=torch.float32).to(device)
+    metadata_batch_disease = torch.tensor(metadata_feature_batch['disease_numeric'].values, dtype=torch.float32).to(device)
 
     if is_test:
         return training_feature_batch, metadata_batch_disease
@@ -73,13 +73,14 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False):
     training_feature_ctrl_batch = ctrl_relative_abundance.loc[ctrl_idx].drop(columns=['uid'])
     metadata_ctrl_batch = ctrl_metadata.loc[ctrl_idx]
 
-    training_feature_ctrl_batch = torch.tensor(training_feature_ctrl_batch.values, dtype=torch.float32)
-    metadata_ctrl_batch_age = torch.tensor(metadata_ctrl_batch['host_age_zscore'].values, dtype=torch.float32)
+    training_feature_ctrl_batch = torch.tensor(training_feature_ctrl_batch.values, dtype=torch.float32).to(device)
+    metadata_ctrl_batch_age = torch.tensor(metadata_ctrl_batch['host_age_zscore'].values, dtype=torch.float32).to(device)
+    metadata_ctrl_batch_bmi = torch.tensor(metadata_ctrl_batch['BMI_zscore'].values, dtype=torch.float32).to(device)
 
-    return (training_feature_ctrl_batch, metadata_ctrl_batch_age,
+    return (training_feature_ctrl_batch, metadata_ctrl_batch_age, metadata_ctrl_batch_bmi, 
             training_feature_batch, metadata_batch_disease)
 
-def dcor_calculation_data(relative_abundance, metadata):
+def dcor_calculation_data(relative_abundance, metadata, device='cpu'):
     """
     Prepare data for distance correlation calculation.
     """
@@ -93,9 +94,9 @@ def dcor_calculation_data(relative_abundance, metadata):
     training_feature_ctrl = ctrl_relative_abundance.loc[ctrl_idx].drop(columns=['uid'])
     metadata_ctrl = ctrl_metadata.loc[ctrl_idx]
 
-    training_feature_ctrl = torch.tensor(training_feature_ctrl.values, dtype=torch.float32)
+    training_feature_ctrl = torch.tensor(training_feature_ctrl.values, dtype=torch.float32).to(device)
     metadata_ctrl_age = torch.tensor(metadata_ctrl['host_age_zscore'].values, dtype=torch.float32)
-
+    metadata_ctrl_bmi = torch.tensor(metadata_ctrl['BMI_zscore'].values, dtype=torch.float32)
     # Disease group
     disease_metadata = metadata[metadata['disease'] == 'D003093']
     disease_run_ids = disease_metadata['uid']
@@ -104,8 +105,9 @@ def dcor_calculation_data(relative_abundance, metadata):
     training_feature_disease = disease_relative_abundance.loc[disease_idx].drop(columns=['uid'])
     metadata_disease = disease_metadata.loc[disease_idx]
 
-    training_feature_disease = torch.tensor(training_feature_disease.values, dtype=torch.float32)
+    training_feature_disease = torch.tensor(training_feature_disease.values, dtype=torch.float32).to(device)
     metadata_disease_age = torch.tensor(metadata_disease['host_age_zscore'].values, dtype=torch.float32)
+    metadata_disease_bmi = torch.tensor(metadata_disease['BMI_zscore'].values, dtype=torch.float32)
 
-    return (training_feature_ctrl, metadata_ctrl_age,
-            training_feature_disease, metadata_disease_age)
+    return (training_feature_ctrl, metadata_ctrl_age,  metadata_ctrl_bmi,
+            training_feature_disease, metadata_disease_age, metadata_disease_bmi)
