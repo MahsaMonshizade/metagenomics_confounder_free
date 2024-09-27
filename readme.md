@@ -73,7 +73,7 @@ random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks
 
 
 
-### Results Summary            |
+### Results Summary            
 
 
 GAN alone: Likely sufficient, as it should remove both linear and non-linear correlations.
@@ -93,9 +93,9 @@ Linear correlation remover: May be useful as a check but could be redundant if t
 
 For test data
 
-| Metric                            | Baseline Model           | Confounder-Free BMI Model    | Confounder-Free age Model |
-|-----------------------------------|---------------------------------------|--------------------------------------| --------------------------------------|
-| **Average Accuracy** |     0.5581 ± 0.1025         | 0.6797 ± 0.0917 |         0.7110 ± 0.0628     | 
-| **Average AUC**           |       0.5868 ± 0.1359          | 0.7480 ± 0.1125              |       0.7836 ± 0.0806    | 
-| **Average F1 Score**                      |   0.6716 ± 0.1006             | 0.7723 ± 0.0955               |      0.8032 ± 0.0722        | 
+| Metric                            | Baseline Model           | Confounder-Free BMI Model    | Confounder-Free age Model | Confounder_Free BMI & age Model|
+|-----------------------------------|---------------------------------------|--------------------------------------| --------------------------------------| --------------------------------------|
+| **Average Accuracy** |     0.5581 ± 0.1025         | 0.6797 ± 0.0917 |         0.7110 ± 0.0628     | 0.6778 ± 0.0383 |
+| **Average AUC**           |       0.5868 ± 0.1359          | 0.7480 ± 0.1125              |       0.7836 ± 0.0806    | 0.7737 ± 0.0729 |
+| **Average F1 Score**                      |   0.6716 ± 0.1006             | 0.7723 ± 0.0955               |      0.8032 ± 0.0722        | 0.7988 ± 0.0796 |
 
