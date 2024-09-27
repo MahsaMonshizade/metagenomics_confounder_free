@@ -9,3 +9,5 @@
 /GMrepo_data/UC_metadata_metagenomics.csv
 /models
 /baseline_models
+/age_models
+/BMI_models

@@ -25,7 +25,7 @@ class GAN(nn.Module):
     Generative Adversarial Network class.
     """
     def __init__(self, input_dim, latent_dim=64, activation_fn=nn.SiLU, num_layers=1):
-        """Initialize the GAN with an encoder, BMI regressor, and disease classifier."""
+        """Initialize the GAN with an encoder, age regressor, BMI regressor, and disease classifier."""
         super(GAN, self).__init__()
 
         # Store parameters for re-initialization
@@ -35,10 +35,12 @@ class GAN(nn.Module):
         self.num_layers = num_layers
 
         self.encoder = self._build_encoder(input_dim, latent_dim, num_layers, activation_fn)
-        self.bmi_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
+        self.age_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
+        # self.bmi_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
         self.disease_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
 
-        self.bmi_regression_loss = InvCorrelationCoefficientLoss()
+        self.age_regression_loss = InvCorrelationCoefficientLoss()
+        # self.bmi_regression_loss = InvCorrelationCoefficientLoss()
         self.distiller_loss = CorrelationCoefficientLoss()
         self.disease_classifier_loss = nn.BCEWithLogitsLoss()
 
@@ -69,7 +71,7 @@ class GAN(nn.Module):
         return nn.Sequential(*layers)
 
     def _build_regressor(self, latent_dim, activation_fn, num_layers):
-        """Build the BMI regressor."""
+        """Build the age or BMI regressor."""
         layers = []
         current_dim = latent_dim
         for _ in range(num_layers):
@@ -134,11 +136,13 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=lr_c
         )
         optimizer_distiller = optim.Adam(model.encoder.parameters(), lr=lr_g)
-        optimizer_regression_bmi = optim.Adam(model.bmi_regressor.parameters(), lr=lr_r)
+        optimizer_regression_age = optim.Adam(model.age_regressor.parameters(), lr=lr_r)
+        # optimizer_regression_bmi = optim.Adam(model.bmi_regressor.parameters(), lr=lr_r)
 
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
         scheduler_distiller = lr_scheduler.ReduceLROnPlateau(optimizer_distiller, mode='min', factor=0.5, patience=5)
-        scheduler_regression_bmi = lr_scheduler.ReduceLROnPlateau(optimizer_regression_bmi, mode='min', factor=0.5, patience=5)
+        scheduler_regression_age = lr_scheduler.ReduceLROnPlateau(optimizer_regression_age, mode='min', factor=0.5, patience=5)
+        # scheduler_regression_bmi = lr_scheduler.ReduceLROnPlateau(optimizer_regression_bmi, mode='min', factor=0.5, patience=5)
 
         X_clr_df_train = relative_abundance.iloc[train_index].reset_index(drop=True)
         X_clr_df_val = relative_abundance.iloc[val_index].reset_index(drop=True)
@@ -165,38 +169,58 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 X_clr_df_train, train_metadata, batch_size, False, device
             )
 
+
             # ----------------------------
-            # Train BMI regressor (r_loss)
+            # Train age regressor (r_loss)
             # ----------------------------
-            optimizer_regression_bmi.zero_grad()
+            optimizer_regression_age.zero_grad()
             for param in model.encoder.parameters():
                 param.requires_grad = False
 
             encoded_features = model.encoder(training_feature_ctrl_batch)
-            bmi_prediction = model.bmi_regressor(encoded_features)
-            r_loss = model.bmi_regression_loss(metadata_ctrl_batch_bmi.view(-1, 1), bmi_prediction)
+            age_prediction = model.age_regressor(encoded_features)
+            r_loss = model.age_regression_loss(metadata_ctrl_batch_age.view(-1, 1), age_prediction)
             r_loss.backward()
-            optimizer_regression_bmi.step()
-            scheduler_regression_bmi.step(r_loss)
+            optimizer_regression_age.step()
+            scheduler_regression_age.step(r_loss)
 
             for param in model.encoder.parameters():
                 param.requires_grad = True
+
+
+            # ----------------------------
+            # Train BMI regressor (r_loss)
+            # ----------------------------
+            # optimizer_regression_bmi.zero_grad()
+            # for param in model.encoder.parameters():
+            #     param.requires_grad = False
+
+            # encoded_features = model.encoder(training_feature_ctrl_batch)
+            # bmi_prediction = model.bmi_regressor(encoded_features)
+            # r_loss = model.bmi_regression_loss(metadata_ctrl_batch_bmi.view(-1, 1), bmi_prediction)
+            # r_loss.backward()
+            # optimizer_regression_bmi.step()
+            # scheduler_regression_bmi.step(r_loss)
+
+            # for param in model.encoder.parameters():
+            #     param.requires_grad = True
+
 
             # ----------------------------
             # Train distiller (g_loss)
             # ----------------------------
             optimizer_distiller.zero_grad()
-            for param in model.bmi_regressor.parameters():
+            for param in model.age_regressor.parameters():
                 param.requires_grad = False
 
             encoder_features = model.encoder(training_feature_ctrl_batch)
-            predicted_bmi = model.bmi_regressor(encoder_features)
-            g_loss = model.distiller_loss(metadata_ctrl_batch_bmi.view(-1, 1), predicted_bmi)
+            predicted_age = model.age_regressor(encoder_features)
+            g_loss = model.distiller_loss(metadata_ctrl_batch_age.view(-1, 1), predicted_age)
             g_loss.backward()
             optimizer_distiller.step()
             scheduler_distiller.step(g_loss)
 
-            for param in model.bmi_regressor.parameters():
+            for param in model.age_regressor.parameters():
                 param.requires_grad = True
 
             # ----------------------------
@@ -231,12 +255,17 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             # Analyze distance correlation and learned features
             with torch.no_grad():
                 feature0 = model.encoder(training_feature_ctrl)
-                dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_bmi)
-                mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_bmi)
+                dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_age)
+                mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_age)
+                # dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_bmi)
+                # mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_bmi)
+
 
                 feature1 = model.encoder(training_feature_disease)
-                dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_bmi)
-                mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_bmi)
+                dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_age)
+                mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_age)
+                # dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_bmi)
+                # mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_bmi)
 
             dcs0.append(dc0)
             dcs1.append(dc1)
@@ -301,13 +330,13 @@ def calculate_auc(metadata_batch_disease, prediction_scores):
 
 def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, fold):
     """Plot training losses and save the figures."""
-    plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_bmi_gloss_fold{fold}.png')
-    plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_bmi_rloss_fold{fold}.png')
-    plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_bmi_closs_fold{fold}.png')
-    plot_single_loss(dcs0, 'dc0', 'orange', f'confounder_free_bmi_dc0_fold{fold}.png')
-    plot_single_loss(dcs1, 'dc1', 'orange', f'confounder_free_bmi_dc1_fold{fold}.png')
-    plot_single_loss(mis0, 'mi0', 'purple', f'confounder_free_bmi_mi0_fold{fold}.png')
-    plot_single_loss(mis1, 'mi1', 'purple', f'confounder_free_bmi_mi1_fold{fold}.png')
+    plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_age_gloss_fold{fold}.png')
+    plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_age_rloss_fold{fold}.png')
+    plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_age_closs_fold{fold}.png')
+    plot_single_loss(dcs0, 'dc0', 'orange', f'confounder_free_age_dc0_fold{fold}.png')
+    plot_single_loss(dcs1, 'dc1', 'orange', f'confounder_free_age_dc1_fold{fold}.png')
+    plot_single_loss(mis0, 'mi0', 'purple', f'confounder_free_age_mi0_fold{fold}.png')
+    plot_single_loss(mis1, 'mi1', 'purple', f'confounder_free_age_mi1_fold{fold}.png')
 
 def plot_single_loss(values, label, color, filename):
     """Helper function to plot a single loss."""

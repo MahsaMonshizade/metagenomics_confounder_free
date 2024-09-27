@@ -89,7 +89,7 @@ def evaluate_baseline():
     
     print("\nFinal Evaluation on Test Data (Baseline Model):")
     print(f"Average Accuracy: {avg_accuracy:.4f} ± {std_accuracy:.4f}")
-    print(f"Average AUC: {avg_auc} ± {std_auc}")
+    print(f"Average AUC: {avg_auc:.4f} ± {std_auc:.4f}")
     print(f"Average F1 Score: {avg_f1:.4f} ± {std_f1:.4f}")
     
     # Save evaluation results

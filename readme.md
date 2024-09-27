@@ -73,13 +73,7 @@ random question: Ask Yuhui how she made awsome repo and ask Yuzhen if she thinks
 
 
 
-### Results Summary
-
-| Model                            | Train (Accuracy, Loss, AUC)           | Eval (Accuracy, Loss, AUC)           | Test (Balanced) (Accuracy, Loss, AUC) | Test (Non-balanced) (Accuracy, Loss, AUC) |
-|-----------------------------------|---------------------------------------|--------------------------------------|----------------------------------------|--------------------------------------------|
-| **confounder_free_age_linear_correlation** | 0.9785, 0.0716, 0.9990                | 0.9429, 0.1802, 0.9678               | **0.7656**, **0.6685**, **0.9094**                 | 0.5758, 1.5848, 0.7847                     |
-| **confounder_free_age**           | 0.9624, 0.1497, 0.9910                | 0.9286, 0.2074, 0.9785               | 0.7344, 0.5889, 0.8821                 | 0.5801, 1.1535, 0.8348                     |
-| **baseline**                      | **1.0000**, **0.0019**, **1.0000**                | **0.9476**, **0.1531**, **0.9954**               | 0.7344, 0.9605, 0.8418                 | 0.6667, 1.3016, 0.7856                     |
+### Results Summary            |
 
 
 GAN alone: Likely sufficient, as it should remove both linear and non-linear correlations.
@@ -99,9 +93,9 @@ Linear correlation remover: May be useful as a check but could be redundant if t
 
 For test data
 
-| Metric                            | Baseline Model           | Confounder-Free Age Model    | 
-|-----------------------------------|---------------------------------------|--------------------------------------|
-| **Average Accuracy** | 0.5222 ± 0.0228              | 0.6610 ± 0.0538 |
-| **Average AUC**           | 0.5718 ± 0.0447                | 0.7602 ± 0.0412              | 
-| **Average F1 Score**                      | 0.6633 ± 0.0757                | 0.5990 ± 0.0931               | 
+| Metric                            | Baseline Model           | Confounder-Free BMI Model    | Confounder-Free age Model |
+|-----------------------------------|---------------------------------------|--------------------------------------| --------------------------------------|
+| **Average Accuracy** |     0.5581 ± 0.1025         | 0.6797 ± 0.0917 |         0.7110 ± 0.0628     | 
+| **Average AUC**           |       0.5868 ± 0.1359          | 0.7480 ± 0.1125              |       0.7836 ± 0.0806    | 
+| **Average F1 Score**                      |   0.6716 ± 0.1006             | 0.7723 ± 0.0955               |      0.8032 ± 0.0722        | 
 
