@@ -35,12 +35,12 @@ class GAN(nn.Module):
         self.num_layers = num_layers
 
         self.encoder = self._build_encoder(input_dim, latent_dim, num_layers, activation_fn)
-        self.age_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
-        # self.bmi_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
+        # self.age_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
+        self.bmi_regressor = self._build_regressor(latent_dim, activation_fn, num_layers)
         self.disease_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
 
-        self.age_regression_loss = InvCorrelationCoefficientLoss()
-        # self.bmi_regression_loss = InvCorrelationCoefficientLoss()
+        # self.age_regression_loss = InvCorrelationCoefficientLoss()
+        self.bmi_regression_loss = InvCorrelationCoefficientLoss()
         self.distiller_loss = CorrelationCoefficientLoss()
         self.disease_classifier_loss = nn.BCEWithLogitsLoss()
 
@@ -121,6 +121,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     all_eval_accuracies = []
     all_eval_aucs = []
+    all_eval_f1s = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(relative_abundance, metadata['disease'])):
         print(f"\nFold {fold + 1}/5")
@@ -136,21 +137,22 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=lr_c
         )
         optimizer_distiller = optim.Adam(model.encoder.parameters(), lr=lr_g)
-        optimizer_regression_age = optim.Adam(model.age_regressor.parameters(), lr=lr_r)
-        # optimizer_regression_bmi = optim.Adam(model.bmi_regressor.parameters(), lr=lr_r)
+        # optimizer_regression_age = optim.Adam(model.age_regressor.parameters(), lr=lr_r)
+        optimizer_regression_bmi = optim.Adam(model.bmi_regressor.parameters(), lr=lr_r)
 
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
         scheduler_distiller = lr_scheduler.ReduceLROnPlateau(optimizer_distiller, mode='min', factor=0.5, patience=5)
-        scheduler_regression_age = lr_scheduler.ReduceLROnPlateau(optimizer_regression_age, mode='min', factor=0.5, patience=5)
-        # scheduler_regression_bmi = lr_scheduler.ReduceLROnPlateau(optimizer_regression_bmi, mode='min', factor=0.5, patience=5)
+        # scheduler_regression_age = lr_scheduler.ReduceLROnPlateau(optimizer_regression_age, mode='min', factor=0.5, patience=5)
+        scheduler_regression_bmi = lr_scheduler.ReduceLROnPlateau(optimizer_regression_bmi, mode='min', factor=0.5, patience=5)
 
         X_clr_df_train = relative_abundance.iloc[train_index].reset_index(drop=True)
         X_clr_df_val = relative_abundance.iloc[val_index].reset_index(drop=True)
         train_metadata = metadata.iloc[train_index].reset_index(drop=True)
         val_metadata = metadata.iloc[val_index].reset_index(drop=True)
 
-        best_loss = float('inf')
-        early_stop_step = 10
+        # best_loss = float('inf')
+        best_disease_acc = 0
+        early_stop_step = 20
         early_stop_patience = 0
 
         (training_feature_ctrl, metadata_ctrl_age, metadata_ctrl_bmi,
@@ -161,6 +163,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         # Lists to store losses
         r_losses, g_losses, c_losses = [], [], []
         dcs0, dcs1, mis0, mis1 = [], [], [], []
+        train_disease_accs, val_disease_accs, train_disease_aucs, val_disease_aucs, train_disease_f1s, val_disease_f1s = [], [], [], [], [], []
 
         for epoch in range(epochs):
             # Create batches
@@ -173,54 +176,54 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             # ----------------------------
             # Train age regressor (r_loss)
             # ----------------------------
-            optimizer_regression_age.zero_grad()
-            for param in model.encoder.parameters():
-                param.requires_grad = False
-
-            encoded_features = model.encoder(training_feature_ctrl_batch)
-            age_prediction = model.age_regressor(encoded_features)
-            r_loss = model.age_regression_loss(metadata_ctrl_batch_age.view(-1, 1), age_prediction)
-            r_loss.backward()
-            optimizer_regression_age.step()
-            scheduler_regression_age.step(r_loss)
-
-            for param in model.encoder.parameters():
-                param.requires_grad = True
-
-
-            # ----------------------------
-            # Train BMI regressor (r_loss)
-            # ----------------------------
-            # optimizer_regression_bmi.zero_grad()
+            # optimizer_regression_age.zero_grad()
             # for param in model.encoder.parameters():
             #     param.requires_grad = False
 
             # encoded_features = model.encoder(training_feature_ctrl_batch)
-            # bmi_prediction = model.bmi_regressor(encoded_features)
-            # r_loss = model.bmi_regression_loss(metadata_ctrl_batch_bmi.view(-1, 1), bmi_prediction)
+            # age_prediction = model.age_regressor(encoded_features)
+            # r_loss = model.age_regression_loss(metadata_ctrl_batch_age.view(-1, 1), age_prediction)
             # r_loss.backward()
-            # optimizer_regression_bmi.step()
-            # scheduler_regression_bmi.step(r_loss)
+            # optimizer_regression_age.step()
+            # scheduler_regression_age.step(r_loss)
 
             # for param in model.encoder.parameters():
             #     param.requires_grad = True
 
 
             # ----------------------------
+            # Train BMI regressor (r_loss)
+            # ----------------------------
+            optimizer_regression_bmi.zero_grad()
+            for param in model.encoder.parameters():
+                param.requires_grad = False
+
+            encoded_features = model.encoder(training_feature_ctrl_batch)
+            bmi_prediction = model.bmi_regressor(encoded_features)
+            r_loss = model.bmi_regression_loss(metadata_ctrl_batch_bmi.view(-1, 1), bmi_prediction)
+            r_loss.backward()
+            optimizer_regression_bmi.step()
+            scheduler_regression_bmi.step(r_loss)
+
+            for param in model.encoder.parameters():
+                param.requires_grad = True
+
+
+            # ----------------------------
             # Train distiller (g_loss)
             # ----------------------------
             optimizer_distiller.zero_grad()
-            for param in model.age_regressor.parameters():
+            for param in model.bmi_regressor.parameters():
                 param.requires_grad = False
 
             encoder_features = model.encoder(training_feature_ctrl_batch)
-            predicted_age = model.age_regressor(encoder_features)
-            g_loss = model.distiller_loss(metadata_ctrl_batch_age.view(-1, 1), predicted_age)
+            predicted_bmi = model.bmi_regressor(encoder_features)
+            g_loss = model.distiller_loss(metadata_ctrl_batch_bmi.view(-1, 1), predicted_bmi)
             g_loss.backward()
             optimizer_distiller.step()
             scheduler_distiller.step(g_loss)
 
-            for param in model.age_regressor.parameters():
+            for param in model.bmi_regressor.parameters():
                 param.requires_grad = True
 
             # ----------------------------
@@ -233,6 +236,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             c_loss.backward()
             pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float()
             disease_acc = balanced_accuracy_score(metadata_batch_disease.cpu(), pred_tag.cpu())
+            disease_auc = calculate_auc(metadata_batch_disease.cpu(), prediction_scores.cpu())
+            disease_f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
             optimizer.step()
             scheduler.step(disease_acc)
 
@@ -241,9 +246,14 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             g_losses.append(g_loss.item())
             c_losses.append(c_loss.item())
 
+            train_disease_accs.append(disease_acc)
+            train_disease_aucs.append(disease_auc)
+            train_disease_f1s.append(disease_f1)
+
+
             # Early stopping check (optional)
-            if c_loss < best_loss:
-                best_loss = c_loss
+            if disease_acc > best_disease_acc:
+                best_disease_acc = disease_acc
                 early_stop_patience = 0
             else:
                 early_stop_patience += 1
@@ -255,17 +265,17 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             # Analyze distance correlation and learned features
             with torch.no_grad():
                 feature0 = model.encoder(training_feature_ctrl)
-                dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_age)
-                mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_age)
-                # dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_bmi)
-                # mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_bmi)
+                # dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_age)
+                # mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_age)
+                dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_bmi)
+                mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_bmi)
 
 
                 feature1 = model.encoder(training_feature_disease)
-                dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_age)
-                mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_age)
-                # dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_bmi)
-                # mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_bmi)
+                # dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_age)
+                # mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_age)
+                dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_bmi)
+                mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_bmi)
 
             dcs0.append(dc0)
             dcs1.append(dc1)
@@ -277,11 +287,14 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                   f"disease_acc: {disease_acc:.4f}, dc0: {dc0:.4f}, dc1: {dc1:.4f}")
 
             # Evaluate
-            eval_accuracy, eval_auc = evaluate(
+            eval_accuracy, eval_auc, eval_f1 = evaluate(
                 model, X_clr_df_val, val_metadata, val_metadata.shape[0], 'eval', device
             )
             # Optionally, evaluate on training data
             # _, _ = evaluate(model, X_clr_df_train, train_metadata, train_metadata.shape[0], 'train', device)
+            val_disease_accs.append(eval_accuracy)
+            val_disease_aucs.append(eval_auc)
+            val_disease_f1s.append(eval_f1)
 
         # Save models
         torch.save(model.encoder.state_dict(), f'models/encoder_fold{fold}.pth')
@@ -291,11 +304,12 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
 
         all_eval_accuracies.append(eval_accuracy)
         all_eval_aucs.append(eval_auc)
-        plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, fold)
+        all_eval_f1s.append(eval_f1)
+        plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, fold)
 
     avg_eval_accuracy = np.mean(all_eval_accuracies)
     avg_eval_auc = np.mean(all_eval_aucs)
-    save_eval_results(all_eval_accuracies, all_eval_aucs)
+    save_eval_results(all_eval_accuracies, all_eval_aucs, all_eval_f1s)
     return avg_eval_accuracy, avg_eval_auc
 
 def evaluate(model, relative_abundance, metadata, batch_size, t, device):
@@ -317,7 +331,7 @@ def evaluate(model, relative_abundance, metadata, batch_size, t, device):
     f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
 
     print(f"{t} result --> Accuracy: {disease_acc:.4f}, Loss: {c_loss.item():.4f}, AUC: {auc}, F1: {f1:.4f}")
-    return disease_acc, auc
+    return disease_acc, auc, f1
 
 def calculate_auc(metadata_batch_disease, prediction_scores):
     """Calculate AUC."""
@@ -328,15 +342,23 @@ def calculate_auc(metadata_batch_disease, prediction_scores):
         print("Cannot compute ROC AUC as only one class is present.")
         return None
 
-def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, fold):
+def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, fold):
     """Plot training losses and save the figures."""
-    plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_age_gloss_fold{fold}.png')
-    plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_age_rloss_fold{fold}.png')
-    plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_age_closs_fold{fold}.png')
-    plot_single_loss(dcs0, 'dc0', 'orange', f'confounder_free_age_dc0_fold{fold}.png')
-    plot_single_loss(dcs1, 'dc1', 'orange', f'confounder_free_age_dc1_fold{fold}.png')
-    plot_single_loss(mis0, 'mi0', 'purple', f'confounder_free_age_mi0_fold{fold}.png')
-    plot_single_loss(mis1, 'mi1', 'purple', f'confounder_free_age_mi1_fold{fold}.png')
+    plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_bmi_gloss_fold{fold}.png')
+    plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_bmi_rloss_fold{fold}.png')
+    plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_bmi_closs_fold{fold}.png')
+    plot_single_loss(dcs0, 'dc0', 'orange', f'confounder_free_bmi_dc0_fold{fold}.png')
+    plot_single_loss(dcs1, 'dc1', 'orange', f'confounder_free_bmi_dc1_fold{fold}.png')
+    plot_single_loss(mis0, 'mi0', 'purple', f'confounder_free_bmi_mi0_fold{fold}.png')
+    plot_single_loss(mis1, 'mi1', 'purple', f'confounder_free_bmi_mi1_fold{fold}.png')
+    plot_single_loss(train_disease_accs, 'train_disease_acc', 'red', f'confounder_free_bmi_train_disease_acc_fold{fold}.png')
+    plot_single_loss(train_disease_aucs, 'train_disease_auc', 'red', f'confounder_free_bmi_train_disease_auc_fold{fold}.png')
+    plot_single_loss(train_disease_f1s, 'train_disease_f1', 'red', f'confounder_free_bmi_train_disease_f1_fold{fold}.png')
+    plot_single_loss(val_disease_accs, 'val_disease_acc', 'red', f'confounder_free_bmi_val_disease_acc_fold{fold}.png')
+    plot_single_loss(val_disease_aucs, 'val_disease_auc', 'red', f'confounder_free_bmi_val_disease_auc_fold{fold}.png')
+    plot_single_loss(val_disease_f1s, 'val_disease_f1', 'red', f'confounder_free_bmi_val_disease_f1_fold{fold}.png')
+    
+    
 
 def plot_single_loss(values, label, color, filename):
     """Helper function to plot a single loss."""
@@ -350,9 +372,9 @@ def plot_single_loss(values, label, color, filename):
     plt.savefig(f'plots/{filename}')
     plt.close()
 
-def save_eval_results(accuracies, aucs, filename='evaluation_results.json'):
+def save_eval_results(accuracies, aucs, f1s, filename='evaluation_results.json'):
     """Save evaluation accuracies and AUCs to a JSON file."""
-    results = {'accuracies': accuracies, 'aucs': aucs}
+    results = {'accuracies': accuracies, 'aucs': aucs, 'f1s': f1s}
     with open(filename, 'w') as f:
         json.dump(results, f, indent=4)
     print(f"Evaluation results saved to {filename}.")

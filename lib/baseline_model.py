@@ -93,6 +93,7 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     all_eval_accuracies = []
     all_eval_aucs = []
+    all_eval_f1s = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(relative_abundance, metadata['disease'])):
         print(f"\nFold {fold + 1}/5")
@@ -114,8 +115,9 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
         train_metadata = metadata.iloc[train_index].reset_index(drop=True)
         val_metadata = metadata.iloc[val_index].reset_index(drop=True)
 
-        best_loss = float('inf')
-        early_stop_step = 10
+        # best_loss = float('inf')
+        best_disease_acc = 0
+        early_stop_step = 20
         early_stop_patience = 0
 
         # Prepare data for dcor and MI calculations
@@ -132,6 +134,8 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
         val_aucs = []
         train_losses = []
         val_losses = []
+        train_f1s = []
+        val_f1s = []
         dcs0, dcs1, mis0, mis1 = [], [], [], []
 
         for epoch in range(epochs):
@@ -157,6 +161,7 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
             disease_acc = balanced_accuracy_score(metadata_batch_disease.cpu(), pred_tag.cpu())
             if len(torch.unique(metadata_batch_disease)) > 1:
                 auc = roc_auc_score(metadata_batch_disease.cpu(), pred_prob.detach().cpu())
+                disease_f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
             else:
                 auc = np.nan  # Use NaN if AUC cannot be computed
 
@@ -164,6 +169,8 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
             train_losses.append(c_loss.item())
             train_accuracies.append(disease_acc)
             train_aucs.append(auc)
+            train_f1s.append(disease_f1)
+
 
             # Evaluation Phase
             model.eval()
@@ -181,6 +188,7 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
                 disease_acc_val = balanced_accuracy_score(metadata_batch_disease_val.cpu(), pred_tag_val.cpu())
                 if len(torch.unique(metadata_batch_disease_val)) > 1:
                     auc_val = roc_auc_score(metadata_batch_disease_val.cpu(), pred_prob_val.detach().cpu())
+                    f1_val = f1_score(metadata_batch_disease_val.cpu(), pred_tag_val.detach().cpu())
                 else:
                     auc_val = np.nan  # Use NaN if AUC cannot be computed
 
@@ -188,6 +196,7 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
                 val_losses.append(c_loss_val.item())
                 val_accuracies.append(disease_acc_val)
                 val_aucs.append(auc_val)
+                val_f1s.append(f1_val)
 
             # Analyze distance correlation and mutual information
             with torch.no_grad():
@@ -204,9 +213,14 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
                 mis0.append(mi_ctrl.mean())
                 mis1.append(mi_disease.mean())
 
+            print(f"Epoch {epoch + 1}/{epochs}, "
+                  f"Train Loss: {c_loss.item():.4f}, Train Acc: {disease_acc:.4f}, Train AUC: {auc:.4f}, "
+                  f"Val Loss: {c_loss_val.item():.4f}, Val Acc: {disease_acc_val:.4f}, Val AUC: {auc_val:.4f}")
+
+
             # Early stopping check (optional)
-            if c_loss_val < best_loss:
-                best_loss = c_loss_val
+            if disease_acc > best_disease_acc:
+                best_disease_acc = disease_acc
                 early_stop_patience = 0
             else:
                 early_stop_patience += 1
@@ -215,10 +229,6 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
                 print("Early stopping triggered.")
                 break
 
-            print(f"Epoch {epoch + 1}/{epochs}, "
-                  f"Train Loss: {c_loss.item():.4f}, Train Acc: {disease_acc:.4f}, Train AUC: {auc:.4f}, "
-                  f"Val Loss: {c_loss_val.item():.4f}, Val Acc: {disease_acc_val:.4f}, Val AUC: {auc_val:.4f}")
-
         # Save models
         torch.save(model.encoder.state_dict(), f'baseline_models/encoder_fold{fold}.pth')
         torch.save(model.disease_classifier.state_dict(), f'baseline_models/disease_classifier_fold{fold}.pth')
@@ -226,18 +236,19 @@ def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size
         print(f'Classifier saved to baseline_models/disease_classifier_fold{fold}.pth.')
         all_eval_accuracies.append(val_accuracies[-1])
         all_eval_aucs.append(val_aucs[-1])
+        all_eval_f1s.append(val_f1s[-1])
 
         # Plot metrics
         plot_metrics(train_losses, val_losses, train_accuracies, val_accuracies,
-                     train_aucs, val_aucs, dcs0, dcs1, mis0, mis1, fold)
+                     train_aucs, val_aucs, train_f1s, val_f1s, dcs0, dcs1, mis0, mis1, fold)
 
     avg_eval_accuracy = np.mean(all_eval_accuracies)
     avg_eval_auc = np.nanmean(all_eval_aucs)
-    save_eval_results(all_eval_accuracies, all_eval_aucs)
+    save_eval_results(all_eval_accuracies, all_eval_aucs, all_eval_f1s)
     return avg_eval_accuracy, avg_eval_auc
 
 def plot_metrics(train_losses, val_losses, train_accuracies, val_accuracies,
-                 train_aucs, val_aucs, dcs0, dcs1, mis0, mis1, fold):
+                     train_aucs, val_aucs, train_f1s, val_f1s, dcs0, dcs1, mis0, mis1, fold):
     """Plot training and validation metrics and save the figures."""
     epochs = range(1, len(train_losses) + 1)
 
@@ -275,6 +286,18 @@ def plot_metrics(train_losses, val_losses, train_accuracies, val_accuracies,
     plt.legend()
     plt.grid(True)
     plt.savefig(f'baseline_plots/auc_fold{fold}.png')
+    plt.close()
+
+    # Plot f1
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_f1s, label='Train F1', color='purple')
+    plt.plot(epochs, val_f1s, label='Validation F1', color='brown')
+    plt.xlabel('Epoch')
+    plt.ylabel('F1')
+    plt.title('Training and Validation F1')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f'baseline_plots/f1_fold{fold}.png')
     plt.close()
 
     # Plot DCOR
@@ -330,9 +353,9 @@ def calculate_auc(metadata_batch_disease, pred_prob):
         print("Cannot compute ROC AUC as only one class is present.")
         return np.nan
 
-def save_eval_results(accuracies, aucs, filename='baseline_evaluation_results.json'):
+def save_eval_results(accuracies, aucs, f1s, filename='baseline_evaluation_results.json'):
     """Save evaluation accuracies and AUCs to a JSON file."""
-    results = {'accuracies': accuracies, 'aucs': aucs}
+    results = {'accuracies': accuracies, 'aucs': aucs, 'f1s': f1s}
     with open(filename, 'w') as f:
         json.dump(results, f, indent=4)
     print(f"Evaluation results saved to {filename}.")

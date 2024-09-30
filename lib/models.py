@@ -122,6 +122,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     all_eval_accuracies = []
     all_eval_aucs = []
+    all_eval_f1s = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(relative_abundance, metadata['disease'])):
         print(f"\nFold {fold + 1}/5")
@@ -152,8 +153,9 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         train_metadata = metadata.iloc[train_index].reset_index(drop=True)
         val_metadata = metadata.iloc[val_index].reset_index(drop=True)
 
-        best_loss = float('inf')
-        early_stop_step = 10
+        # best_loss = float('inf')
+        best_disease_acc = 0
+        early_stop_step = 20
         early_stop_patience = 0
 
         (training_feature_ctrl, metadata_ctrl_age, metadata_ctrl_bmi,
@@ -164,6 +166,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         # Lists to store losses
         r_age_losses, r_bmi_losses, g_age_losses, g_bmi_losses, c_losses = [], [], [], [], []
         dcs0_age, dcs1_age, mis0_age, mis1_age,  dcs0_bmi, dcs1_bmi, mis0_bmi, mis1_bmi = [], [], [], [], [], [], [], []
+        train_disease_accs, val_disease_accs, train_disease_aucs, val_disease_aucs, train_disease_f1s, val_disease_f1s = [], [], [], [], [], []
 
         for epoch in range(epochs):
             # Create batches
@@ -251,6 +254,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             c_loss.backward()
             pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float()
             disease_acc = balanced_accuracy_score(metadata_batch_disease.cpu(), pred_tag.cpu())
+            disease_auc = calculate_auc(metadata_batch_disease.cpu(), prediction_scores.cpu())
+            disease_f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
             optimizer.step()
             scheduler.step(disease_acc)
 
@@ -261,9 +266,13 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             g_bmi_losses.append(g_bmi_loss.item())
             c_losses.append(c_loss.item())
 
+            train_disease_accs.append(disease_acc)
+            train_disease_aucs.append(disease_auc)
+            train_disease_f1s.append(disease_f1)
+
             # Early stopping check (optional)
-            if c_loss < best_loss:
-                best_loss = c_loss
+            if disease_acc > best_disease_acc:
+                best_disease_acc = disease_acc
                 early_stop_patience = 0
             else:
                 early_stop_patience += 1
@@ -302,11 +311,15 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                   f" c_loss: {c_loss.item():.4f}, disease_acc: {disease_acc:.4f}")
 
             # Evaluate
-            eval_accuracy, eval_auc = evaluate(
+            eval_accuracy, eval_auc, eval_f1 = evaluate(
                 model, X_clr_df_val, val_metadata, val_metadata.shape[0], 'eval', device
             )
             # Optionally, evaluate on training data
             # _, _ = evaluate(model, X_clr_df_train, train_metadata, train_metadata.shape[0], 'train', device)
+
+            val_disease_accs.append(eval_accuracy)
+            val_disease_aucs.append(eval_auc)
+            val_disease_f1s.append(eval_f1)
 
         # Save models
         torch.save(model.encoder.state_dict(), f'models/encoder_fold{fold}.pth')
@@ -316,11 +329,12 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
 
         all_eval_accuracies.append(eval_accuracy)
         all_eval_aucs.append(eval_auc)
-        plot_losses(r_age_losses, r_bmi_losses, g_age_losses,  g_bmi_losses, c_losses, dcs0_age, dcs1_age, mis0_age, mis1_age, dcs0_bmi, dcs1_bmi, mis0_bmi, mis1_bmi, fold)
+        all_eval_f1s.append(eval_f1)
+        plot_losses(r_age_losses, r_bmi_losses, g_age_losses,  g_bmi_losses, c_losses, dcs0_age, dcs1_age, mis0_age, mis1_age, dcs0_bmi, dcs1_bmi, mis0_bmi, mis1_bmi, train_disease_accs, val_disease_accs, train_disease_aucs, val_disease_aucs, train_disease_f1s, val_disease_f1s, fold)
 
     avg_eval_accuracy = np.mean(all_eval_accuracies)
     avg_eval_auc = np.mean(all_eval_aucs)
-    save_eval_results(all_eval_accuracies, all_eval_aucs)
+    save_eval_results(all_eval_accuracies, all_eval_aucs, all_eval_f1s)
     return avg_eval_accuracy, avg_eval_auc
 
 def evaluate(model, relative_abundance, metadata, batch_size, t, device):
@@ -342,7 +356,7 @@ def evaluate(model, relative_abundance, metadata, batch_size, t, device):
     f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
 
     print(f"{t} result --> Accuracy: {disease_acc:.4f}, Loss: {c_loss.item():.4f}, AUC: {auc}, F1: {f1:.4f}")
-    return disease_acc, auc
+    return disease_acc, auc, f1
 
 def calculate_auc(metadata_batch_disease, prediction_scores):
     """Calculate AUC."""
@@ -353,7 +367,7 @@ def calculate_auc(metadata_batch_disease, prediction_scores):
         print("Cannot compute ROC AUC as only one class is present.")
         return None
 
-def plot_losses(r_age_losses, r_bmi_losses, g_age_losses,  g_bmi_losses, c_losses, dcs0_age, dcs1_age, mis0_age, mis1_age, dcs0_bmi, dcs1_bmi, mis0_bmi, mis1_bmi, fold):
+def plot_losses(r_age_losses, r_bmi_losses, g_age_losses,  g_bmi_losses, c_losses, dcs0_age, dcs1_age, mis0_age, mis1_age, dcs0_bmi, dcs1_bmi, mis0_bmi, mis1_bmi, train_disease_accs, val_disease_accs, train_disease_aucs, val_disease_aucs, train_disease_f1s, val_disease_f1s, fold):
     """Plot training losses and save the figures."""
     plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_closs_fold{fold}.png')
 
@@ -371,6 +385,14 @@ def plot_losses(r_age_losses, r_bmi_losses, g_age_losses,  g_bmi_losses, c_losse
     plot_single_loss(mis0_bmi, 'mi0', 'purple', f'confounder_free_bmi_mi0_fold{fold}.png')
     plot_single_loss(mis1_bmi, 'mi1', 'purple', f'confounder_free_bmi_mi1_fold{fold}.png')
 
+    plot_single_loss(train_disease_accs, 'train_disease_acc', 'red', f'confounder_free_train_disease_acc_fold{fold}.png')
+    plot_single_loss(train_disease_aucs, 'train_disease_auc', 'red', f'confounder_free_train_disease_auc_fold{fold}.png')
+    plot_single_loss(train_disease_f1s, 'train_disease_f1', 'red', f'confounder_free_train_disease_f1_fold{fold}.png')
+    plot_single_loss(val_disease_accs, 'val_disease_acc', 'red', f'confounder_free_val_disease_acc_fold{fold}.png')
+    plot_single_loss(val_disease_aucs, 'val_disease_auc', 'red', f'confounder_free_val_disease_auc_fold{fold}.png')
+    plot_single_loss(val_disease_f1s, 'val_disease_f1', 'red', f'confounder_free_val_disease_f1_fold{fold}.png')
+    
+
 def plot_single_loss(values, label, color, filename):
     """Helper function to plot a single loss."""
     plt.figure(figsize=(12, 6))
@@ -383,9 +405,9 @@ def plot_single_loss(values, label, color, filename):
     plt.savefig(f'plots/{filename}')
     plt.close()
 
-def save_eval_results(accuracies, aucs, filename='evaluation_results.json'):
+def save_eval_results(accuracies, aucs, f1s, filename='evaluation_results.json'):
     """Save evaluation accuracies and AUCs to a JSON file."""
-    results = {'accuracies': accuracies, 'aucs': aucs}
+    results = {'accuracies': accuracies, 'aucs': aucs, 'f1s': f1s}
     with open(filename, 'w') as f:
         json.dump(results, f, indent=4)
     print(f"Evaluation results saved to {filename}.")
