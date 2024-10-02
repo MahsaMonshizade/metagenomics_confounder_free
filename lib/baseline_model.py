@@ -22,7 +22,7 @@ class BaselineModel(nn.Module):
     """
     Baseline model with an encoder and a disease classifier.
     """
-    def __init__(self, input_dim, latent_dim=64, activation_fn=nn.ReLU, num_layers=3):
+    def __init__(self, input_dim, latent_dim=64, activation_fn=nn.SiLU, num_layers=1):
         super(BaselineModel, self).__init__()
         # Store parameters for re-initialization
         self.input_dim = input_dim
@@ -48,11 +48,16 @@ class BaselineModel(nn.Module):
         current_dim = first_layer
         for _ in range(num_layers):
             layers.extend([
-                nn.Linear(current_dim, max(current_dim // 2, latent_dim)),
-                nn.BatchNorm1d(max(current_dim // 2, latent_dim)),
+                nn.Linear(current_dim, current_dim // 2),
+                nn.BatchNorm1d(current_dim // 2),
                 activation_fn()
             ])
-            current_dim = max(current_dim // 2, latent_dim)
+            current_dim = current_dim // 2
+        layers.extend([
+            nn.Linear(current_dim, latent_dim),
+            nn.BatchNorm1d(latent_dim),
+            activation_fn()
+        ])
         return nn.Sequential(*layers)
 
     def _build_classifier(self, latent_dim, activation_fn, num_layers):
@@ -61,11 +66,11 @@ class BaselineModel(nn.Module):
         current_dim = latent_dim
         for _ in range(num_layers):
             layers.extend([
-                nn.Linear(current_dim, max(current_dim // 2, 1)),
-                nn.BatchNorm1d(max(current_dim // 2, 1)),
+                nn.Linear(current_dim, current_dim // 2),
+                nn.BatchNorm1d(current_dim // 2),
                 activation_fn()
             ])
-            current_dim = max(current_dim // 2, 1)
+            current_dim = current_dim // 2
         layers.append(nn.Linear(current_dim, 1))
         return nn.Sequential(*layers)
 
@@ -86,7 +91,7 @@ class BaselineModel(nn.Module):
         output = self.disease_classifier(encoded).view(-1)
         return output
 
-def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size=64, lr=0.001):
+def train_baseline_model(model, epochs, relative_abundance, metadata, batch_size=64, lr=0.005):
     """Train the baseline model using K-Fold cross-validation."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

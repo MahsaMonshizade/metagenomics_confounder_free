@@ -50,6 +50,7 @@ https://evolgeniusteam.github.io/gmrepodocumentation/usage/downloaddatafromgmrep
 - [ ] 11. Add explainability methods to find unbiased biomarkers
 - [ ] 12. Ask chatgpt to help ake th idea better
 - [ ] 13. Find more data
+- [ ] 14. From "A realistic benchmark for differential abundance testing and confounder adjustment in human microbiome studies" paper I found their confounder dataset which is here: https://zenodo.org/records/6242715
 
 
 
@@ -83,7 +84,17 @@ For test data
 
 | Metric                            | Baseline Model           | Confounder-Free BMI Model    | Confounder-Free age Model | Confounder_Free BMI & age Model|
 |-----------------------------------|---------------------------------------|--------------------------------------| --------------------------------------| --------------------------------------|
-| **Average Accuracy** |     0.5732 ± 0.0977         | 0.6742 ± 0.0877 |         0.7036 ± 0.0627     | 0.6826 ± 0.0306 |
-| **Average AUC**           |       0.5965 ± 0.1526          | .0.7596 ± 0.1058             |       0.7867 ± 0.0798    | 0.7822 ± 0.0629 |
-| **Average F1 Score**                      |   0.7291 ± 0.1012             | 0.7963 ± 0.0868               |      0.8208 ± 0.0526       | 0.8336 ± 0.0435 |
+| **Average Accuracy** |     0.7448 ± 0.0627         | 0.6742 ± 0.0877 |         0.7036 ± 0.0627     | 0.6826 ± 0.0306 |
+| **Average AUC**           |       0.8103 ± 0.0552         | .0.7596 ± 0.1058             |       0.7867 ± 0.0798    | 0.7822 ± 0.0629 |
+| **Average F1 Score**                      |   0.8369 ± 0.0245             | 0.7963 ± 0.0868               |      0.8208 ± 0.0526       | 0.8336 ± 0.0435 |
 
+
+***oct 2***
+tried to have one distiller and one regressor and changed the loss from correlation to mse and used GradientReversalFunction but the results on test are worst: 
+
+Final Evaluation on Test Data:
+Average Accuracy: 0.6559 ± 0.0269
+Average AUC: 0.7538 ± 0.0600
+Average F1 Score: 0.7748 ± 0.0663
+
+the scriot is: multitask_model.py

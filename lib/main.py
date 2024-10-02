@@ -3,7 +3,8 @@
 import os
 import pandas as pd
 from data_processing import set_seed, load_and_transform_data
-from models import GAN, train_model
+# from models import GAN, train_model
+from benchmark_model import GAN, train_model
 
 def main():
     """Main function to run the GAN training."""
