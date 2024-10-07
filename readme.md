@@ -98,3 +98,11 @@ Average AUC: 0.7538 ± 0.0600
 Average F1 Score: 0.7748 ± 0.0663
 
 the scriot is: multitask_model.py
+
+
+results for projection one:
+
+Final Evaluation on Test Data:
+Average Accuracy: 0.6889 ± 0.0588
+Average AUC: 0.7848 ± 0.0804
+Average F1 Score: 0.8542 ± 0.0295

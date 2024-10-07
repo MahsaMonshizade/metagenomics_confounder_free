@@ -8,7 +8,8 @@
 /GMrepo_data/UC_relative_abundance_metagenomics.csv
 /GMrepo_data/UC_metadata_metagenomics.csv
 /models
-/baseline_models
-/age_models
-/bmi_models
-/age-bmi_models
+/GMrepo_results/baseline_models
+/GMrepo_results/age_models
+/GMrepo_results/bmi_models
+/GMrepo_results/age-bmi_models
+/MetaCardis_data
