@@ -106,3 +106,6 @@ Final Evaluation on Test Data:
 Average Accuracy: 0.6889 ± 0.0588
 Average AUC: 0.7848 ± 0.0804
 Average F1 Score: 0.8542 ± 0.0295
+
+***oct 7***
+Try a new dataset name MetaCardis. The information about the labels find in the supplementry table 1 of following paper: https://www.nature.com/articles/s41586-021-04177-9#Sec15
