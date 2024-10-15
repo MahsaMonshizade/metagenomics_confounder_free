@@ -12,4 +12,11 @@
 /GMrepo_results/age_models
 /GMrepo_results/bmi_models
 /GMrepo_results/age-bmi_models
-/MetaCardis_data
+/MetaCardis_data/T2D_abundance.csv
+/MetaCardis_data/T2D_metadata.csv
+/MetaCardis_data/test_T2D_abundance.csv
+/MetaCardis_data/test_T2D_metadata.csv
+/MetaCardis_data/train_T2D_abundance.csv
+/MetaCardis_data/metadata
+/MetaCardis_data/input_features
+/MetaCardis_data/preprocessing.ipynb

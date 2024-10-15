@@ -42,7 +42,7 @@ class GAN(nn.Module):
         self.drug_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
 
         # self.drug_classification_loss = nn.BCEWithLogitsLoss()
-        self.distiller_loss = CorrelationCoefficientLoss()
+        self.distiller_loss = nn.MSELoss()
 
         self.initialize_weights()
 
@@ -163,6 +163,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 # Get next batch from disease_loader
                 
                 training_feature_disease_batch, metadata_disease_batch_drug = next(disease_iter)
+                metadata_disease_batch_drug_zero_point_five = torch.full_like(metadata_disease_batch_drug, 0.5)
+
                
 
                 # ----------------------------
@@ -184,18 +186,18 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 pred_drug = torch.sigmoid(predicted_drug)
                 # print("pred_drug")
                 # print(pred_drug)
-                g_loss = model.distiller_loss(metadata_disease_batch_drug, predicted_drug)
+                g_loss = model.distiller_loss(metadata_disease_batch_drug_zero_point_five, predicted_drug)
                 g_loss.backward()
 
-                print("Gradients for encoder distiller layers:")
-                for name, param in model.encoder.named_parameters():
-                    if param.grad is not None:
-                        print(f"{name}: {param.grad.norm()}")
+                # print("Gradients for encoder distiller layers:")
+                # for name, param in model.encoder.named_parameters():
+                #     if param.grad is not None:
+                #         print(f"{name}: {param.grad.norm()}")
 
-                print("Gradients for drug classifier distiller layers:")
-                for name, param in model.drug_classifier.named_parameters():
-                    if param.grad is not None:
-                        print(f"{name}: {param.grad.norm()}")
+                # print("Gradients for drug classifier distiller layers:")
+                # for name, param in model.drug_classifier.named_parameters():
+                #     if param.grad is not None:
+                #         print(f"{name}: {param.grad.norm()}")
 
                 optimizer_distiller.step()
 
