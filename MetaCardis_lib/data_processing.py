@@ -28,7 +28,7 @@ def load_and_transform_data(file_path):
 
 def preprocess_metadata(metadata):
     """Convert categorical metadata into numeric features."""
-    disease_dict = {8: 0, 3: 1}
+    disease_dict = {0: 0, 1: 1}
     metadata = metadata.copy()
     metadata['disease_numeric'] = metadata['PATGROUPFINAL_C'].map(disease_dict)
     return metadata
@@ -44,7 +44,7 @@ def create_batch(relative_abundance, metadata, batch_size, is_test=False, device
 
     # Sample metadata
     metadata_feature_batch = metadata.groupby('disease_numeric').apply(
-        lambda x: x.sample(n=num_samples_per_group[x.name], random_state=42)
+        lambda x: x.sample(n=num_samples_per_group[x.name])
     ).reset_index(drop=True)
 
     # Sample relative abundance

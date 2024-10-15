@@ -109,3 +109,28 @@ Average F1 Score: 0.8542 ± 0.0295
 
 ***oct 7***
 Try a new dataset name MetaCardis. The information about the labels find in the supplementry table 1 of following paper: https://www.nature.com/articles/s41586-021-04177-9#Sec15
+
+
+*** oct 9 *** 
+Final Evaluation on Test Data: (confounder_free model)
+Average Accuracy: 0.7460 ± 0.0122
+Average AUC: 0.8443 ± 0.0174
+Average F1 Score: 0.6529 ± 0.0195
+
+Final Evaluation on Test Data (Baseline Model):
+Average Accuracy: 0.7490 ± 0.0255
+Average AUC: 0.8383 ± 0.0088
+Average F1 Score: 0.6506 ± 0.0381
+
+*** oct 15 ***
+fix the gradients claculation for each part of the model
+
+
+
+to Yuhui: check the MetaCardis_lib_new. models.py is the one that just train the distiller. models_main is the one that train GAN.
+
+to run the model you have to run the following: 
+
+```
+python MetaCardis_lib_new/main.py
+```
