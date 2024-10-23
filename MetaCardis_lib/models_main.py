@@ -7,8 +7,8 @@ from torch.optim import lr_scheduler
 from torch.nn import init
 from torch.utils.data import DataLoader
 import numpy as np
-from data_processing import dcor_calculation_data, DiseaseDataset, MixedDataset
-from losses import CorrelationCoefficientLoss, calculate_pearson_correlation
+from data_processing import dcor_calculation_data, DiseaseDataset, MixedDataset, StratifiedBatchSampler
+from losses import CorrelationCoefficientLoss, PearsonCorrelationLoss
 import matplotlib.pyplot as plt
 import json
 import dcor
@@ -39,12 +39,12 @@ class GAN(nn.Module):
         self.num_layers = num_layers
 
         self.encoder = self._build_encoder(input_dim, latent_dim, num_layers, activation_fn)
-        self.drug_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
+        self.drug_classifier = self._build_classifier_adv(latent_dim, activation_fn, num_layers)
         self.disease_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
 
         # self.age_regression_loss = InvCorrelationCoefficientLoss()
-        self.drug_classification_loss = nn.BCEWithLogitsLoss()
-        self.distiller_loss = nn.BCEWithLogitsLoss()
+        self.drug_classification_loss = nn.BCELoss()
+        self.distiller_loss = CorrelationCoefficientLoss()
         self.disease_classifier_loss = nn.BCEWithLogitsLoss()
 
         self.initialize_weights()
@@ -86,6 +86,21 @@ class GAN(nn.Module):
             ])
             current_dim = current_dim // 2
         layers.append(nn.Linear(current_dim, 1))
+        return nn.Sequential(*layers)
+    
+    def _build_classifier_adv(self, latent_dim, activation_fn, num_layers):
+        """Build the disease classifier."""
+        layers = []
+        current_dim = latent_dim
+        for _ in range(num_layers):
+            layers.extend([
+                nn.Linear(current_dim, current_dim // 2),
+                nn.BatchNorm1d(current_dim // 2),
+                activation_fn()
+            ])
+            current_dim = current_dim // 2
+        layers.append(nn.Linear(current_dim, 1))
+        layers.append(nn.Sigmoid())
         return nn.Sequential(*layers)
 
     def initialize_weights(self):
@@ -139,7 +154,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         disease_dataset = DiseaseDataset(X_clr_df_train, train_metadata, device)
         mixed_dataset = MixedDataset(X_clr_df_train, train_metadata, device)
 
-        disease_loader = DataLoader(disease_dataset, batch_size=batch_size, shuffle=True)
+        # Use the custom StratifiedBatchSampler for disease_loader
+        labels = disease_dataset.labels
+        batch_sampler = StratifiedBatchSampler(labels, batch_size)
+        disease_loader = DataLoader(disease_dataset, batch_sampler=batch_sampler)
+
         mixed_loader = DataLoader(mixed_dataset, batch_size=batch_size, shuffle=True)
 
         # Initialize iterators
@@ -180,9 +199,12 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                     training_feature_disease_batch, metadata_disease_batch_drug = next(disease_iter)
 
                 # Get next batch from mixed_loader
+                metadata_disease_batch_drug_zero_point_five = torch.full_like(metadata_disease_batch_drug, 0.5)
                 training_feature_batch, metadata_batch_disease = next(mixed_iter)
                 # print(f"batch_{i}")
                 # print(metadata_disease_batch_drug)
+
+               
                 # ----------------------------
                 # Train drug classification (r_loss)
                 # ----------------------------
@@ -232,7 +254,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 # pred_drug = torch.sigmoid(predicted_drug)
                 # print("pred_drug")
                 # print(pred_drug)
-                g_loss = -1 * model.distiller_loss(metadata_disease_batch_drug, predicted_drug)
+                # g_loss =  model.distiller_loss(metadata_disease_batch_drug, predicted_drug)
+                print("hi")
+                print(predicted_drug)
+                print(metadata_disease_batch_drug)
+                g_loss = model.distiller_loss(predicted_drug, metadata_disease_batch_drug)
                 g_loss.backward()
 
                 # print("Gradients for encoder distiller layers:")
@@ -250,7 +276,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
 
                 model.drug_classifier.requires_grad_(True)
 
-                # ----------------------------
+
+                 # ----------------------------
                 # Train encoder & classifier (c_loss)
                 # ----------------------------
                 optimizer.zero_grad()
@@ -270,6 +297,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 #         print(f"{name}: {param.grad.norm()}")
                 optimizer.step()
 
+
                 # Store the batch losses
                 epoch_r_loss += r_loss.item()
                 epoch_g_loss += g_loss.item()
@@ -279,6 +307,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float()
                 epoch_train_preds.append(pred_tag.cpu())
                 epoch_train_labels.append(metadata_batch_disease.cpu())
+
+                
 
             # Compute average losses over the epoch
             epoch_r_loss /= num_batches
@@ -344,9 +374,9 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             else:
                 early_stop_patience += 1
 
-            if early_stop_patience == early_stop_step:
-                print("Early stopping triggered.")
-                break
+            # if early_stop_patience == early_stop_step:
+            #     print("Early stopping triggered.")
+            #     break
 
             # Print epoch statistics
             print(f"Epoch {epoch + 1}/{epochs}, "

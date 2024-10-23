@@ -5,31 +5,19 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.nn import init
+from torch.utils.data import DataLoader
 import numpy as np
-from data_processing import create_batch, dcor_calculation_data
-from losses import CorrelationCoefficientLoss
+from data_processing import dcor_calculation_data, DiseaseDataset, MixedDataset, StratifiedBatchSampler
+from losses import CorrelationCoefficientLoss, PearsonCorrelationLoss
 import matplotlib.pyplot as plt
 import json
 import dcor
 from sklearn.metrics import balanced_accuracy_score, roc_auc_score, f1_score
-from sklearn.feature_selection import mutual_info_regression
+from sklearn.feature_selection import mutual_info_classif
 from sklearn.model_selection import StratifiedKFold
 from scipy.stats import pearsonr
+from itertools import cycle
 
-from torch.autograd import Function
-
-class GradientReversalFunction(Function):
-    @staticmethod
-    def forward(ctx, x, alpha=1.0):
-        ctx.alpha = alpha
-        return x.view_as(x)
-    
-    @staticmethod
-    def backward(ctx, grad_output):
-        return -ctx.alpha * grad_output, None
-
-def grad_reverse(x, alpha=1.0):
-    return GradientReversalFunction.apply(x, alpha)
 
 def previous_power_of_two(n):
     """Return the greatest power of two less than or equal to n."""
@@ -52,12 +40,9 @@ class GAN(nn.Module):
 
         self.encoder = self._build_encoder(input_dim, latent_dim, num_layers, activation_fn)
         self.drug_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
-        self.disease_classifier = self._build_classifier(latent_dim, activation_fn, num_layers)
 
         # self.age_regression_loss = InvCorrelationCoefficientLoss()
-        self.drug_classification_loss = nn.BCEWithLogitsLoss()
-        self.distiller_loss = CorrelationCoefficientLoss()
-        self.disease_classifier_loss = nn.BCEWithLogitsLoss()
+        self.drug_classification_loss = CorrelationCoefficientLoss()
 
         self.initialize_weights()
 
@@ -98,13 +83,14 @@ class GAN(nn.Module):
             ])
             current_dim = current_dim // 2
         layers.append(nn.Linear(current_dim, 1))
+        layers.append(nn.Sigmoid())
         return nn.Sequential(*layers)
 
     def initialize_weights(self):
         """Initialize weights using Kaiming initialization for layers with ReLU activation."""
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                init.kaiming_normal_(m.weight, nonlinearity='relu')
+                init.kaiming_normal_(m.weight, nonlinearity='leaky_relu')
                 if m.bias is not None:
                     init.zeros_(m.bias)
             elif isinstance(m, nn.BatchNorm1d):
@@ -112,7 +98,7 @@ class GAN(nn.Module):
                 init.zeros_(m.bias)
 
 
-def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r=0.001, lr_g=0.001, lr_c=0.005):
+def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r=0.001, lr_g=0.0002, lr_c=0.0001):
     """Train the GAN model using K-Fold cross-validation."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -130,16 +116,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         model.initialize_weights()
         model.to(device)
 
-        # Initialize optimizers and schedulers
-        optimizer = optim.Adam(
-            list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=lr_c
-        )
-        optimizer_distiller = optim.Adam(model.encoder.parameters(), lr=lr_g)
-        # optimizer_regression_age = optim.Adam(model.age_regressor.parameters(), lr=lr_r)
-        optimizer_classification_drug = optim.Adam(model.drug_classifier.parameters(), lr=lr_r)
+        # Initialize optimizers
+        
+        optimizer_classification_drug = optim.Adam( model.encoder.parameters(), lr=lr_r)
 
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
-        scheduler_distiller = lr_scheduler.ReduceLROnPlateau(optimizer_distiller, mode='min', factor=0.5, patience=5)
+        # Initialize schedulers
         scheduler_classification_drug = lr_scheduler.ReduceLROnPlateau(optimizer_classification_drug, mode='min', factor=0.5, patience=5)
 
         X_clr_df_train = relative_abundance.iloc[train_index].reset_index(drop=True)
@@ -147,10 +128,25 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         train_metadata = metadata.iloc[train_index].reset_index(drop=True)
         val_metadata = metadata.iloc[val_index].reset_index(drop=True)
 
-        print(val_metadata)
+        # Create datasets and DataLoaders
+        disease_dataset = DiseaseDataset(X_clr_df_train, train_metadata, device)
+        mixed_dataset = MixedDataset(X_clr_df_train, train_metadata, device)
 
-        # best_loss = float('inf')
-        best_disease_acc = 0
+        # Use the custom StratifiedBatchSampler for disease_loader
+        labels = disease_dataset.labels
+        batch_sampler = StratifiedBatchSampler(labels, batch_size)
+        disease_loader = DataLoader(disease_dataset, batch_sampler=batch_sampler)
+
+        # disease_loader = DataLoader(disease_dataset, batch_size=batch_size, shuffle=True)
+        mixed_loader = DataLoader(mixed_dataset, batch_size=batch_size, shuffle=True)
+
+        # Initialize iterators
+        disease_iter = iter(disease_loader)
+
+        # Determine the number of batches per epoch
+        num_batches = len(mixed_loader)
+
+        best_eval_acc = 0  # Changed variable name for clarity
         early_stop_step = 20
         early_stop_patience = 0
 
@@ -159,161 +155,220 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             X_clr_df_train, train_metadata, device
         )
 
-        # Lists to store losses
+        # Lists to store losses and metrics per epoch
+        train_disease_accs, val_disease_accs = [], []
+        train_disease_aucs, val_disease_aucs = [], []
+        train_disease_f1s, val_disease_f1s = [], []
         r_losses, g_losses, c_losses = [], [], []
         dcs0, dcs1, mis0, mis1 = [], [], [], []
-        train_disease_accs, val_disease_accs, train_disease_aucs, val_disease_aucs, train_disease_f1s, val_disease_f1s = [], [], [], [], [], []
 
         for epoch in range(epochs):
-            # Create batches
-            (training_feature_disease_batch, metadata_disease_batch_drug,
-             training_feature_batch, metadata_batch_disease) = create_batch(
-                X_clr_df_train, train_metadata, batch_size, False, device
-            )
+            model.train()
+            # Reset iterators and accumulators
+            mixed_iter = iter(mixed_loader)
+            epoch_r_loss, epoch_g_loss, epoch_c_loss = 0, 0, 0
+            epoch_train_preds, epoch_train_labels = [], []
 
-            # ----------------------------
-            # Train drug classification (r_loss)
-            # ----------------------------
-            optimizer_classification_drug.zero_grad()
-            for param in model.encoder.parameters():
-                param.requires_grad = False
+            for i in range(num_batches):
+                # Get next batch from disease_loader
+                try:
+                    training_feature_disease_batch, metadata_disease_batch_drug = next(disease_iter)
+                except StopIteration:
+                    disease_iter = iter(disease_loader)
+                    training_feature_disease_batch, metadata_disease_batch_drug = next(disease_iter)
 
-            encoded_features = model.encoder(training_feature_disease_batch)
-            drug_prediction = model.drug_classifier(encoded_features).view(-1)
-            r_loss = model.drug_classification_loss(metadata_disease_batch_drug, drug_prediction)
-            r_loss.backward()
-            optimizer_classification_drug.step()
-            scheduler_classification_drug.step(r_loss)
+                # Get next batch from mixed_loader
+                metadata_disease_batch_drug_zero_point_five = torch.full_like(metadata_disease_batch_drug, 0.5)
+                training_feature_batch, metadata_batch_disease = next(mixed_iter)
+                # print(f"batch_{i}")
+                # print(metadata_disease_batch_drug)
+                # ----------------------------
+                # Train drug classification (r_loss)
+                # ----------------------------
+                optimizer_classification_drug.zero_grad()
+                # Manually zero out the encoder's gradients
+                # for param in model.encoder.parameters():
+                #     param.grad = None  # or param.grad.detach_().zero_()
 
-            for param in model.encoder.parameters():
-                param.requires_grad = True
+                # model.encoder.requires_grad_(False)
+
+                # with torch.no_grad():
+                 # Manually zero out the drug_classifier's gradients
+                for param in model.drug_classifier.parameters():
+                    param.grad = None  # or param.grad.detach_().zero_()
+
+                model.drug_classifier.requires_grad_(False)
+                encoded_features = model.encoder(training_feature_disease_batch)
+                drug_prediction = model.drug_classifier(encoded_features).view(-1)
+                # drug_pred = torch.sigmoid(drug_prediction)
+                r_loss = model.drug_classification_loss(drug_prediction, metadata_disease_batch_drug)
+                r_loss.backward()
+
+                print("Gradients for encoder layers:")
+                for name, param in model.encoder.named_parameters():
+                    if param.grad is not None:
+                        print(f"{name}: {param.grad.norm()}")
+
+                print("Gradients for drug classifier layers:")
+                for name, param in model.drug_classifier.named_parameters():
+                    if param.grad is not None:
+                        print(f"{name}: {param.grad.norm()}")
+                        
+                optimizer_classification_drug.step()
+
+                # model.encoder.requires_grad_(True)
+                
+
+                # Store the batch losses
+                epoch_r_loss += r_loss.item()
+                
+
+                # Collect predictions and labels for epoch metrics
+                pred_tag = (drug_prediction > 0.5).float()
+                epoch_train_preds.append(pred_tag.cpu())
+                epoch_train_labels.append(metadata_disease_batch_drug.cpu())
+
+            # Compute average losses over the epoch
+            epoch_r_loss /= num_batches
+
+             # Store the losses
+            r_losses.append(epoch_r_loss)
 
 
-            # ----------------------------
-            # Train distiller (g_loss)
-            # ----------------------------
-            optimizer_distiller.zero_grad()
-            for param in model.drug_classifier.parameters():
-                param.requires_grad = False
+            # Compute training metrics for the epoch
+            epoch_train_preds = torch.cat(epoch_train_preds)
+            epoch_train_labels = torch.cat(epoch_train_labels)
 
-            # encoder_features = model.encoder(training_feature_disease_batch)
-            # # Pass through gradient reversal layer before the drug classifier
-            # reversed_encoder_features= grad_reverse(encoder_features, 1.0)
-            # predicted_drug = model.drug_classifier(reversed_encoder_features).view(-1)
-            encoder_features = model.encoder(training_feature_disease_batch)
-            predicted_drug = model.drug_classifier(encoder_features).view(-1)
-            g_loss = model.distiller_loss(metadata_disease_batch_drug, predicted_drug)
-            g_loss.backward()
-            optimizer_distiller.step()
-            scheduler_distiller.step(g_loss)
+            train_disease_acc = balanced_accuracy_score(epoch_train_labels, epoch_train_preds)
+            train_disease_auc = calculate_auc(epoch_train_labels.view(-1, 1), epoch_train_preds)
+            train_disease_f1 = f1_score(epoch_train_labels, epoch_train_preds)
 
-            for param in model.drug_classifier.parameters():
-                param.requires_grad = True
+            train_disease_accs.append(train_disease_acc)
+            train_disease_aucs.append(train_disease_auc)
+            train_disease_f1s.append(train_disease_f1)
 
-            # ----------------------------
-            # Train encoder & classifier (c_loss)
-            # ----------------------------
-            optimizer.zero_grad()
-            encoded_feature_batch = model.encoder(training_feature_batch)
-            prediction_scores = model.disease_classifier(encoded_feature_batch).view(-1)
-            print(prediction_scores)
-            print(metadata_batch_disease)
-            c_loss = model.disease_classifier_loss(prediction_scores, metadata_batch_disease)
-            c_loss.backward()
-            pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float()
-            disease_acc = balanced_accuracy_score(metadata_batch_disease.cpu(), pred_tag.cpu())
-            disease_auc = calculate_auc(metadata_batch_disease.cpu().view(-1,1), prediction_scores.cpu())
-            disease_f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
-            optimizer.step()
-            scheduler.step(disease_acc)
-
-            # Store the losses
-            r_losses.append(r_loss.item())
-            g_losses.append(g_loss.item())
-            c_losses.append(c_loss.item())
-
-            train_disease_accs.append(disease_acc)
-            train_disease_aucs.append(disease_auc)
-            train_disease_f1s.append(disease_f1)
-
-
-            # Early stopping check (optional)
-            if disease_acc > best_disease_acc:
-                best_disease_acc = disease_acc
-                early_stop_patience = 0
-            else:
-                early_stop_patience += 1
-            # Uncomment the early stopping if needed
-            if early_stop_patience == early_stop_step:
-                print("Early stopping triggered.")
-                break
+            # Step schedulers per epoch
+            scheduler_classification_drug.step(epoch_r_loss)
 
             # Analyze distance correlation and learned features
             with torch.no_grad():
                 feature0 = model.encoder(training_feature_ctrl)
+                # predicted_ctrl_drug = model.drug_classifier(feature0)
+                # predicted_ctrl_drug = torch.sigmoid(predicted_ctrl_drug)
                 dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_drug)
-                mi_ctrl = mutual_info_regression(feature0.cpu().numpy(), metadata_ctrl_drug)
-
+                mi_ctrl = mutual_info_classif(feature0.cpu().numpy(), metadata_ctrl_drug, discrete_features=False, random_state=42)
+                # mi_ctrl = pearsonr(metadata_ctrl_drug, predicted_ctrl_drug.cpu().numpy())
 
                 feature1 = model.encoder(training_feature_disease)
+                # predicted_disease_drug = model.drug_classifier(feature1)
+                # predicted_disease_drug = torch.sigmoid(predicted_disease_drug)
+                # print(metadata_disease_drug.numpy().dtype)
+                # print(predicted_disease_drug.cpu().numpy().dtype)
                 dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_drug)
-                mi_disease = mutual_info_regression(feature1.cpu().numpy(), metadata_disease_drug)
-
+                mi_disease = mutual_info_classif(feature1.cpu().numpy(), metadata_disease_drug, discrete_features=False, random_state=42)
+                # mi_disease = pearsonr(metadata_disease_drug.numpy(), predicted_disease_drug.cpu().numpy())
             dcs0.append(dc0)
             dcs1.append(dc1)
-            mis0.append(mi_ctrl.mean())
-            mis1.append(mi_disease.mean())
+            mis0.append(mi_ctrl)
+            mis1.append(mi_disease)
 
-            print(f"Epoch {epoch + 1}/{epochs}, r_loss: {r_loss.item():.4f}, "
-                  f"g_loss: {g_loss.item():.4f}, c_loss: {c_loss.item():.4f}, "
-                  f"disease_acc: {disease_acc:.4f}, dc0: {dc0:.4f}, dc1: {dc1:.4f}")
+            # Evaluate on validation data
+            # eval_accuracy, eval_auc, eval_f1 = evaluate(
+            #     model, X_clr_df_val, val_metadata, batch_size, 'eval', device
+            # )
+            # val_disease_accs.append(eval_accuracy)
+            # val_disease_aucs.append(eval_auc)
+            # val_disease_f1s.append(eval_f1)
 
-            # Evaluate
-            eval_accuracy, eval_auc, eval_f1 = evaluate(
-                model, X_clr_df_val, val_metadata, val_metadata.shape[0], 'eval', device
-            )
-            # Optionally, evaluate on training data
-            # _, _ = evaluate(model, X_clr_df_train, train_metadata, train_metadata.shape[0], 'train', device)
-            val_disease_accs.append(eval_accuracy)
-            val_disease_aucs.append(eval_auc)
-            val_disease_f1s.append(eval_f1)
+            # # Early stopping check based on validation accuracy
+            # if eval_accuracy > best_eval_acc:
+            #     best_eval_acc = eval_accuracy
+            #     early_stop_patience = 0
+            # else:
+            #     early_stop_patience += 1
+
+            # if early_stop_patience == early_stop_step:
+            #     print("Early stopping triggered.")
+            #     break
+
+            # Print epoch statistics
+            print(f"Epoch {epoch + 1}/{epochs}, "
+                  f"r_loss: {epoch_r_loss:.4f} "
+                  f"train_acc: {train_disease_acc:.4f}, "
+                  f"dc0: {dc0:.4f}, dc1: {dc1:.4f}")
 
         # Save models
         torch.save(model.encoder.state_dict(), f'models/encoder_fold{fold}.pth')
-        torch.save(model.disease_classifier.state_dict(), f'models/disease_classifier_fold{fold}.pth')
+        # torch.save(model.disease_classifier.state_dict(), f'models/disease_classifier_fold{fold}.pth')
         print(f'Encoder saved to models/encoder_fold{fold}.pth.')
         print(f'Classifier saved to models/disease_classifier_fold{fold}.pth.')
 
-        all_eval_accuracies.append(eval_accuracy)
-        all_eval_aucs.append(eval_auc)
-        all_eval_f1s.append(eval_f1)
-        plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, fold)
+        # all_eval_accuracies.append(eval_accuracy)
+        # all_eval_aucs.append(eval_auc)
+        # all_eval_f1s.append(eval_f1)
 
-    avg_eval_accuracy = np.mean(all_eval_accuracies)
-    avg_eval_auc = np.mean(all_eval_aucs)
-    save_eval_results(all_eval_accuracies, all_eval_aucs, all_eval_f1s)
-    return avg_eval_accuracy, avg_eval_auc
+        # Plotting losses and metrics
+        plot_losses(
+            r_losses, dcs0, dcs1, mis0, mis1,
+            train_disease_accs, train_disease_aucs, train_disease_f1s,
+            fold
+        )
+
+    # avg_eval_accuracy = np.mean(all_eval_accuracies)
+    # avg_eval_auc = np.mean(all_eval_aucs)
+    # save_eval_results(all_eval_accuracies, all_eval_aucs, all_eval_f1s)
+    # return avg_eval_accuracy, avg_eval_auc
+
 
 def evaluate(model, relative_abundance, metadata, batch_size, t, device):
-    """Evaluate the trained GAN model."""
+    """Evaluate the trained GAN model using MixedDataset."""
     model.to(device)
+    model.eval()  # Set the model to evaluation mode
 
-    feature_batch, metadata_batch_disease = create_batch(
-        relative_abundance, metadata, batch_size, is_test=True, device=device
-    )
+    # Create the MixedDataset and DataLoader for evaluation
+    eval_dataset = MixedDataset(relative_abundance, metadata, device)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
+
+    all_preds = []
+    all_labels = []
+    all_scores = []
+
     with torch.no_grad():
-        encoded_feature_batch = model.encoder(feature_batch)
-        prediction_scores = model.disease_classifier(encoded_feature_batch).view(-1)
+        for feature_batch, metadata_batch_disease in eval_loader:
+            feature_batch = feature_batch.to(device)
+            metadata_batch_disease = metadata_batch_disease.to(device)
 
-    pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float().cpu()
-    disease_acc = balanced_accuracy_score(metadata_batch_disease.cpu(), pred_tag.cpu())
-    c_loss = model.disease_classifier_loss(prediction_scores.cpu(), metadata_batch_disease.cpu())
+            # Forward pass
+            encoded_feature_batch = model.encoder(feature_batch)
+            prediction_scores = model.disease_classifier(encoded_feature_batch).view(-1)
+            pred_tag = (torch.sigmoid(prediction_scores) > 0.5).float()
 
-    auc = calculate_auc(metadata_batch_disease.cpu(), prediction_scores.cpu())
-    f1 = f1_score(metadata_batch_disease.cpu(), pred_tag.cpu())
+            # Collect predictions and labels
+            all_preds.append(pred_tag)
+            all_labels.append(metadata_batch_disease)
+            all_scores.append(prediction_scores)
 
-    print(f"{t} result --> Accuracy: {disease_acc:.4f}, Loss: {c_loss.item():.4f}, AUC: {auc}, F1: {f1:.4f}")
+    # Concatenate all batches
+    all_preds = torch.cat(all_preds)
+    all_labels = torch.cat(all_labels)
+    all_scores = torch.cat(all_scores)
+
+    # Compute loss
+    c_loss = model.disease_classifier_loss(all_scores, all_labels)
+
+    # Move data to CPU for metric computations
+    all_preds_cpu = all_preds.cpu()
+    all_labels_cpu = all_labels.cpu()
+    all_scores_cpu = all_scores.cpu()
+
+    # Compute evaluation metrics
+    disease_acc = balanced_accuracy_score(all_labels_cpu, all_preds_cpu)
+    auc = calculate_auc(all_labels_cpu.view(-1, 1), all_scores_cpu)
+    f1 = f1_score(all_labels_cpu, all_preds_cpu)
+
+    print(f"{t} result --> Accuracy: {disease_acc:.4f}, Loss: {c_loss.item():.4f}, AUC: {auc:.4f}, F1: {f1:.4f}")
     return disease_acc, auc, f1
+
 
 def calculate_auc(metadata_batch_disease, prediction_scores):
     """Calculate AUC."""
@@ -324,11 +379,11 @@ def calculate_auc(metadata_batch_disease, prediction_scores):
         print("Cannot compute ROC AUC as only one class is present.")
         return None
 
-def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, fold):
+def plot_losses(r_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, fold):
     """Plot training losses and save the figures."""
-    plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_drug_gloss_fold{fold}.png')
+  
     plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_drug_rloss_fold{fold}.png')
-    plot_single_loss(c_losses, 'c_loss', 'blue', f'confounder_free_drug_closs_fold{fold}.png')
+    
     plot_single_loss(dcs0, 'dc0', 'orange', f'confounder_free_drug_dc0_fold{fold}.png')
     plot_single_loss(dcs1, 'dc1', 'orange', f'confounder_free_drug_dc1_fold{fold}.png')
     plot_single_loss(mis0, 'mi0', 'purple', f'confounder_free_drug_mi0_fold{fold}.png')
@@ -336,10 +391,7 @@ def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_dise
     plot_single_loss(train_disease_accs, 'train_disease_acc', 'red', f'confounder_free_drug_train_disease_acc_fold{fold}.png')
     plot_single_loss(train_disease_aucs, 'train_disease_auc', 'red', f'confounder_free_drug_train_disease_auc_fold{fold}.png')
     plot_single_loss(train_disease_f1s, 'train_disease_f1', 'red', f'confounder_free_drug_train_disease_f1_fold{fold}.png')
-    plot_single_loss(val_disease_accs, 'val_disease_acc', 'red', f'confounder_free_drug_val_disease_acc_fold{fold}.png')
-    plot_single_loss(val_disease_aucs, 'val_disease_auc', 'red', f'confounder_free_drug_val_disease_auc_fold{fold}.png')
-    plot_single_loss(val_disease_f1s, 'val_disease_f1', 'red', f'confounder_free_drug_val_disease_f1_fold{fold}.png')
-    
+   
     
 
 def plot_single_loss(values, label, color, filename):

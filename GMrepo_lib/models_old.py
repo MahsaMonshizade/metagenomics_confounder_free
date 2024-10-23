@@ -258,9 +258,9 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             else:
                 early_stop_patience += 1
             # Uncomment the early stopping if needed
-            if early_stop_patience == early_stop_step:
-                print("Early stopping triggered.")
-                break
+            # if early_stop_patience == early_stop_step:
+            #     print("Early stopping triggered.")
+            #     break
 
             # Analyze distance correlation and learned features
             with torch.no_grad():

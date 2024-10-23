@@ -134,3 +134,10 @@ to run the model you have to run the following:
 ```
 python MetaCardis_lib_new/main.py
 ```
+***oct 23 ***
+
+The problem for g_loss not converging was small batch size and the distribution of confounder labels in each epoch which I tried to fix it. (though the batch size is the same)
+
+Still distance correlation goes higher we have to fix that
+
+for Y.H: You can find the codes in MetaCardis_Lib and demo code in test.ipynb

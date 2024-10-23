@@ -3,11 +3,11 @@
 import os
 import pandas as pd
 from data_processing import set_seed, load_and_transform_data
-from models import GAN, train_model
+from models_main import GAN, train_model
 
 def main():
     """Main function to run the GAN training."""
-    set_seed(42)
+    set_seed(1)
 
     # Create directories if they don't exist
     os.makedirs('models', exist_ok=True)
