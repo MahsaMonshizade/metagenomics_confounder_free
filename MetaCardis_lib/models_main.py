@@ -217,8 +217,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
 
                 with torch.no_grad():
                     encoded_features = model.encoder(training_feature_disease_batch)
-                drug_prediction = model.drug_classifier(encoded_features).view(-1)
-                r_loss = model.drug_classification_loss(drug_prediction, metadata_disease_batch_drug)
+                drug_prediction = model.drug_classifier(encoded_features)
+                print("drug drug drug")
+                print(drug_prediction.shape)
+                print(metadata_disease_batch_drug.shape)
+                r_loss = model.drug_classification_loss(drug_prediction, metadata_disease_batch_drug.unsqueeze(1))
                 r_loss.backward()
 
                 # print("Gradients for encoder layers:")
@@ -248,7 +251,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 
                 encoded_features = model.encoder(training_feature_disease_batch)
               
-                predicted_drug = model.drug_classifier(encoded_features).view(-1)
+                predicted_drug = model.drug_classifier(encoded_features)
                 # print("predicted_drug")
                 # print(predicted_drug)
                 # pred_drug = torch.sigmoid(predicted_drug)
@@ -256,9 +259,9 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 # print(pred_drug)
                 # g_loss =  model.distiller_loss(metadata_disease_batch_drug, predicted_drug)
                 print("hi")
-                print(predicted_drug)
-                print(metadata_disease_batch_drug)
-                g_loss = model.distiller_loss(predicted_drug, metadata_disease_batch_drug)
+                print(predicted_drug.shape)
+                print(metadata_disease_batch_drug.shape)
+                g_loss = model.distiller_loss(predicted_drug, metadata_disease_batch_drug.unsqueeze(1))
                 g_loss.backward()
 
                 # print("Gradients for encoder distiller layers:")
@@ -282,8 +285,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 # ----------------------------
                 optimizer.zero_grad()
                 encoded_feature_batch = model.encoder(training_feature_batch)
-                prediction_scores = model.disease_classifier(encoded_feature_batch).view(-1)
-                c_loss = model.disease_classifier_loss(prediction_scores, metadata_batch_disease)
+                prediction_scores = model.disease_classifier(encoded_feature_batch)
+                print("prediction_scores")
+                print(prediction_scores.shape)
+                print(metadata_batch_disease.shape)
+                c_loss = model.disease_classifier_loss(prediction_scores, metadata_batch_disease.unsqueeze(1))
                 c_loss.backward()
 
                 # print("Gradients for encoder classifier layers:")
