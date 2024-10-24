@@ -235,8 +235,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 #         print(f"{name}: {param.grad.norm()}")
                         
                 optimizer_classification_drug.step()
+                for param in model.encoder.parameters():
+                    param.requires_grad = True
 
                 model.encoder.requires_grad_(True)
+
 
                 # ----------------------------
                 # Train distiller (g_loss)
@@ -276,7 +279,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
 
                 optimizer_distiller.step()
 
-
+                for param in model.drug_classifier.parameters():
+                    param.requires_grad = True
                 model.drug_classifier.requires_grad_(True)
 
 
