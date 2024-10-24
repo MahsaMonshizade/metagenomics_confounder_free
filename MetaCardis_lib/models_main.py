@@ -56,20 +56,20 @@ class GAN(nn.Module):
         layers.extend([
             nn.Linear(input_dim, first_layer),
             nn.BatchNorm1d(first_layer),
-            activation_fn()
+            nn.ReLU()
         ])
         current_dim = first_layer
         for _ in range(num_layers):
             layers.extend([
                 nn.Linear(current_dim, current_dim // 2),
                 nn.BatchNorm1d(current_dim // 2),
-                activation_fn()
+                nn.ReLU()
             ])
             current_dim = current_dim // 2
         layers.extend([
             nn.Linear(current_dim, latent_dim),
             nn.BatchNorm1d(latent_dim),
-            activation_fn()
+            nn.ReLU()
         ])
         return nn.Sequential(*layers)
 
@@ -82,7 +82,7 @@ class GAN(nn.Module):
             layers.extend([
                 nn.Linear(current_dim, current_dim // 2),
                 nn.BatchNorm1d(current_dim // 2),
-                activation_fn()
+                nn.Tanh()
             ])
             current_dim = current_dim // 2
         layers.append(nn.Linear(current_dim, 1))
@@ -96,7 +96,7 @@ class GAN(nn.Module):
             layers.extend([
                 nn.Linear(current_dim, current_dim // 2),
                 nn.BatchNorm1d(current_dim // 2),
-                activation_fn()
+                nn.Tanh()
             ])
             current_dim = current_dim // 2
         layers.append(nn.Linear(current_dim, 1))
