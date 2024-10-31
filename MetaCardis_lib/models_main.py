@@ -182,8 +182,11 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         train_disease_f1s, val_disease_f1s = [], []
         r_losses, g_losses, c_losses = [], [], []
         dcs0, dcs1, mis0, mis1 = [], [], [], []
+        dcor_history = []
 
         for epoch in range(epochs):
+            hidden_activations_list = []
+            targets_list = []
             model.train()
             # Reset iterators and accumulators
             mixed_iter = iter(mixed_loader)
@@ -283,6 +286,8 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                     param.requires_grad = True
                 model.drug_classifier.requires_grad_(True)
 
+                hidden_activations_list.append(encoded_features.detach().cpu())
+                targets_list.append(metadata_disease_batch_drug.unsqueeze(1).detach().cpu())
 
                  # ----------------------------
                 # Train encoder & classifier (c_loss)
@@ -347,11 +352,22 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
             scheduler_distiller.step(epoch_g_loss)
             scheduler_classification_drug.step(epoch_r_loss)
 
+            hidden_activations_all = torch.cat(hidden_activations_list, dim=0)
+            targets_all = torch.cat(targets_list, dim=0)
+        
+            # Compute distance correlation between hidden activations and targets
+            hidden_activations_np = hidden_activations_all.numpy()
+            targets_np = targets_all.numpy()
+            
+            dcor_value = dcor.distance_correlation_sqr(hidden_activations_np, targets_np)
+            dcor_history.append(dcor_value)
+
             # Analyze distance correlation and learned features
             with torch.no_grad():
                 feature0 = model.encoder(training_feature_ctrl)
                 # predicted_ctrl_drug = model.drug_classifier(feature0)
                 # predicted_ctrl_drug = torch.sigmoid(predicted_ctrl_drug)
+                
                 dc0 = dcor.u_distance_correlation_sqr(feature0.cpu().numpy(), metadata_ctrl_drug)
                 mi_ctrl = mutual_info_classif(feature0.cpu().numpy(), metadata_ctrl_drug, discrete_features=False, random_state=42)
                 # mi_ctrl = pearsonr(metadata_ctrl_drug, predicted_ctrl_drug.cpu().numpy())
@@ -361,7 +377,17 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
                 # predicted_disease_drug = torch.sigmoid(predicted_disease_drug)
                 # print(metadata_disease_drug.numpy().dtype)
                 # print(predicted_disease_drug.cpu().numpy().dtype)
-                dc1 = dcor.u_distance_correlation_sqr(feature1.cpu().numpy(), metadata_disease_drug)
+                feature11 = feature1.cpu().numpy()
+                metadata_disease_drug1 =metadata_disease_drug.unsqueeze(1).numpy()
+                
+                print("dcor")
+                print(feature11)
+                print(metadata_disease_drug1)
+                print(feature11.shape)
+                print(metadata_disease_drug1.shape)
+                print(type(feature11))
+                print(type(metadata_disease_drug1))
+                dc1 = dcor.u_distance_correlation_sqr(feature11, metadata_disease_drug1)
                 mi_disease = mutual_info_classif(feature1.cpu().numpy(), metadata_disease_drug, discrete_features=False, random_state=42)
                 # mi_disease = pearsonr(metadata_disease_drug.numpy(), predicted_disease_drug.cpu().numpy())
             dcs0.append(dc0)
@@ -408,7 +434,7 @@ def train_model(model, epochs, relative_abundance, metadata, batch_size=64, lr_r
         plot_losses(
             r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1,
             train_disease_accs, train_disease_aucs, train_disease_f1s,
-            val_disease_accs, val_disease_aucs, val_disease_f1s, fold
+            val_disease_accs, val_disease_aucs, val_disease_f1s, dcor_history, fold
         )
 
     avg_eval_accuracy = np.mean(all_eval_accuracies)
@@ -476,7 +502,7 @@ def calculate_auc(metadata_batch_disease, prediction_scores):
         print("Cannot compute ROC AUC as only one class is present.")
         return None
 
-def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, fold):
+def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_disease_accs, train_disease_aucs, train_disease_f1s, val_disease_accs, val_disease_aucs, val_disease_f1s, dcor_history, fold):
     """Plot training losses and save the figures."""
     plot_single_loss(g_losses, 'g_loss', 'green', f'confounder_free_drug_gloss_fold{fold}.png')
     plot_single_loss(r_losses, 'r_loss', 'red', f'confounder_free_drug_rloss_fold{fold}.png')
@@ -491,6 +517,7 @@ def plot_losses(r_losses, g_losses, c_losses, dcs0, dcs1, mis0, mis1, train_dise
     plot_single_loss(val_disease_accs, 'val_disease_acc', 'red', f'confounder_free_drug_val_disease_acc_fold{fold}.png')
     plot_single_loss(val_disease_aucs, 'val_disease_auc', 'red', f'confounder_free_drug_val_disease_auc_fold{fold}.png')
     plot_single_loss(val_disease_f1s, 'val_disease_f1', 'red', f'confounder_free_drug_val_disease_f1_fold{fold}.png')
+    plot_single_loss(dcor_history, 'dcor_values', 'red', f'dcor_value_fold{fold}.png')
     
     
 
