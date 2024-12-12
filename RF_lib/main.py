@@ -21,7 +21,7 @@ def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
 
 def main():
     # Ensure plots directory exists
-    os.makedirs('plots', exist_ok=True)
+    os.makedirs('Results/RF_plots', exist_ok=True)
     
     # Parameters
     n_splits = 5
@@ -137,15 +137,15 @@ def main():
         # Plot confusion matrices for this fold
         plot_confusion_matrix(train_conf_matrix, 
                               title=f'Train Confusion Matrix - Fold {fold+1}', 
-                              save_path=f'plots/fold_{fold+1}_train_conf_matrix.png',
+                              save_path=f'Results/RF_plots/fold_{fold+1}_train_conf_matrix.png',
                               class_names=['Class 0', 'Class 1'])
         plot_confusion_matrix(val_conf_matrix, 
                               title=f'Validation Confusion Matrix - Fold {fold+1}', 
-                              save_path=f'plots/fold_{fold+1}_val_conf_matrix.png',
+                              save_path=f'Results/RF_plots/fold_{fold+1}_val_conf_matrix.png',
                               class_names=['Class 0', 'Class 1'])
         plot_confusion_matrix(test_conf_matrix, 
                               title=f'Test Confusion Matrix - Fold {fold+1}', 
-                              save_path=f'plots/fold_{fold+1}_test_conf_matrix.png',
+                              save_path=f'Results/RF_plots/fold_{fold+1}_test_conf_matrix.png',
                               class_names=['Class 0', 'Class 1'])
 
     # Compute average metrics across folds
@@ -185,17 +185,17 @@ def main():
     # Plot average confusion matrices
     plot_confusion_matrix(avg_train_cm, 
                           title='Average Train Confusion Matrix', 
-                          save_path='plots/average_train_conf_matrix.png',
+                          save_path='Results/RF_plots/average_train_conf_matrix.png',
                           class_names=['Class 0', 'Class 1'])
 
     plot_confusion_matrix(avg_val_cm, 
                           title='Average Validation Confusion Matrix', 
-                          save_path='plots/average_val_conf_matrix.png',
+                          save_path='Results/RF_plots/average_val_conf_matrix.png',
                           class_names=['Class 0', 'Class 1'])
 
     plot_confusion_matrix(avg_test_cm, 
                           title='Average Test Confusion Matrix', 
-                          save_path='plots/average_test_conf_matrix.png',
+                          save_path='Results/RF_plots/average_test_conf_matrix.png',
                           class_names=['Class 0', 'Class 1'])
 
     # Save all metrics to a CSV file
@@ -245,7 +245,7 @@ def main():
     })
 
     df_metrics = pd.DataFrame(fold_data)
-    df_metrics.to_csv('plots/fold_metrics.csv', index=False)
+    df_metrics.to_csv('Results/RF_plots/fold_metrics.csv', index=False)
 
 if __name__ == "__main__":
     main()

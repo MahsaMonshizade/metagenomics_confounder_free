@@ -14,12 +14,19 @@ class MaskedLinear(nn.Module):
         else:
             self.register_parameter('bias', None)
         self.reset_parameters()
+
+        if self.bias is not None:
+            self.bias.register_hook(self._zero_bias_grad)
                 
     def reset_parameters(self):
         nn.init.xavier_uniform_(self.weight)
         if self.bias is not None:
             nn.init.zeros_(self.bias)
         self.weight.data *= self.mask  # Apply mask to initial weights
+
+    def _zero_bias_grad(self, grad):
+        # Hook function to zero out the bias gradient
+        return torch.zeros_like(grad)
         
     def forward(self, input):
         masked_weight = self.weight * self.mask  # Apply mask to weights

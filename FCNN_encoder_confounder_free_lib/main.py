@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -32,6 +33,8 @@ def main():
     learning_rate = 0.0001
     num_epochs = 100
     batch_size = 64
+
+    os.makedirs('Results/FCNN_encoder_confounder_free_plots', exist_ok=True)
 
     train_abundance_path = 'MetaCardis_data/new_train_T2D_abundance_with_taxon_ids.csv'
     train_metadata_path = 'MetaCardis_data/train_T2D_metadata.csv'
@@ -140,17 +143,17 @@ def main():
         # Plot confusion matrices for the final epoch of this fold
         plot_confusion_matrix(Results['train']['confusion_matrix'][-1], 
                       title=f'Train Confusion Matrix - Fold {fold+1}', 
-                      save_path=f'plots/fold_{fold+1}_train_conf_matrix.png',
+                      save_path=f'Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png',
                       class_names=['Class 0', 'Class 1'])
 
         plot_confusion_matrix(Results['val']['confusion_matrix'][-1], 
                       title=f'Validation Confusion Matrix - Fold {fold+1}', 
-                      save_path=f'plots/fold_{fold+1}_val_conf_matrix.png',
+                      save_path=f'Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png',
                       class_names=['Class 0', 'Class 1'])
 
         plot_confusion_matrix(Results['test']['confusion_matrix'][-1], 
                       title=f'Test Confusion Matrix - Fold {fold+1}', 
-                      save_path=f'plots/fold_{fold+1}_test_conf_matrix.png',
+                      save_path=f'Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png',
                       class_names=['Class 0', 'Class 1'])
         
         num_epochs_actual = len(Results['train']['gloss_history'])
@@ -230,7 +233,7 @@ def main():
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig(f'plots/fold_{fold+1}_metrics.png')
+        plt.savefig(f'Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_metrics.png')
         plt.close()
 
     num_epochs_actual = len(train_metrics_per_fold[0]['gloss_history'])
@@ -352,7 +355,7 @@ def main():
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig('plots/average_metrics.png')
+    plt.savefig('Results/FCNN_encoder_confounder_free_plots/average_metrics.png')
     plt.close()
 
     # Print average of the final epoch's test accuracy across folds
@@ -370,21 +373,79 @@ def main():
     # Plot average confusion matrices
     plot_confusion_matrix(train_avg_metrics['confusion_matrix'][-1], 
                         title='Average Train Confusion Matrix', 
-                        save_path='plots/average_train_conf_matrix.png',
+                        save_path='Results/FCNN_encoder_confounder_free_plots/average_train_conf_matrix.png',
                         class_names=['Class 0', 'Class 1'])
 
     plot_confusion_matrix(val_avg_metrics['confusion_matrix'][-1], 
                         title='Average Validation Confusion Matrix', 
-                        save_path='plots/average_val_conf_matrix.png',
+                        save_path='Results/FCNN_encoder_confounder_free_plots/average_val_conf_matrix.png',
                         class_names=['Class 0', 'Class 1'])
 
     plot_confusion_matrix(test_avg_metrics['confusion_matrix'][-1], 
                         title='Average Test Confusion Matrix', 
-                        save_path='plots/average_test_conf_matrix.png',
+                        save_path='Results/FCNN_encoder_confounder_free_plots/average_test_conf_matrix.png',
                         class_names=['Class 0', 'Class 1'])
     
     avg_test_accs = test_avg_metrics['accuracy'][-1]
     print(f"Average Test Accuracy over {n_splits} folds: {avg_test_accs:.4f}")
+
+     # Create DataFrame to store metrics for each fold
+    metrics_columns = ['Fold', 'Train_Accuracy', 'Val_Accuracy', 'Test_Accuracy',
+                    'Train_F1', 'Val_F1', 'Test_F1', 
+                    'Train_AUCPR', 'Val_AUCPR', 'Test_AUCPR',
+                    'Train_precision', 'Val_precision', 'Test_precision',
+                    'Train_recall', 'Val_recall', 'Test_recall']
+
+    metrics_data = []
+
+    for i in range(n_splits):
+        metrics_data.append([
+            i + 1,
+            train_metrics_per_fold[i]['accuracy'][-1],
+            val_metrics_per_fold[i]['accuracy'][-1],
+            test_metrics_per_fold[i]['accuracy'][-1],
+            train_metrics_per_fold[i]['f1_score'][-1],
+            val_metrics_per_fold[i]['f1_score'][-1],
+            test_metrics_per_fold[i]['f1_score'][-1],
+            train_metrics_per_fold[i]['auc_pr'][-1],
+            val_metrics_per_fold[i]['auc_pr'][-1],
+            test_metrics_per_fold[i]['auc_pr'][-1],
+             train_metrics_per_fold[i]['precision'][-1],
+            val_metrics_per_fold[i]['precision'][-1],
+            test_metrics_per_fold[i]['precision'][-1],
+             train_metrics_per_fold[i]['recall'][-1],
+            val_metrics_per_fold[i]['recall'][-1],
+            test_metrics_per_fold[i]['recall'][-1],
+        ])
+
+    # Add average metrics to the table
+    metrics_data.append([
+        'Average',
+        train_avg_metrics['accuracy'][-1],
+        val_avg_metrics['accuracy'][-1],
+        test_avg_metrics['accuracy'][-1],
+        train_avg_metrics['f1_score'][-1],
+        val_avg_metrics['f1_score'][-1],
+        test_avg_metrics['f1_score'][-1],
+        train_avg_metrics['auc_pr'][-1],
+        val_avg_metrics['auc_pr'][-1],
+        test_avg_metrics['auc_pr'][-1],
+        train_avg_metrics['precision'][-1],
+        val_avg_metrics['precision'][-1],
+        test_avg_metrics['precision'][-1],
+        train_avg_metrics['recall'][-1],
+        val_avg_metrics['recall'][-1],
+        test_avg_metrics['recall'][-1],
+    ])
+
+    # Create a DataFrame
+    metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
+
+    # Save to CSV
+    metrics_df.to_csv('Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv', index=False)
+
+    print("Metrics for each fold and their average have been saved to 'Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+
 
 if __name__ == "__main__":
     main()
