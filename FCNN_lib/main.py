@@ -14,7 +14,7 @@ from utils import create_stratified_dataloader
 from train import train_model
 
 # Check if GPU is available
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
 # Function to plot confusion matrix
 def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
@@ -106,6 +106,10 @@ def main():
             criterion_disease_classifier, optimizer_disease_classifier,
             device
         )
+
+        torch.save(model.state_dict(), f"Results/FCNN_plots/trained_model{fold+1}.pth")
+        pd.Series(feature_columns).to_csv("Results/FCNN_plots/feature_columns.csv", index=False)
+        print("Model and feature columns saved.")
 
         # Store metrics for this fold
         train_metrics_per_fold.append(Results['train'])

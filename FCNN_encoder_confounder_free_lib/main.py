@@ -3,10 +3,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
+from torch.optim.lr_scheduler import StepLR
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import ConfusionMatrixDisplay
+
 
 from data_utils import get_data
 from models import GAN, PearsonCorrelationLoss
@@ -118,13 +120,15 @@ def main():
         # Define model, loss, and optimizer
         model = GAN(input_size, latent_dim=latent_dim, num_layers=num_layers).to(device)
         criterion = PearsonCorrelationLoss().to(device)
-        optimizer = optim.Adam(model.encoder.parameters(), lr=0.002)
+        optimizer = optim.AdamW(model.encoder.parameters(), lr=0.002)
         criterion_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_drug).to(device)
-        optimizer_classifier = optim.Adam(model.classifier.parameters(), lr=0.002)
+        optimizer_classifier = optim.AdamW(model.classifier.parameters(), lr=0.002)
         criterion_disease_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_disease).to(device)
-        optimizer_disease_classifier = optim.Adam(
+        optimizer_disease_classifier = optim.AdamW(
             list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=learning_rate
         )
+
+        # scheduler = StepLR(optimizer_disease_classifier, step_size=30, gamma=0.8)
 
         # Train the model
         Results = train_model(
@@ -133,6 +137,10 @@ def main():
             criterion_classifier, optimizer_classifier, criterion_disease_classifier, optimizer_disease_classifier,
             device
         )
+
+        torch.save(model.state_dict(), f"Results/FCNN_encoder_confounder_free_plots/trained_model{fold+1}.pth")
+        pd.Series(feature_columns).to_csv("Results/FCNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
+        print("Model and feature columns saved.")
 
         # Store metrics for this fold
         train_metrics_per_fold.append(Results['train'])

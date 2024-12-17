@@ -55,6 +55,7 @@ def train_model(
     criterion_classifier = criterion_classifier.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
 
+
     for epoch in range(num_epochs):
         model.train()
 
@@ -69,6 +70,7 @@ def train_model(
         data_iter = iter(data_loader)
         data_all_iter = iter(data_all_loader)
 
+        
         while True:
             try:
                 x_all_batch, y_all_batch = next(data_all_iter)
@@ -158,6 +160,7 @@ def train_model(
         dcor_value = dcor.distance_correlation_sqr(hidden_activations_all.numpy(), targets_all.numpy())
         results['train']['dcor_history'].append(dcor_value)
 
+
         # Validation
         model.eval()
         epoch_val_loss = 0
@@ -214,6 +217,7 @@ def train_model(
 
         val_conf_matrix = confusion_matrix(epoch_val_labels, epoch_val_preds)
         results['val']['confusion_matrix'].append(val_conf_matrix)
+
 
         # Test
         epoch_test_loss = 0
@@ -283,5 +287,6 @@ def train_model(
                 f'Test Loss: {avg_test_loss:.4f}, Test Acc: {test_acc:.4f}, '
                 f'Test F1: {test_f1:.4f}, Test DCor: {test_dcor_value:.4f}'
             )
+        
 
     return results

@@ -65,6 +65,7 @@ class GAN(nn.Module):
     def _build_classifier(self, latent_dim, num_layers):
         """Build the classifier network."""
         layers = []
+        # current_dim = latent_dim
         current_dim = latent_dim
         for _ in range(num_layers):
             layers.extend([
