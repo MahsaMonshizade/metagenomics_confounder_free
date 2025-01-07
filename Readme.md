@@ -10,9 +10,9 @@ Here, we provide descriptions of different libraries included in this repository
 
 - **`lib`**:  
   This library can be ignored.
-
-- **`MicrokPNN_encoder_confounder_free_lib`**:  
-  Code implementing a GAN-based approach for confounder-free modeling. The encoder part is similar to MicroKPNN.
+ 
+- **`MicrokPNN_encoder_confounder_free_lib`**:  This is our model
+  Code implementing a GAN-based approach for confounder-free modeling. The encoder part is similar to MicroKPNN. (the first layer of encoder is MicroKPNN and the rest is fully connected)
 
 - **`MicroKPNN_lib`**:  
   MicroKPNN implementation without the confounder-free component.
