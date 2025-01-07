@@ -69,15 +69,15 @@ class GAN(nn.Module):
     """
     GAN model with encoder, classifier, and disease_classifier.
     """
-    def __init__(self, mask, num_layers=1):
+    def __init__(self, mask, num_layers=1, latent_dim = 64):
         super(GAN, self).__init__()
 
-        self.latent_dim = mask.shape[0]
-        self.encoder = self._build_encoder(mask)
+        self.latent_dim = latent_dim
+        self.encoder = self._build_encoder(mask, latent_dim, num_layers)
         self.classifier = self._build_classifier(self.latent_dim, num_layers)
         self.disease_classifier = self._build_classifier(self.latent_dim, num_layers)
 
-    def _build_encoder(self, mask):
+    def _build_encoder(self, mask, latent_dim, num_layers):
         """Build the encoder network."""
         layers = []
         in_size = mask.shape[1]
@@ -88,6 +88,27 @@ class GAN(nn.Module):
             
         # Add ReLU activation for all layers except the last one
         layers.append(nn.BatchNorm1d(out_size))
+        layers.append(nn.ReLU())
+
+        first_layer = previous_power_of_two(out_size)
+        # layers.extend([
+        #     nn.Linear(out_size, first_layer//2),
+        #     nn.BatchNorm1d(first_layer//2),
+        #     nn.ReLU()
+        # ])
+        current_dim = first_layer
+        for _ in range(num_layers):
+            layers.extend([
+                nn.Linear(out_size, current_dim // 2),
+                nn.BatchNorm1d(current_dim // 2),
+                nn.ReLU()
+            ])
+            current_dim = current_dim // 2
+        layers.extend([
+            nn.Linear(current_dim, latent_dim),
+            nn.BatchNorm1d(latent_dim),
+            nn.ReLU()
+        ])
 
         # Return the model as an nn.Sequential container
         return nn.Sequential(*layers)

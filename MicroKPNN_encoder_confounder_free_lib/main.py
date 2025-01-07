@@ -167,6 +167,10 @@ def main():
             device
         )
 
+        torch.save(model.state_dict(), f"Results/MicroKPNN_encoder_confounder_free_plots/trained_model{fold+1}.pth")
+        pd.Series(feature_columns).to_csv("Results/MicroKPNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
+        print("Model and feature columns saved.")
+
         # Store metrics for this fold
         train_metrics_per_fold.append(Results['train'])
         val_metrics_per_fold.append(Results['val'])

@@ -125,7 +125,7 @@ def main():
         optimizer_classifier = optim.AdamW(model.classifier.parameters(), lr=0.002)
         criterion_disease_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_disease).to(device)
         optimizer_disease_classifier = optim.AdamW(
-            list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=learning_rate
+            list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=0.0001
         )
 
         # scheduler = StepLR(optimizer_disease_classifier, step_size=30, gamma=0.8)
