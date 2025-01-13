@@ -29,3 +29,11 @@ Here, we provide descriptions of different libraries included in this repository
   ```plaintext
   miniconda3/envs/confounder_free/lib/python3.8/site-packages/sklearn/metrics/_classification.py:1469: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 due to no predicted samples. Use `zero_division` parameter to control this behavior.
     _warn_prf(average, modifier, msg_start, len(result))
+
+    How to run:
+
+    first make a directory name Results
+    then Run following: 
+    ```
+    python MicroKPNN_encoder_confounder_free_lib/main.py
+    ```
