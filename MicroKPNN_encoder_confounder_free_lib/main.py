@@ -47,32 +47,34 @@ def main():
     species = relative_abundance.columns.values.tolist()
     # Build masks for each pair of consecutive ranks
     def build_mask(edge_list, species):
-        # generate the mask
+    # generate the mask
         edge_df = pd.read_csv(edge_list)
         
-
         edge_df['parent'] = edge_df['parent'].astype(str)
-        parent_nodes = list(set(edge_df['parent'].tolist()))
+        parent_nodes = sorted(set(edge_df['parent'].tolist()))  # Sort to ensure consistent order
         mask = torch.zeros(len(species), len(parent_nodes))
-        child_nodes = species 
-		
-        # parent_nodes.sort()
+        child_nodes = species
+
         parent_dict = {k: i for i, k in enumerate(parent_nodes)}
-        # child_nodes.sort()
         child_dict = {k: i for i, k in enumerate(child_nodes)}
-				
+        
         for i, row in edge_df.iterrows():
             if row['child'] != 'Unnamed: 0': 
                 mask[child_dict[str(row['child'])]][parent_dict[row['parent']]] = 1
 
-        return mask.T
+        return mask.T, parent_dict
     
 
     # Build masks
     
-    mask = build_mask(edge_list, species)
+    mask, parent_dict = build_mask(edge_list, species)
     print(mask.shape)
     print(mask)
+
+    # Save parent_dict to a CSV
+    parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
+    parent_dict_csv_path = "Results/MicroKPNN_encoder_confounder_free_plots/parent_dict_main.csv"
+    parent_df.to_csv(parent_dict_csv_path, index=False)
 
     # Load merged data
     merged_data_all = get_data(train_abundance_path, train_metadata_path)
