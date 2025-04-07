@@ -1,0 +1,2 @@
+Folder,Train_Accuracy,Val_Accuracy,Test_Accuracy,Train_F1,Val_F1,Test_F1,Train_AUCPR,Val_AUCPR,Test_AUCPR,Train_precision,Val_precision,Test_precision,Train_recall,Val_recall,Test_recall
+Results/MicroKPNN_encoder_confounder_free_plots,0.9423 ± 0.0004,0.7045 ± 0.0014,0.7417 ± 0.0001,0.9401 ± 0.0005,0.7054 ± 0.0022,0.6381 ± 0.0001,0.9963 ± 0.0000,0.9046 ± 0.0005,0.6504 ± 0.0019,0.9983 ± 0.0000,0.9067 ± 0.0010,0.5590 ± 0.0011,0.8889 ± 0.0015,0.5798 ± 0.0038,0.7500 ± 0.0039

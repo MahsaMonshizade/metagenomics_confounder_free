@@ -82,6 +82,7 @@ def train_model(
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
                 # Train drug classification (r_loss)
+                model.zero_grad()
                 for param in model.encoder.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
@@ -89,11 +90,22 @@ def train_model(
                 r_loss = criterion_classifier(predicted_drug, y_batch)
                 optimizer_classifier.zero_grad()
                 r_loss.backward()
+                # Print gradient of your classifier parameters
+                print("1st step")
+                for name, param in model.classifier.named_parameters():
+                    if param.grad is not None:
+                        print(f"[Drug Classifier] {name} grad mean: {param.grad.mean().item():.6f}")
+
+                for name, param in model.encoder.named_parameters():
+                    if param.grad is not None:
+                        print(f"[encoder] {name} grad mean: {param.grad.mean().item():.6f}")
+
                 optimizer_classifier.step()
                 for param in model.encoder.parameters():
                     param.requires_grad = True
 
                 # Train distiller (g_loss)
+                model.zero_grad()
                 for param in model.classifier.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
@@ -103,21 +115,48 @@ def train_model(
                 targets_list.append(y_batch.detach().cpu())
                 optimizer.zero_grad()
                 g_loss.backward()
+                print("2nd step")
+                for name, param in model.classifier.named_parameters():
+                    if param.grad is not None:
+                        print(f"[Drug Classifier] {name} grad mean: {param.grad.mean().item():.6f}")
+
+                for name, param in model.encoder.named_parameters():
+                    if param.grad is not None:
+                        print(f"[encoder] {name} grad mean: {param.grad.mean().item():.6f}")
+
                 optimizer.step()
                 epoch_gloss += g_loss.item()
                 for param in model.classifier.parameters():
                     param.requires_grad = True
 
                 # Train encoder & disease classifier (c_loss)
+                model.zero_grad()
                 encoded_features_all = model.encoder(x_all_batch)
                 predicted_disease_all = model.disease_classifier(encoded_features_all)
                 c_loss = criterion_disease_classifier(predicted_disease_all, y_all_batch)
                 optimizer_disease_classifier.zero_grad()
                 c_loss.backward()
+                print("3rd step")
+                for name, param in model.classifier.named_parameters():
+                    if param.grad is not None:
+                        print(f"[Drug Classifier] {name} grad mean: {param.grad.mean().item():.6f}")
+
+                for name, param in model.encoder.named_parameters():
+                    if param.grad is not None:
+                        print(f"[encoder] {name} grad mean: {param.grad.mean().item():.6f}")
+
+                for name, param in model.disease_classifier.named_parameters():
+                    if param.grad is not None:
+                        print(f"[Disease Classifier] {name} grad mean: {param.grad.mean().item():.6f}")
+
                 optimizer_disease_classifier.step()
                 epoch_train_loss += c_loss.item()
                 pred_prob = torch.sigmoid(predicted_disease_all).detach().cpu()
                 epoch_train_probs.extend(pred_prob)
+                # print("actuall_label")
+                # print(y_all_batch)
+                # print("predicted _label")
+                # print(pred_prob)
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_train_preds.append(pred_tag.cpu())
                 epoch_train_labels.append(y_all_batch.cpu())
@@ -176,6 +215,10 @@ def train_model(
                 epoch_val_loss += c_loss.item()
                 pred_prob = torch.sigmoid(predicted_disease).detach().cpu()
                 epoch_val_probs.extend(pred_prob)
+                # print("actuall_label")
+                # print(y_batch)
+                # print("predicted _label")
+                # print(pred_prob)
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_val_preds.append(pred_tag.cpu())
                 epoch_val_labels.append(y_batch.cpu())

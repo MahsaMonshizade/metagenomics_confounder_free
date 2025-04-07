@@ -12,9 +12,11 @@ from data_utils import get_data
 from models import GAN, PearsonCorrelationLoss
 from utils import create_stratified_dataloader
 from train import train_model
+import pickle
 
 # Check if GPU is available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 # Function to plot confusion matrix
 def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
@@ -28,7 +30,7 @@ def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
 def main():
     # Hyperparameters
     input_size = 371  # 654 features
-    latent_dim = 32
+    latent_dim = 64
     num_layers = 1
     learning_rate = 0.0001
     num_epochs = 100
@@ -87,8 +89,10 @@ def main():
     ]
 
     X = merged_data_all[feature_columns].values
-    y_all = merged_data_all['PATGROUPFINAL_C'].values  # Labels for disease classification
-
+    # y_all = merged_data_all['PATGROUPFINAL_C'].values   # Labels for disease classification
+    merged_data_all['combined'] = merged_data_all['PATGROUPFINAL_C'].astype(str) + merged_data_all['METFORMIN_C'].astype(str)
+    y_all = merged_data_all['combined'].values
+    print(set(y_all))
     # Prepare test data
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
     y_test_all = torch.tensor(merged_test_data_all['PATGROUPFINAL_C'].values, dtype=torch.float32).unsqueeze(1)
@@ -118,8 +122,20 @@ def main():
         x_all_train = torch.tensor(train_data[feature_columns].values, dtype=torch.float32)
         y_all_train = torch.tensor(train_data['PATGROUPFINAL_C'].values, dtype=torch.float32).unsqueeze(1)
 
+        train_num_ones = torch.sum(y_all_train == 1).item()
+        train_num_zeros = torch.sum(y_all_train == 0).item()
+
+        print("Train Number of 1s disease:", train_num_ones)
+        print("Train Number of 0s disease:", train_num_zeros)
+
         x_all_val = torch.tensor(val_data[feature_columns].values, dtype=torch.float32)
         y_all_val = torch.tensor(val_data['PATGROUPFINAL_C'].values, dtype=torch.float32).unsqueeze(1)
+
+        val_num_ones = torch.sum(y_all_val == 1).item()
+        val_num_zeros = torch.sum(y_all_val == 0).item()
+
+        print("Val Number of 1s disease:", val_num_ones)
+        print("Val Number of 0s disease:", val_num_zeros)
 
         # Disease group data (patients with PATGROUPFINAL_C == 1)
         train_data_disease = train_data[train_data['PATGROUPFINAL_C'] == 1]
@@ -128,16 +144,67 @@ def main():
         x_disease_train = torch.tensor(train_data_disease[feature_columns].values, dtype=torch.float32)
         y_disease_train = torch.tensor(train_data_disease['METFORMIN_C'].values, dtype=torch.float32).unsqueeze(1)
 
+        train_num_ones_met = torch.sum(y_disease_train == 1).item()
+        train_num_zeros_met = torch.sum(y_disease_train == 0).item()
+
+        print("Train Number of 1s Metformin:", train_num_ones_met)
+        print("Train Number of Metformin:", train_num_zeros_met)
+
         x_disease_val = torch.tensor(val_data_disease[feature_columns].values, dtype=torch.float32)
         y_disease_val = torch.tensor(val_data_disease['METFORMIN_C'].values, dtype=torch.float32).unsqueeze(1)
+
+        val_num_ones_met = torch.sum(y_disease_val == 1).item()
+        val_num_zeros_met = torch.sum(y_disease_val == 0).item()
+
+        print("Val Number of 1s Metformin:", val_num_ones_met)
+        print("Val Number of 0s Metformin:", val_num_zeros_met)
 
         # Create stratified DataLoaders
         data_loader = create_stratified_dataloader(x_disease_train, y_disease_train, batch_size)
         data_all_loader = create_stratified_dataloader(x_all_train, y_all_train, batch_size)
+        # Example: Check distribution in data_all_loader
+    #     for batch_idx, (x_batch, y_batch) in enumerate(data_all_loader):
+    #         y_batch_np = y_batch.numpy().flatten()
+    #         num_positives = sum(y_batch_np)
+    #         num_negatives = len(y_batch_np) - num_positives
+
+    #         print(
+    #             f"Batch train{batch_idx} --> "
+    #             f"Total: {len(y_batch_np)}, "
+    #             f"Positives: {num_positives}, "
+    #             f"Negatives: {num_negatives}"
+    # )
+
         data_val_loader = create_stratified_dataloader(x_disease_val, y_disease_val, batch_size)
         data_all_val_loader = create_stratified_dataloader(x_all_val, y_all_val, batch_size)
+        # Example: Check distribution in data_all_loader
+    #     for batch_idx, (x_batch, y_batch) in enumerate(data_all_val_loader):
+    #         y_batch_np = y_batch.numpy().flatten()
+    #         num_positives = sum(y_batch_np)
+    #         num_negatives = len(y_batch_np) - num_positives
+
+    #         print(
+    #             f"Batch val {batch_idx} --> "
+    #             f"Total: {len(y_batch_np)}, "
+    #             f"Positives: {num_positives}, "
+    #             f"Negatives: {num_negatives}"
+    # )
+
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, batch_size)
         data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, batch_size)
+        # Example: Check distribution in data_all_loader
+    #     for batch_idx, (x_batch, y_batch) in enumerate(data_all_test_loader):
+    #         y_batch_np = y_batch.numpy().flatten()
+    #         num_positives = sum(y_batch_np)
+    #         num_negatives = len(y_batch_np) - num_positives
+
+    #         print(
+    #             f"Batch test {batch_idx} --> "
+    #             f"Total: {len(y_batch_np)}, "
+    #             f"Positives: {num_positives}, "
+    #             f"Negatives: {num_negatives}"
+    # )
+
 
         # Compute positive class weights
         num_pos_disease = y_all_train.sum().item()
@@ -158,7 +225,7 @@ def main():
         optimizer_classifier = optim.Adam(model.classifier.parameters(), lr=0.002)
         criterion_disease_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_disease).to(device)
         optimizer_disease_classifier = optim.Adam(
-            list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=learning_rate
+            list(model.encoder.parameters()) + list(model.disease_classifier.parameters()), lr=0.0001
         )
 
         # Train the model
@@ -210,7 +277,7 @@ def main():
 
         plt.subplot(3, 3, 2)
         plt.plot(epochs, Results['train']['dcor_history'], label=f'Fold train {fold+1}')
-        plt.plot(epochs, Results['val']['dcor_history'], label=f'Fold val {fold+1}')
+        # plt.plot(epochs, Results['val']['dcor_history'], label=f'Fold val {fold+1}')
         plt.plot(epochs, Results['test']['dcor_history'], label=f'Fold test {fold+1}')
         plt.title("Distance Correlation History")
         plt.xlabel("Epoch")
@@ -219,7 +286,7 @@ def main():
 
         plt.subplot(3, 3, 3)
         plt.plot(epochs, Results['train']['loss_history'], label=f'Fold train {fold+1}')
-        plt.plot(epochs, Results['val']['loss_history'], label=f'Fold val {fold+1}')
+        # plt.plot(epochs, Results['val']['loss_history'], label=f'Fold val {fold+1}')
         plt.plot(epochs, Results['test']['loss_history'], label=f'Fold test {fold+1}')
         plt.title("Disease Loss History")
         plt.xlabel("Epoch")
@@ -228,7 +295,7 @@ def main():
 
         plt.subplot(3, 3, 4)
         plt.plot(epochs, Results['train']['accuracy'], label=f'Fold {fold+1} Train')
-        plt.plot(epochs, Results['val']['accuracy'], label=f'Fold {fold+1} Val')
+        # plt.plot(epochs, Results['val']['accuracy'], label=f'Fold {fold+1} Val')
         plt.plot(epochs, Results['test']['accuracy'], label=f'Fold {fold+1} Test')
         plt.title("Accuracy History")
         plt.xlabel("Epoch")
@@ -237,7 +304,7 @@ def main():
 
         plt.subplot(3, 3, 5)
         plt.plot(epochs, Results['train']['f1_score'], label=f'Fold {fold+1} Train')
-        plt.plot(epochs, Results['val']['f1_score'], label=f'Fold {fold+1} Val')
+        # plt.plot(epochs, Results['val']['f1_score'], label=f'Fold {fold+1} Val')
         plt.plot(epochs, Results['test']['f1_score'], label=f'Fold {fold+1} Test')
         plt.title("F1 Score History")
         plt.xlabel("Epoch")
@@ -246,7 +313,7 @@ def main():
 
         plt.subplot(3, 3, 6)
         plt.plot(epochs, Results['train']['auc_pr'], label=f'Fold {fold+1} Train')
-        plt.plot(epochs, Results['val']['auc_pr'], label=f'Fold {fold+1} Val')
+        # plt.plot(epochs, Results['val']['auc_pr'], label=f'Fold {fold+1} Val')
         plt.plot(epochs, Results['test']['auc_pr'], label=f'Fold {fold+1} Test')
         plt.title("AUCPR Score History")
         plt.xlabel("Epoch")
@@ -255,7 +322,7 @@ def main():
 
         plt.subplot(3, 3, 7)
         plt.plot(epochs, Results['train']['precision'], label=f'Fold {fold+1} Train')
-        plt.plot(epochs, Results['val']['precision'], label=f'Fold {fold+1} Val')
+        # plt.plot(epochs, Results['val']['precision'], label=f'Fold {fold+1} Val')
         plt.plot(epochs, Results['test']['precision'], label=f'Fold {fold+1} Test')
         plt.title("Precisions Score History")
         plt.xlabel("Epoch")
@@ -264,7 +331,7 @@ def main():
 
         plt.subplot(3, 3, 8)
         plt.plot(epochs, Results['train']['recall'], label=f'Fold {fold+1} Train')
-        plt.plot(epochs, Results['val']['recall'], label=f'Fold {fold+1} Val')
+        # plt.plot(epochs, Results['val']['recall'], label=f'Fold {fold+1} Val')
         plt.plot(epochs, Results['test']['recall'], label=f'Fold {fold+1} Test')
         plt.title("Recalls Score History")
         plt.xlabel("Epoch")
@@ -281,6 +348,8 @@ def main():
     train_avg_metrics = {key: np.zeros(num_epochs_actual) for key in train_metrics_per_fold[0].keys() if key != 'confusion_matrix'}
     val_avg_metrics = {key: np.zeros(num_epochs_actual) for key in val_metrics_per_fold[0].keys() if key != 'confusion_matrix'}
     test_avg_metrics = { key: np.zeros(num_epochs_actual) for key in test_metrics_per_fold[0].keys() if key != 'confusion_matrix'}
+
+
 
     # Initialize confusion matrix averages separately
     train_conf_matrix_avg = [np.zeros_like(train_metrics_per_fold[0]['confusion_matrix'][0]) for _ in range(num_epochs_actual)]
@@ -320,6 +389,14 @@ def main():
     for key in test_avg_metrics.keys():
         test_avg_metrics[key] /= num_test_folds
 
+    
+    with open('Results/MicroKPNN_encoder_confounder_free_plots/metrics.pkl', 'wb') as f:
+        pickle.dump({
+        'train_avg_metrics': train_avg_metrics,
+        'val_avg_metrics': val_avg_metrics,
+        'test_avg_metrics': test_avg_metrics
+    }, f)
+
     # Plot average metrics across folds
     plt.figure(figsize=(20, 15))
 
@@ -332,7 +409,7 @@ def main():
 
     plt.subplot(3, 3, 2)
     plt.plot(epochs, train_avg_metrics['dcor_history'], label='Average train')
-    plt.plot(epochs, val_avg_metrics['dcor_history'], label='Average val')
+    # plt.plot(epochs, val_avg_metrics['dcor_history'], label='Average val')
     plt.plot(epochs, test_avg_metrics['dcor_history'], label='Average test')
     plt.title("Average Distance Correlation History")
     plt.xlabel("Epoch")
@@ -341,7 +418,7 @@ def main():
 
     plt.subplot(3, 3, 3)
     plt.plot(epochs, train_avg_metrics['loss_history'], label='Average train')
-    plt.plot(epochs, val_avg_metrics['loss_history'], label='Average val')
+    # plt.plot(epochs, val_avg_metrics['loss_history'], label='Average val')
     plt.plot(epochs, test_avg_metrics['loss_history'], label='Average test')
     plt.title("Average Disease Loss History")
     plt.xlabel("Epoch")
@@ -350,7 +427,7 @@ def main():
 
     plt.subplot(3, 3, 4)
     plt.plot(epochs, train_avg_metrics['accuracy'], label='Train Average')
-    plt.plot(epochs, val_avg_metrics['accuracy'], label='Validation Average')
+    # plt.plot(epochs, val_avg_metrics['accuracy'], label='Validation Average')
     plt.plot(epochs, test_avg_metrics['accuracy'], label='Test Average')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
@@ -359,7 +436,7 @@ def main():
 
     plt.subplot(3, 3, 5)
     plt.plot(epochs, train_avg_metrics['f1_score'], label='Train Average')
-    plt.plot(epochs, val_avg_metrics['f1_score'], label='Validation Average')
+    # plt.plot(epochs, val_avg_metrics['f1_score'], label='Validation Average')
     plt.plot(epochs, test_avg_metrics['f1_score'], label='Test Average')
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
@@ -368,7 +445,7 @@ def main():
 
     plt.subplot(3, 3, 6)
     plt.plot(epochs, train_avg_metrics['auc_pr'], label='Train Average')
-    plt.plot(epochs, val_avg_metrics['auc_pr'], label='Validation Average')
+    # plt.plot(epochs, val_avg_metrics['auc_pr'], label='Validation Average')
     plt.plot(epochs, test_avg_metrics['auc_pr'], label='Test Average')
     plt.title("Average AUCPR Score History")
     plt.xlabel("Epoch")
@@ -377,7 +454,7 @@ def main():
 
     plt.subplot(3, 3, 7)
     plt.plot(epochs, train_avg_metrics['precision'], label=f'Fold {fold+1} Train')
-    plt.plot(epochs, val_avg_metrics['precision'], label=f'Fold {fold+1} Val')
+    # plt.plot(epochs, val_avg_metrics['precision'], label=f'Fold {fold+1} Val')
     plt.plot(epochs, test_avg_metrics['precision'], label=f'Fold {fold+1} Test')
     plt.title("Average Precisions Score History")
     plt.xlabel("Epoch")
@@ -386,7 +463,7 @@ def main():
 
     plt.subplot(3, 3, 8)
     plt.plot(epochs, train_avg_metrics['recall'], label=f'Fold {fold+1} Train')
-    plt.plot(epochs, val_avg_metrics['recall'], label=f'Fold {fold+1} Val')
+    # plt.plot(epochs, val_avg_metrics['recall'], label=f'Fold {fold+1} Val')
     plt.plot(epochs, test_avg_metrics['recall'], label=f'Fold {fold+1} Test')
     plt.title("Average Recalls Score History")
     plt.xlabel("Epoch")

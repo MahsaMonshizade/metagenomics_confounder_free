@@ -30,7 +30,7 @@ def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
 def main():
     # Hyperparameters
     input_size = 371  # 654 features
-    latent_dim = 32
+    latent_dim = 64
     num_layers = 1
     learning_rate = 0.0001
     num_epochs = 100

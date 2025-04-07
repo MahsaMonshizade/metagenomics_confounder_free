@@ -28,10 +28,10 @@ def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
 def main():
     # Hyperparameters
     input_size = 371  # 654 features
-    latent_dim = 32
+    latent_dim = 64
     num_layers = 1
     learning_rate = 0.0001
-    num_epochs = 100
+    num_epochs = 200
     batch_size = 64
 
     os.makedirs('Results/FCNN_plots', exist_ok=True)
@@ -52,7 +52,9 @@ def main():
     ]
 
     X = merged_data_all[feature_columns].values
-    y_all = merged_data_all['PATGROUPFINAL_C'].values  # Labels for disease classification
+    # y_all = merged_data_all['PATGROUPFINAL_C'].values  # Labels for disease classification
+    merged_data_all['combined'] = merged_data_all['PATGROUPFINAL_C'].astype(str) + merged_data_all['METFORMIN_C'].astype(str)
+    y_all = merged_data_all['combined'].values
 
     # Prepare test data
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
@@ -83,8 +85,41 @@ def main():
 
         # Create stratified DataLoaders
         data_all_loader = create_stratified_dataloader(x_all_train, y_all_train, batch_size)
+        for batch_idx, (x_batch, y_batch) in enumerate(data_all_loader):
+            y_batch_np = y_batch.numpy().flatten()
+            num_positives = sum(y_batch_np)
+            num_negatives = len(y_batch_np) - num_positives
+
+        print(
+            f"Batch train {batch_idx} --> "
+            f"Total: {len(y_batch_np)}, "
+            f"Positives: {num_positives}, "
+            f"Negatives: {num_negatives}"
+        )
         data_all_val_loader = create_stratified_dataloader(x_all_val, y_all_val, batch_size)
+        for batch_idx, (x_batch, y_batch) in enumerate(data_all_val_loader):
+            y_batch_np = y_batch.numpy().flatten()
+            num_positives = sum(y_batch_np)
+            num_negatives = len(y_batch_np) - num_positives
+
+        print(
+            f"Batch val {batch_idx} --> "
+            f"Total: {len(y_batch_np)}, "
+            f"Positives: {num_positives}, "
+            f"Negatives: {num_negatives}"
+        )
         data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, batch_size)
+        for batch_idx, (x_batch, y_batch) in enumerate(data_all_test_loader):
+            y_batch_np = y_batch.numpy().flatten()
+            num_positives = sum(y_batch_np)
+            num_negatives = len(y_batch_np) - num_positives
+
+        print(
+            f"Batch test {batch_idx} --> "
+            f"Total: {len(y_batch_np)}, "
+            f"Positives: {num_positives}, "
+            f"Negatives: {num_negatives}"
+        )
 
         # Compute positive class weights
         num_pos_disease = y_all_train.sum().item()

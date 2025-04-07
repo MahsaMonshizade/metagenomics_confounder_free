@@ -84,6 +84,7 @@ def train_model(
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
                 # Train drug classification (r_loss)
+                model.zero_grad()
                 for param in model.encoder.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
@@ -96,6 +97,7 @@ def train_model(
                     param.requires_grad = True
 
                 # Train distiller (g_loss)
+                model.zero_grad()
                 for param in model.classifier.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
@@ -111,6 +113,7 @@ def train_model(
                     param.requires_grad = True
 
                 # Train encoder & disease classifier (c_loss)
+                model.zero_grad()
                 encoded_features_all = model.encoder(x_all_batch)
                 predicted_disease_all = model.disease_classifier(encoded_features_all)
                 c_loss = criterion_disease_classifier(predicted_disease_all, y_all_batch)

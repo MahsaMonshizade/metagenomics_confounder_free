@@ -73,7 +73,7 @@ class GAN(nn.Module):
         super(GAN, self).__init__()
 
         self.latent_dim = latent_dim
-        self.encoder = self._build_encoder(mask, latent_dim, num_layers)
+        self.encoder = self._build_encoder(mask, latent_dim, 1)
         self.classifier = self._build_classifier(self.latent_dim, num_layers)
         self.disease_classifier = self._build_classifier(self.latent_dim, num_layers)
 
@@ -89,6 +89,8 @@ class GAN(nn.Module):
         # Add ReLU activation for all layers except the last one
         layers.append(nn.BatchNorm1d(out_size))
         layers.append(nn.ReLU())
+        # layers.append(nn.Tanh())
+        # layers.append(nn.Dropout(p=0.2) )
 
         first_layer = previous_power_of_two(out_size)
         # layers.extend([
@@ -96,18 +98,24 @@ class GAN(nn.Module):
         #     nn.BatchNorm1d(first_layer//2),
         #     nn.ReLU()
         # ])
+        # current_dim = out_size
         current_dim = first_layer
         for _ in range(num_layers):
             layers.extend([
                 nn.Linear(out_size, current_dim // 2),
                 nn.BatchNorm1d(current_dim // 2),
-                nn.ReLU()
+                nn.ReLU(),
+                # nn.Tanh(),
+                # nn.Dropout(p=0.2) 
             ])
             current_dim = current_dim // 2
         layers.extend([
             nn.Linear(current_dim, latent_dim),
             nn.BatchNorm1d(latent_dim),
-            nn.ReLU()
+            nn.ReLU(),
+            # nn.Tanh(),
+            # nn.Dropout(p=0.2)
+            
         ])
 
         # Return the model as an nn.Sequential container
@@ -121,8 +129,10 @@ class GAN(nn.Module):
             layers.extend([
                 nn.Linear(current_dim, current_dim // 2),
                 nn.BatchNorm1d(current_dim // 2),
-                nn.Tanh()
+                nn.Tanh(),
+                # nn.Dropout(p=0.2)
             ])
             current_dim = current_dim // 2
+           
         layers.append(nn.Linear(current_dim, 1))
         return nn.Sequential(*layers)
