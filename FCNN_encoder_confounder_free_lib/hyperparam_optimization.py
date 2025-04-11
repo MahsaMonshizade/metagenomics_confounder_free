@@ -13,66 +13,78 @@ from utils import create_stratified_dataloader
 from train import train_model
 from sklearn.model_selection import StratifiedKFold
 
-# Use the device defined in the configuration.
+# Use the device as specified in the configuration.
 device = torch.device(config["training"].get("device", "cpu"))
 
-def run_trial(trial_config, num_epochs=100):
+def run_trial(trial_config, num_epochs=10):
     """
-    Run a training trial using 5-fold cross-validation and return the average test accuracy.
-    
-    WARNING: This function uses the test dataset for optimization, which biases the final estimates.
+    Run a training trial using 5-fold cross-validation on the training set and return the average validation accuracy.
+
+    This function:
+      - Loads the training data from the paths in config.
+      - Computes the feature columns and thus the input size dynamically.
+      - Uses the column names for disease and confounder as given in config.
+      - Splits the training data into 5 folds.
+      - For each fold, trains the model (using the three-phase training routine) and evaluates the validation performance.
+      - Returns the average validation accuracy (from the 'val' branch) across all folds.
     """
     # Extract configuration sections.
     data_cfg = trial_config["data"]
     train_cfg = trial_config["training"]
     model_cfg = trial_config["model"]
     
-    # Load merged data (using the training files).
+    # Load merged training data.
     merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
     
-    # Define feature columns (excluding metadata and SampleID).
+    # Get column names from config (must exist in the config file).
+    disease_col = data_cfg["disease_column"]
+    confounder_col = data_cfg["confounder_column"]
+    
+    # Determine feature columns (exclude metadata and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()
     feature_columns = [col for col in merged_data_all.columns if col not in metadata_columns and col != "SampleID"]
     
-    # Overall disease classification.
+    # Compute the input size dynamically.
+    input_size = len(feature_columns)
+    print(f"Determined input size: {input_size}")
+    
+    # Overall disease labels.
     X = merged_data_all[feature_columns].values
-    y_all = merged_data_all["disease"].values
+    y_all = merged_data_all[disease_col].values
     
-    # Prepare to aggregate test accuracies over folds.
-    fold_test_accuracies = []
+    # Prepare to aggregate validation accuracies.
+    fold_val_accuracies = []
     
-    # Define the cross-validation splitter.
+    # Set up 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     
-    # Iterate over all folds.
-    for fold, (train_index, test_index) in enumerate(skf.split(X, y_all)):
-        print(f"Running fold {fold+1}")
-        # Create training and test subsets (using the same logic as in main.py).
+    for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
+        print(f"Running fold {fold+1} of 5")
+        # Split into training and validation subsets.
         train_data = merged_data_all.iloc[train_index]
-        test_data = merged_data_all.iloc[test_index]
+        val_data = merged_data_all.iloc[val_index]
         
-        # Overall disease classification training data.
+        # Overall disease training data.
         x_all_train = torch.tensor(train_data[feature_columns].values, dtype=torch.float32)
-        y_all_train = torch.tensor(train_data["disease"].values, dtype=torch.float32).unsqueeze(1)
-        x_all_test = torch.tensor(test_data[feature_columns].values, dtype=torch.float32)
-        y_all_test = torch.tensor(test_data["disease"].values, dtype=torch.float32).unsqueeze(1)
+        y_all_train = torch.tensor(train_data[disease_col].values, dtype=torch.float32).unsqueeze(1)
+        x_all_val = torch.tensor(val_data[feature_columns].values, dtype=torch.float32)
+        y_all_val = torch.tensor(val_data[disease_col].values, dtype=torch.float32).unsqueeze(1)
         
-        # Prepare confounder (drug/sex) classification data: only samples with disease == 1.
-        train_data_disease = train_data[train_data["disease"] == 1]
-        test_data_disease  = test_data[test_data["disease"] == 1]
+        # Confounder (drug/sex) training data: use only samples where disease == 1.
+        train_data_disease = train_data[train_data[disease_col] == 1]
+        val_data_disease = val_data[val_data[disease_col] == 1]
         x_disease_train = torch.tensor(train_data_disease[feature_columns].values, dtype=torch.float32)
-        y_disease_train = torch.tensor(train_data_disease["sex"].values, dtype=torch.float32).unsqueeze(1)
-        x_disease_test  = torch.tensor(test_data_disease[feature_columns].values, dtype=torch.float32)
-        y_disease_test  = torch.tensor(test_data_disease["sex"].values, dtype=torch.float32).unsqueeze(1)
+        y_disease_train = torch.tensor(train_data_disease[confounder_col].values, dtype=torch.float32).unsqueeze(1)
+        x_disease_val = torch.tensor(val_data_disease[feature_columns].values, dtype=torch.float32)
+        y_disease_val = torch.tensor(val_data_disease[confounder_col].values, dtype=torch.float32).unsqueeze(1)
         
         batch_size = train_cfg["batch_size"]
         
-        # Create DataLoaders.
+        # Create stratified DataLoaders.
         data_loader = create_stratified_dataloader(x_disease_train, y_disease_train, batch_size)
         data_all_loader = create_stratified_dataloader(x_all_train, y_all_train, batch_size)
-        # Here, we use test data loaders for evaluation.
-        data_test_loader = create_stratified_dataloader(x_disease_test, y_disease_test, batch_size)
-        data_all_test_loader = create_stratified_dataloader(x_all_test, y_all_test, batch_size)
+        data_val_loader = create_stratified_dataloader(x_disease_val, y_disease_val, batch_size)
+        data_all_val_loader = create_stratified_dataloader(x_all_val, y_all_val, batch_size)
         
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -85,16 +97,16 @@ def run_trial(trial_config, num_epochs=100):
         pos_weight_value_drug = num_neg_drug / num_pos_drug
         pos_weight_drug = torch.tensor([pos_weight_value_drug], dtype=torch.float32).to(device)
         
-        # Build the model using updated hyperparameters.
+        # Build the model.
         model = GAN(
-            input_size=model_cfg["input_size"],
+            input_size=input_size,
             latent_dim=model_cfg["latent_dim"],
-            num_encoder_layers=model_cfg.get("num_encoder_layers", 1),
-            num_classifier_layers=model_cfg.get("num_classifier_layers", 1),
-            dropout_rate=model_cfg.get("dropout_rate", 0.3),
-            norm=model_cfg.get("norm", "batch"),
-            classifier_hidden_dims=model_cfg.get("classifier_hidden_dims", []),
-            activation=model_cfg.get("activation", "relu")
+            num_encoder_layers=model_cfg["num_encoder_layers"],
+            num_classifier_layers=model_cfg["num_classifier_layers"],
+            dropout_rate=model_cfg["dropout_rate"],
+            norm=model_cfg["norm"],
+            classifier_hidden_dims=model_cfg["classifier_hidden_dims"],
+            activation=model_cfg["activation"]
         ).to(device)
         
         # Define loss functions.
@@ -111,36 +123,34 @@ def run_trial(trial_config, num_epochs=100):
         )
         
         # Train the model using the three-phase training routine.
+        # Here, both the confounder branch and disease branch are trained.
         Results = train_model(
             model, criterion, optimizer,
-            data_loader, data_all_loader,
-            data_test_loader, data_all_test_loader,   # Evaluate on test data for this fold.
-            data_test_loader, data_all_test_loader,
-            num_epochs,
+            data_loader, data_all_loader, data_val_loader, data_all_val_loader,
+            data_val_loader, data_all_val_loader, num_epochs,
             criterion_classifier, optimizer_classifier,
             criterion_disease_classifier, optimizer_disease_classifier,
             device
         )
         
-        # Extract the final test accuracy from this fold.
-        fold_test_acc = Results["test"]["accuracy"][-1]
-        print(f"Fold {fold+1} test accuracy: {fold_test_acc:.4f}")
-        fold_test_accuracies.append(fold_test_acc)
+        # Extract the final validation accuracy from this fold.
+        fold_val_acc = Results["val"]["accuracy"][-1]
+        print(f"Fold {fold+1} validation accuracy: {fold_val_acc:.4f}")
+        fold_val_accuracies.append(fold_val_acc)
     
-    # Return the average test accuracy over all folds.
-    avg_test_accuracy = np.mean(fold_test_accuracies)
-    print(f"Average test accuracy over 5 folds: {avg_test_accuracy:.4f}")
-    return avg_test_accuracy
+    # Compute the average validation accuracy over all folds.
+    avg_val_accuracy = np.mean(fold_val_accuracies)
+    print(f"Average validation accuracy over 5 folds: {avg_val_accuracy:.4f}")
+    return avg_val_accuracy
 
 def objective(trial):
     """
     Objective function for Optuna: Suggest discrete hyperparameter values,
-    update the base configuration, run a training trial using all folds,
-    and return the average test accuracy for maximization.
+    update the base configuration, run a training trial using 5-fold cross-validation
+    (evaluating on the validation dataset), and return the average validation accuracy.
     """
     trial_config = copy.deepcopy(config)
     
-    # Set hyperparameters via categorical suggestions.
     trial_config["model"]["num_encoder_layers"] = trial.suggest_categorical("num_encoder_layers", [1, 2, 3])
     trial_config["model"]["num_classifier_layers"] = trial.suggest_categorical("num_classifier_layers", [1, 2, 3])
     trial_config["model"]["dropout_rate"] = trial.suggest_categorical("dropout_rate", [0.0, 0.3, 0.5])
@@ -149,9 +159,9 @@ def objective(trial):
     trial_config["training"]["classifier_lr"] = trial.suggest_categorical("classifier_lr", [1e-5, 1e-4, 5e-4, 1e-3])
     trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
     
-    # Run the trial using a reduced number of epochs for speed.
-    avg_test_accuracy = run_trial(trial_config, num_epochs=10)
-    return avg_test_accuracy
+    # Run the trial with a reduced number of epochs for speed.
+    avg_val_accuracy = run_trial(trial_config, num_epochs=10)
+    return avg_val_accuracy
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
@@ -159,7 +169,7 @@ if __name__ == "__main__":
     
     print("Best trial:")
     best_trial = study.best_trial
-    print("  Final test accuracy:", best_trial.value)
+    print("  Final validation accuracy:", best_trial.value)
     print("  Best hyperparameters:")
     for key, value in best_trial.params.items():
         print(f"    {key}: {value}")

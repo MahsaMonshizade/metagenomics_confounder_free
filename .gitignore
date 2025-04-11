@@ -1,2 +1,7 @@
-/dataset
+/dataset/CRC_data/crc_abundance_PRJEB6070.csv
+/dataset/CRC_data/crc_abundance_PRJNA397219.csv
+/dataset/IBS_data/new_test_filtered.csv
+/dataset/IBS_data/new_train_filtered.csv
+/dataset/MetaCardis_data/new_test_T2D_abundance_with_taxon_ids.csv
+/dataset/MetaCardis_data/new_train_T2D_abundance_with_taxon_ids.csv
 

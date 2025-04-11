@@ -1,33 +1,33 @@
 config = {
-    ### Colorectal cancer data with gender as confounder (we also can use age and bmi as confounder as well) (coming from GMrepo database)
-    "data": {
-        "train_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB6070.csv",
-        "train_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB6070.csv",
-        "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJNA397219.csv",
-        "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJNA397219.csv",
-        "disease_column": "disease",
-        "confounder_column": "sex"
-    },
+    # ### Colorectal cancer data with gender as confounder (we also can use age and bmi as confounder as well) (coming from GMrepo database)
+    # "data": {
+    #     "train_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB6070.csv",
+    #     "train_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB6070.csv",
+    #     "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJNA397219.csv",
+    #     "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJNA397219.csv",
+    #     "disease_column": "disease",
+    #     "confounder_column": "sex"
+    # },
 
     # ### IBS data with gender as confounder (coming from GMrepo database)
     # "data": {
-    #     "train_abundance_path": "dataset/IBS_data/new_train_T2D_abundance_with_taxon_ids.csv",
-    #     "train_metadata_path": "dataset/IBS_data/trian_metadata.csv",
-    #     "test_abundance_path": "dataset/IBS_data/new_test_T2D_abundance_with_taxon_ids.csv",
+    #     "train_abundance_path": "dataset/IBS_data/new_train_filtered.csv",
+    #     "train_metadata_path": "dataset/IBS_data/train_metadata.csv",
+    #     "test_abundance_path": "dataset/IBS_data/new_test_filtered.csv",
     #     "test_metadata_path": "dataset/IBS_data/test_metadata.csv",
     #     "disease_column": "disease",
     #     "confounder_column": "sex"
     # },
 
-    # ### T2D data with metformine as confounder (coming frm Metacardis dataset)
-    # "data": {
-    #     "train_abundance_path": "dataset/MetaCardis_data/new_train_T2D_abundance_with_taxon_ids.csv",
-    #     "train_metadata_path": "dataset/MetaCardis_data/train_T2D_metadata.csv",
-    #     "test_abundance_path": "dataset/MetaCardis_data/new_test_T2D_abundance_with_taxon_ids.csv",
-    #     "test_metadata_path": "dataset/MetaCardis_data/test_T2D_metadata.csv",
-    #     "disease_column": "PATGROUPFINAL_C",
-    #     "confounder_column": "METFORMIN_C"
-    # },
+    ### T2D data with metformine as confounder (coming frm Metacardis dataset)
+    "data": {
+        "train_abundance_path": "dataset/MetaCardis_data/new_train_T2D_abundance_with_taxon_ids.csv",
+        "train_metadata_path": "dataset/MetaCardis_data/train_T2D_metadata.csv",
+        "test_abundance_path": "dataset/MetaCardis_data/new_test_T2D_abundance_with_taxon_ids.csv",
+        "test_metadata_path": "dataset/MetaCardis_data/test_T2D_metadata.csv",
+        "disease_column": "PATGROUPFINAL_C",
+        "confounder_column": "METFORMIN_C"
+    },
     
     "training": {
         "num_epochs": 100,
