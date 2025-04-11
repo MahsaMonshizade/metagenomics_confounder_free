@@ -8,57 +8,64 @@ from sklearn.metrics import (
 
 def train_model(
     model, criterion, optimizer, data_loader, data_all_loader, data_val_loader, data_all_val_loader,
-    data_test_loader, data_all_test_loader, num_epochs, criterion_classifier, optimizer_classifier,
+    data_test_loader, data_all_test_loader, num_epochs, 
+    criterion_classifier, optimizer_classifier, 
     criterion_disease_classifier, optimizer_disease_classifier, device
 ):
     """
-    Train the model with the given data loaders and hyperparameters.
+    Train the model using a three-phase procedure:
+      - Phase 1: Drug/Confounder classification training (r_loss) using data_loader.
+      - Phase 2: Distillation training (g_loss) with PearsonCorrelationLoss.
+      - Phase 3: Disease classification training (c_loss) using data_all_loader.
+      
+    Metrics for training, validation, and test phases are stored.
     """
-
-    # Initialize dictionaries to store training, validation, and test metrics
+    # Initialize results dictionary to store metric histories.
     results = {
-        'train': {
-            'gloss_history': [],
-            'loss_history': [],
-            'dcor_history': [],
-            'accuracy': [],
-            'f1_score': [],
-            'auc_pr': [],
-            'precision': [],
-            'recall': [],
-            'confusion_matrix': []
+        "train": {
+            "gloss_history": [],      # g_loss: distillation phase loss
+            "loss_history": [],       # c_loss: disease classification loss
+            "dcor_history": [],       # Distance correlation measure
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
         },
-        'val': {
-            'loss_history': [],
-            'dcor_history': [],
-            'accuracy': [],
-            'f1_score': [],
-            'auc_pr': [],
-            'precision': [],
-            'recall': [],
-            'confusion_matrix': []
+        "val": {
+            "loss_history": [],
+            "dcor_history": [],
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
         },
-        'test': {
-            'loss_history': [],
-            'dcor_history': [],
-            'accuracy': [],
-            'f1_score': [],
-            'auc_pr': [],
-            'precision': [],
-            'recall': [],
-            'confusion_matrix': []
+        "test": {
+            "loss_history": [],
+            "dcor_history": [],
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
         }
     }
 
+    # Move model and loss functions to device.
     model = model.to(device)
     criterion = criterion.to(device)
     criterion_classifier = criterion_classifier.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
 
-
+    # Begin epoch loop.
     for epoch in range(num_epochs):
-        model.train()
+        model.train()  # Enable training mode
 
+        # Initialize accumulators for training phase metrics.
         epoch_gloss = 0
         epoch_train_loss = 0
         epoch_train_preds = []
@@ -67,24 +74,29 @@ def train_model(
         hidden_activations_list = []
         targets_list = []
 
+        # Create iterators for the two DataLoaders used in Phase 1 and Phase 3.
         data_iter = iter(data_loader)
         data_all_iter = iter(data_all_loader)
 
-        
+        # Loop over batches until data_all_iter is exhausted.
         while True:
             try:
+                # ---- Phase 3: Disease classification batch ----
                 x_all_batch, y_all_batch = next(data_all_iter)
                 x_all_batch, y_all_batch = x_all_batch.to(device), y_all_batch.to(device)
 
+                # ---- Phase 1: Confounder (drug) classification batch ----
                 try:
                     x_batch, y_batch = next(data_iter)
                 except StopIteration:
+                    # Restart the iterator if exhausted.
                     data_iter = iter(data_loader)
                     x_batch, y_batch = next(data_iter)
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
-                # Train drug classification (r_loss)
+                # -------- Phase 1: Train confounder classifier --------
                 model.zero_grad()
+                # Freeze encoder parameters temporarily.
                 for param in model.encoder.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
@@ -93,26 +105,31 @@ def train_model(
                 optimizer_classifier.zero_grad()
                 r_loss.backward()
                 optimizer_classifier.step()
+                # Unfreeze encoder parameters.
                 for param in model.encoder.parameters():
                     param.requires_grad = True
 
-                # Train distiller (g_loss)
+                # -------- Phase 2: Train distillation (alignment) --------
                 model.zero_grad()
+                # Freeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = False
                 encoded_features = model.encoder(x_batch)
+                # Use sigmoid on the classifier output.
                 predicted_drug = torch.sigmoid(model.classifier(encoded_features))
                 g_loss = criterion(predicted_drug, y_batch)
+                # Save hidden activations and targets for computing distance correlation.
                 hidden_activations_list.append(encoded_features.detach().cpu())
                 targets_list.append(y_batch.detach().cpu())
                 optimizer.zero_grad()
                 g_loss.backward()
                 optimizer.step()
                 epoch_gloss += g_loss.item()
+                # Unfreeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = True
 
-                # Train encoder & disease classifier (c_loss)
+                # -------- Phase 3: Train encoder & disease classifier --------
                 model.zero_grad()
                 encoded_features_all = model.encoder(x_all_batch)
                 predicted_disease_all = model.disease_classifier(encoded_features_all)
@@ -128,43 +145,38 @@ def train_model(
                 epoch_train_labels.append(y_all_batch.cpu())
 
             except StopIteration:
-                break
+                break  # End of epoch
 
-        # Compute training metrics
+        # Compute training metrics over the epoch.
         avg_gloss = epoch_gloss / len(data_all_loader)
         avg_train_loss = epoch_train_loss / len(data_all_loader)
-        results['train']['gloss_history'].append(avg_gloss)
-        results['train']['loss_history'].append(avg_train_loss)
+        results["train"]["gloss_history"].append(avg_gloss)
+        results["train"]["loss_history"].append(avg_train_loss)
 
         epoch_train_probs = torch.cat(epoch_train_probs)
         epoch_train_preds = torch.cat(epoch_train_preds)
         epoch_train_labels = torch.cat(epoch_train_labels)
-
         train_acc = balanced_accuracy_score(epoch_train_labels, epoch_train_preds)
-        results['train']['accuracy'].append(train_acc)
-
+        results["train"]["accuracy"].append(train_acc)
         train_f1 = f1_score(epoch_train_labels, epoch_train_preds)
-        results['train']['f1_score'].append(train_f1)
-
+        results["train"]["f1_score"].append(train_f1)
         precision, recall, _ = precision_recall_curve(epoch_train_labels, epoch_train_probs)
         train_auc_pr = auc(recall, precision)
-        results['train']['auc_pr'].append(train_auc_pr)
-
+        results["train"]["auc_pr"].append(train_auc_pr)
         train_precision = precision_score(epoch_train_labels, epoch_train_preds)
         train_recall = recall_score(epoch_train_labels, epoch_train_preds)
-        results['train']['precision'].append(train_precision)
-        results['train']['recall'].append(train_recall)
-
+        results["train"]["precision"].append(train_precision)
+        results["train"]["recall"].append(train_recall)
         train_conf_matrix = confusion_matrix(epoch_train_labels, epoch_train_preds)
-        results['train']['confusion_matrix'].append(train_conf_matrix)
+        results["train"]["confusion_matrix"].append(train_conf_matrix)
 
+        # Compute distance correlation for training phase.
         hidden_activations_all = torch.cat(hidden_activations_list, dim=0)
         targets_all = torch.cat(targets_list, dim=0)
         dcor_value = dcor.distance_correlation_sqr(hidden_activations_all.numpy(), targets_all.numpy())
-        results['train']['dcor_history'].append(dcor_value)
+        results["train"]["dcor_history"].append(dcor_value)
 
-
-        # Validation
+        # -------------- Validation Phase --------------
         model.eval()
         epoch_val_loss = 0
         epoch_val_preds = []
@@ -185,7 +197,6 @@ def train_model(
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_val_preds.append(pred_tag.cpu())
                 epoch_val_labels.append(y_batch.cpu())
-
             for x_batch, y_batch in data_val_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
@@ -193,36 +204,29 @@ def train_model(
                 val_targets_list.append(y_batch.cpu())
 
         avg_val_loss = epoch_val_loss / len(data_all_val_loader)
-        results['val']['loss_history'].append(avg_val_loss)
-
+        results["val"]["loss_history"].append(avg_val_loss)
         epoch_val_probs = torch.cat(epoch_val_probs)
         epoch_val_preds = torch.cat(epoch_val_preds)
         epoch_val_labels = torch.cat(epoch_val_labels)
-
         val_acc = balanced_accuracy_score(epoch_val_labels, epoch_val_preds)
         val_f1 = f1_score(epoch_val_labels, epoch_val_preds)
         precision, recall, _ = precision_recall_curve(epoch_val_labels, epoch_val_probs)
         val_auc_pr = auc(recall, precision)
-
-        results['val']['accuracy'].append(val_acc)
-        results['val']['f1_score'].append(val_f1)
-        results['val']['auc_pr'].append(val_auc_pr)
-
+        results["val"]["accuracy"].append(val_acc)
+        results["val"]["f1_score"].append(val_f1)
+        results["val"]["auc_pr"].append(val_auc_pr)
         val_hidden_activations_all = torch.cat(val_hidden_activations_list, dim=0)
         val_targets_all = torch.cat(val_targets_list, dim=0)
         val_dcor_value = dcor.distance_correlation_sqr(val_hidden_activations_all.numpy(), val_targets_all.numpy())
-        results['val']['dcor_history'].append(val_dcor_value)
-
+        results["val"]["dcor_history"].append(val_dcor_value)
         val_precision = precision_score(epoch_val_labels, epoch_val_preds)
         val_recall = recall_score(epoch_val_labels, epoch_val_preds)
-        results['val']['precision'].append(val_precision)
-        results['val']['recall'].append(val_recall)
-
+        results["val"]["precision"].append(val_precision)
+        results["val"]["recall"].append(val_recall)
         val_conf_matrix = confusion_matrix(epoch_val_labels, epoch_val_preds)
-        results['val']['confusion_matrix'].append(val_conf_matrix)
+        results["val"]["confusion_matrix"].append(val_conf_matrix)
 
-
-        # Test
+        # -------------- Test Phase --------------
         epoch_test_loss = 0
         epoch_test_preds = []
         epoch_test_labels = []
@@ -242,7 +246,6 @@ def train_model(
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_test_preds.append(pred_tag.cpu())
                 epoch_test_labels.append(y_batch.cpu())
-
             for x_batch, y_batch in data_test_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
@@ -250,46 +253,37 @@ def train_model(
                 test_targets_list.append(y_batch.cpu())
 
         avg_test_loss = epoch_test_loss / len(data_all_test_loader)
-        results['test']['loss_history'].append(avg_test_loss)
-
+        results["test"]["loss_history"].append(avg_test_loss)
         epoch_test_probs = torch.cat(epoch_test_probs)
         epoch_test_preds = torch.cat(epoch_test_preds)
         epoch_test_labels = torch.cat(epoch_test_labels)
-
         test_acc = balanced_accuracy_score(epoch_test_labels, epoch_test_preds)
         test_f1 = f1_score(epoch_test_labels, epoch_test_preds)
         precision, recall, _ = precision_recall_curve(epoch_test_labels, epoch_test_probs)
         test_auc_pr = auc(recall, precision)
-
-        results['test']['accuracy'].append(test_acc)
-        results['test']['f1_score'].append(test_f1)
-        results['test']['auc_pr'].append(test_auc_pr)
-
+        results["test"]["accuracy"].append(test_acc)
+        results["test"]["f1_score"].append(test_f1)
+        results["test"]["auc_pr"].append(test_auc_pr)
         test_hidden_activations_all = torch.cat(test_hidden_activations_list, dim=0)
         test_targets_all = torch.cat(test_targets_list, dim=0)
         test_dcor_value = dcor.distance_correlation_sqr(test_hidden_activations_all.numpy(), test_targets_all.numpy())
-        results['test']['dcor_history'].append(test_dcor_value)
-
+        results["test"]["dcor_history"].append(test_dcor_value)
         test_precision = precision_score(epoch_test_labels, epoch_test_preds)
         test_recall = recall_score(epoch_test_labels, epoch_test_preds)
-        results['test']['precision'].append(test_precision)
-        results['test']['recall'].append(test_recall)
-
+        results["test"]["precision"].append(test_precision)
+        results["test"]["recall"].append(test_recall)
         test_conf_matrix = confusion_matrix(epoch_test_labels, epoch_test_preds)
-        results['test']['confusion_matrix'].append(test_conf_matrix)
+        results["test"]["confusion_matrix"].append(test_conf_matrix)
 
         if (epoch + 1) % 50 == 0:
             print(
                 f'Epoch [{epoch+1}/{num_epochs}], Loss: {avg_gloss:.4f}, DCor: {dcor_value:.4f}'
             )
             print(
-                f'Validation Loss: {avg_val_loss:.4f}, Validation Acc: {val_acc:.4f}, '
-                f'Validation F1: {val_f1:.4f}, Val DCor: {val_dcor_value:.4f}'
+                f'Validation Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.4f}, Val F1: {val_f1:.4f}, Val DCor: {val_dcor_value:.4f}'
             )
             print(
-                f'Test Loss: {avg_test_loss:.4f}, Test Acc: {test_acc:.4f}, '
-                f'Test F1: {test_f1:.4f}, Test DCor: {test_dcor_value:.4f}'
+                f'Test Loss: {avg_test_loss:.4f}, Test Acc: {test_acc:.4f}, Test F1: {test_f1:.4f}, Test DCor: {test_dcor_value:.4f}'
             )
-        
 
     return results
