@@ -56,3 +56,11 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 8. Implement **early stopping** in the training process.
 9. If the **feature count is high**, apply **feature engineering** to remove less important features before training the model.
 10. From train data we can get some samples for test with different gender distribution
+
+we should try to increase recall
+
+11. To change BCEwithlogit with BCEloss
+12. Try different loss function instead of pearson loss function
+13. Even when we use FCNN lib still recall decrease so there should be some fundamental problem
+14. plot pca and tsne on both train and test to see samples distribution
+15. check utils.py carefully (assigned: Yuhui)

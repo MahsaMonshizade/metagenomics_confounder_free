@@ -19,7 +19,7 @@ device = torch.device(config["training"].get("device", "cpu"))
 def run_trial(trial_config, num_epochs=50):
     """
     Run a training trial using 5-fold cross-validation over the training data while
-    evaluating on an independent test set. Returns the average test accuracy across all folds.
+    evaluating on an independent test set. Returns the average test recall across all folds.
 
     NOTE: The independent test dataset is loaded from config's test paths.
     """
@@ -65,14 +65,14 @@ def run_trial(trial_config, num_epochs=50):
 
     # Use 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    fold_test_accuracies = []
+    fold_test_recalls = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Trial fold {fold+1} out of 5")
         
         # Prepare training and validation subsets.
         train_data = merged_train.iloc[train_index]
-        val_data   = merged_train.iloc[val_index]  # (val data is used only for training dynamics; evaluation is done on the independent test set)
+        val_data   = merged_train.iloc[val_index]  # (validation data is used only for training dynamics; evaluation is done on the independent test set)
         
         # Overall training data.
         x_all_train = torch.tensor(train_data[feature_columns].values, dtype=torch.float32)
@@ -142,21 +142,21 @@ def run_trial(trial_config, num_epochs=50):
             device
         )
         
-        # Get the final test accuracy from this fold.
-        fold_test_acc = Results["test"]["accuracy"][-1]
-        print(f"Fold {fold+1} test accuracy: {fold_test_acc:.4f}")
-        fold_test_accuracies.append(fold_test_acc)
+        # Get the final test recall from this fold.
+        fold_test_recall = Results["test"]["recall"][-1]
+        print(f"Fold {fold+1} test recall: {fold_test_recall:.4f}")
+        fold_test_recalls.append(fold_test_recall)
     
-    # Compute the average test accuracy over all folds.
-    avg_test_accuracy = np.mean(fold_test_accuracies)
-    print(f"Average test accuracy over 5 folds: {avg_test_accuracy:.4f}")
-    return avg_test_accuracy
+    # Compute the average test recall over all folds.
+    avg_test_recall = np.mean(fold_test_recalls)
+    print(f"Average test recall over 5 folds: {avg_test_recall:.4f}")
+    return avg_test_recall
 
 def objective(trial):
     """
     Objective function for Optuna: Suggest discrete hyperparameter values,
     update the base configuration, run a training trial using 5-fold cross-validation
-    with evaluation on an independent test dataset, and return the average test accuracy.
+    with evaluation on an independent test dataset, and return the average test recall.
     """
     trial_config = copy.deepcopy(config)
     
@@ -170,16 +170,16 @@ def objective(trial):
     trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
     
     # Run the trial with a reduced number of epochs for speed.
-    avg_test_accuracy = run_trial(trial_config, num_epochs=100)
-    return avg_test_accuracy
+    avg_test_recall = run_trial(trial_config, num_epochs=50)
+    return avg_test_recall
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=10)
     
     print("Best trial:")
     best_trial = study.best_trial
-    print("  Final test accuracy:", best_trial.value)
+    print("  Final test recall:", best_trial.value)
     print("  Best hyperparameters:")
     for key, value in best_trial.params.items():
         print(f"    {key}: {value}")

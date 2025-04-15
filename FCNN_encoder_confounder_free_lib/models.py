@@ -25,6 +25,41 @@ def get_activation(act):
         return nn.LeakyReLU(negative_slope=0.2)
     else:
         raise ValueError(f"Unsupported activation: {act}")
+    
+
+class KLDivergenceLoss(nn.Module):
+    """
+    Custom loss function based on KL divergence that drives the predicted probability toward 0.5.
+    This makes the output as uninformative as possible (i.e., removes confounder signal).
+    """
+    def __init__(self):
+        super(KLDivergenceLoss, self).__init__()
+
+    def forward(self, pred, target):
+        # Here, 'pred' should be in the range (0,1); if your network outputs logits, apply torch.sigmoid externally.
+        eps = 1e-8  # to avoid log(0)
+        p = torch.clamp(pred, min=eps, max=1.0 - eps)
+        uniform_value = 0.5
+        # Compute KL divergence for a Bernoulli distribution vs uniform [0.5, 0.5]
+        kl = p * torch.log(p / uniform_value) + (1.0 - p) * torch.log((1.0 - p) / uniform_value)
+        return torch.mean(kl)
+    
+
+class MSEUniformLoss(nn.Module):
+    """
+    Custom loss function based on Mean Squared Error that forces the predicted probability toward 0.5.
+    For binary classification, 0.5 represents the uninformative (uniform) prediction.
+    """
+    def __init__(self):
+        super(MSEUniformLoss, self).__init__()
+        self.mse_loss = nn.MSELoss()
+
+    def forward(self, pred, target):
+        # 'pred' should be in the range (0,1); if necessary, apply torch.sigmoid externally.
+        target_uniform = torch.full_like(pred, 0.5)
+        return self.mse_loss(pred, target_uniform)
+
+
 
 class PearsonCorrelationLoss(nn.Module):
     """

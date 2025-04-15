@@ -9,7 +9,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import ConfusionMatrixDisplay
 
 from data_utils import get_data
-from models import GAN, PearsonCorrelationLoss
+from models import GAN, PearsonCorrelationLoss, MSEUniformLoss, KLDivergenceLoss
 from utils import create_stratified_dataloader
 from train import train_model
 from config import config
@@ -125,7 +125,9 @@ def main():
 
         # Define loss functions.
         # For the distillation (Pearson correlation) phase.
-        criterion = PearsonCorrelationLoss().to(device)
+        # criterion = PearsonCorrelationLoss().to(device)
+        # criterion = KLDivergenceLoss().to(device)
+        criterion = MSEUniformLoss().to(device)
         # For the confounder classifier branch.
         criterion_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_drug).to(device)
         # For the disease classification branch.
