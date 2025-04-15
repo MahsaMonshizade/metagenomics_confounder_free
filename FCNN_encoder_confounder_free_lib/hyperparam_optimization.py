@@ -16,7 +16,7 @@ from sklearn.model_selection import StratifiedKFold
 # Use the device as specified in the configuration.
 device = torch.device(config["training"].get("device", "cpu"))
 
-def run_trial(trial_config, num_epochs=10):
+def run_trial(trial_config, num_epochs=50):
     """
     Run a training trial using 5-fold cross-validation on the training set and return the average validation accuracy.
 
@@ -50,7 +50,11 @@ def run_trial(trial_config, num_epochs=10):
     
     # Overall disease labels.
     X = merged_data_all[feature_columns].values
-    y_all = merged_data_all[disease_col].values
+    merged_data_all['combined'] = (
+        merged_data_all[disease_col].astype(str) +
+        merged_data_all[confounder_col].astype(str)
+    )
+    y_all = merged_data_all["combined"].values
     
     # Prepare to aggregate validation accuracies.
     fold_val_accuracies = []
@@ -160,7 +164,7 @@ def objective(trial):
     trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
     
     # Run the trial with a reduced number of epochs for speed.
-    avg_val_accuracy = run_trial(trial_config, num_epochs=10)
+    avg_val_accuracy = run_trial(trial_config, num_epochs=50)
     return avg_val_accuracy
 
 if __name__ == "__main__":

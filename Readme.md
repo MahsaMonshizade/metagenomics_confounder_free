@@ -48,10 +48,11 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 1. **Check the code** and modify it if anything looks incorrect. *(Assigned: Yuhui)*
 2. Perform **hyperparameter optimization** for all datasets.
-3. For the **ARC dataset**, remove **age** and **BMI** as they are potential confounders.
-4. **Find additional test data for SRC**. *(Assigned: Mahsa)*
+3. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
+4. **Find additional test data for CRC**. *(Assigned: Mahsa)*
 5. **Find additional test data for IBS**. *(Assigned: Mahsa)*
 6. **Search for more datasets in general**. *(Assigned: Mahsa)*
 7. Investigate why the **results vary significantly across folds**.
 8. Implement **early stopping** in the training process.
 9. If the **feature count is high**, apply **feature engineering** to remove less important features before training the model.
+10. From train data we can get some samples for test with different gender distribution

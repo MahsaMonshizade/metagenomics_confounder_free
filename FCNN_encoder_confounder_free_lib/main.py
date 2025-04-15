@@ -50,7 +50,11 @@ def main():
 
     # Overall disease classification.
     X = merged_data_all[feature_columns].values
-    y_all = merged_data_all[disease_col].values
+    merged_data_all['combined'] = (
+        merged_data_all[disease_col].astype(str) +
+        merged_data_all[confounder_col].astype(str)
+    )
+    y_all = merged_data_all["combined"].values
 
     # Prepare test data (for overall disease prediction).
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)

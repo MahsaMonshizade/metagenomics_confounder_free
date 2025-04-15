@@ -16,7 +16,7 @@ from sklearn.model_selection import StratifiedKFold
 # Use the device as specified in the config.
 device = torch.device(config["training"].get("device", "cpu"))
 
-def run_trial(trial_config, num_epochs=10):
+def run_trial(trial_config, num_epochs=50):
     """
     Run a training trial using 5-fold cross-validation over the training data while
     evaluating on an independent test set. Returns the average test accuracy across all folds.
@@ -27,6 +27,9 @@ def run_trial(trial_config, num_epochs=10):
     data_cfg = trial_config["data"]
     train_cfg = trial_config["training"]
     model_cfg = trial_config["model"]
+
+    disease_col = data_cfg["disease_column"]
+    confounder_col = data_cfg["confounder_column"]
 
     # Load training data from the training paths.
     merged_train = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
@@ -43,14 +46,18 @@ def run_trial(trial_config, num_epochs=10):
 
     # Overall disease labels for training.
     X = merged_train[feature_columns].values
-    y_all = merged_train["disease"].values
+    merged_train['combined'] = (
+        merged_train[disease_col].astype(str) +
+        merged_train[confounder_col].astype(str)
+    )
+    y_all = merged_train["combined"].values
 
     # Create independent test DataLoaders (these remain fixed across folds).
     x_test_all = torch.tensor(merged_test[feature_columns].values, dtype=torch.float32)
-    y_test_all = torch.tensor(merged_test["disease"].values, dtype=torch.float32).unsqueeze(1)
-    test_data_disease = merged_test[merged_test["disease"] == 1]
+    y_test_all = torch.tensor(merged_test[disease_col].values, dtype=torch.float32).unsqueeze(1)
+    test_data_disease = merged_test[merged_test[disease_col] == 1]
     x_test_disease = torch.tensor(test_data_disease[feature_columns].values, dtype=torch.float32)
-    y_test_disease = torch.tensor(test_data_disease["sex"].values, dtype=torch.float32).unsqueeze(1)
+    y_test_disease = torch.tensor(test_data_disease[confounder_col].values, dtype=torch.float32).unsqueeze(1)
     batch_size = train_cfg["batch_size"]
     # Create test DataLoaders.
     data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, batch_size)
@@ -69,17 +76,17 @@ def run_trial(trial_config, num_epochs=10):
         
         # Overall training data.
         x_all_train = torch.tensor(train_data[feature_columns].values, dtype=torch.float32)
-        y_all_train = torch.tensor(train_data["disease"].values, dtype=torch.float32).unsqueeze(1)
+        y_all_train = torch.tensor(train_data[disease_col].values, dtype=torch.float32).unsqueeze(1)
         x_all_val   = torch.tensor(val_data[feature_columns].values, dtype=torch.float32)
-        y_all_val   = torch.tensor(val_data["disease"].values, dtype=torch.float32).unsqueeze(1)
+        y_all_val   = torch.tensor(val_data[disease_col].values, dtype=torch.float32).unsqueeze(1)
         
         # Confounder (drug) classification data: only samples with disease == 1.
-        train_data_disease = train_data[train_data["disease"] == 1]
-        val_data_disease   = val_data[val_data["disease"] == 1]
+        train_data_disease = train_data[train_data[disease_col] == 1]
+        val_data_disease   = val_data[val_data[disease_col] == 1]
         x_disease_train = torch.tensor(train_data_disease[feature_columns].values, dtype=torch.float32)
-        y_disease_train = torch.tensor(train_data_disease["sex"].values, dtype=torch.float32).unsqueeze(1)
+        y_disease_train = torch.tensor(train_data_disease[confounder_col].values, dtype=torch.float32).unsqueeze(1)
         x_disease_val   = torch.tensor(val_data_disease[feature_columns].values, dtype=torch.float32)
-        y_disease_val   = torch.tensor(val_data_disease["sex"].values, dtype=torch.float32).unsqueeze(1)
+        y_disease_val   = torch.tensor(val_data_disease[confounder_col].values, dtype=torch.float32).unsqueeze(1)
         
         # Create stratified DataLoaders for training and validation.
         data_loader = create_stratified_dataloader(x_disease_train, y_disease_train, batch_size)
@@ -163,12 +170,12 @@ def objective(trial):
     trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
     
     # Run the trial with a reduced number of epochs for speed.
-    avg_test_accuracy = run_trial(trial_config, num_epochs=10)
+    avg_test_accuracy = run_trial(trial_config, num_epochs=100)
     return avg_test_accuracy
 
 if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=10)
+    study.optimize(objective, n_trials=50)
     
     print("Best trial:")
     best_trial = study.best_trial
