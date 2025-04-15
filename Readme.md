@@ -61,6 +61,7 @@ we should try to increase recall
 
 11. To change BCEwithlogit with BCEloss
 12. Try different loss function instead of pearson loss function
-13. Even when we use FCNN lib still recall decrease so there should be some fundamental problem
-14. plot pca and tsne on both train and test to see samples distribution
-15. check utils.py carefully (assigned: Yuhui)
+13. plot pca and tsne on both train and test to see samples distribution
+14. check utils.py carefully (assigned: Yuhui)
+
+In FCNN_encoder_confounder_free_lib I set encoder learning rate and classfier learnin rate to 0 but still recall decreased why?
