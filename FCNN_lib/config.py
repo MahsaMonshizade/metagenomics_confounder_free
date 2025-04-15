@@ -57,7 +57,11 @@ config = {
     },
     "tuning": {
         # Discrete hyperparameter search space:
-        "learning_rate": [1e-4, 5e-4, 1e-3],
+        "learning_rate": [1e-5, 2e-5, 5e-5,
+                          1e-4, 2e-4, 5e-4,
+                          1e-3, 2e-3, 5e-3,
+                          1e-2, 2e-2, 5e-2,
+                          1e-1],
         "dropout_rate": [0.0, 0.3, 0.5],
         "num_encoder_layers": [1, 2, 3],
         "num_classifier_layers": [1, 2, 3],

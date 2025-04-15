@@ -135,6 +135,68 @@ def main():
                               title=f"Test Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/FCNN_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
+           # Plot average metrics across folds (2x3 grid).
+        num_epochs_actual = len(Results["train"]["loss_history"])
+        epochs = range(1, num_epochs_actual + 1)
+
+        plt.figure(figsize=(20, 15))
+        plt.subplot(2, 3, 1)
+        plt.plot(epochs, Results["train"]["loss_history"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["loss_history"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["loss_history"], label=f"Test {fold+1}")
+        plt.title("Loss History")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.legend()
+
+        plt.subplot(2, 3, 2)
+        plt.plot(epochs, Results["train"]["accuracy"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["accuracy"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["accuracy"], label=f"Test {fold+1}")
+        plt.title("Accuracy History")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.legend()
+
+        plt.subplot(2, 3, 3)
+        plt.plot(epochs, Results["train"]["f1_score"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["f1_score"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["f1_score"], label=f"Test {fold+1}")
+        plt.title("F1 Score History")
+        plt.xlabel("Epoch")
+        plt.ylabel("F1 Score")
+        plt.legend()
+
+        plt.subplot(2, 3, 4)
+        plt.plot(epochs, Results["train"]["auc_pr"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["auc_pr"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["auc_pr"], label=f"Test {fold+1}")
+        plt.title("AUCPR History")
+        plt.xlabel("Epoch")
+        plt.ylabel("AUCPR")
+        plt.legend()
+
+        plt.subplot(2, 3, 5)
+        plt.plot(epochs, Results["train"]["precision"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["precision"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["precision"], label=f"Test {fold+1}")
+        plt.title("Precision History")
+        plt.xlabel("Epoch")
+        plt.ylabel("Precision")
+        plt.legend()
+
+        plt.subplot(2, 3, 6)
+        plt.plot(epochs, Results["train"]["recall"], label=f"Train {fold+1}")
+        plt.plot(epochs, Results["val"]["recall"], label=f"Validation {fold+1}")
+        plt.plot(epochs, Results["test"]["recall"], label=f"Test {fold+1}")
+        plt.title("Recall History")
+        plt.xlabel("Epoch")
+        plt.ylabel("Recall")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig(f"Results/FCNN_plots/fold_{fold+1}_metrics.png")
+        plt.close()
 
     # -----------------------------------------------------------
     # After cross-validation: Aggregate metrics and plot averages.
