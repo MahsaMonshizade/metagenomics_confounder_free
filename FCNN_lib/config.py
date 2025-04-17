@@ -40,7 +40,7 @@ config = {
     # },
     
     "training": {
-        "learning_rate": 1e-3,
+        "learning_rate": 5e-3,
         "num_epochs": 100,
         "batch_size": 64,
         "device": "cuda:0",  # Use "cpu" if no GPU available
@@ -48,9 +48,9 @@ config = {
     },
     "model": {
         "latent_dim": 64,
-        "num_encoder_layers": 1,    # One encoder layer beyond the initial layer
-        "num_classifier_layers": 2, # One hidden layer for classifier networks
-        "dropout_rate": 0.5,
+        "num_encoder_layers": 2,    # One encoder layer beyond the initial layer
+        "num_classifier_layers": 3, # One hidden layer for classifier networks
+        "dropout_rate": 0.3,
         "norm": "batch",            # Options: "batch" or "layer"
         "classifier_hidden_dims": [],  # If provided, these override the halving rule
         "activation": "tanh"        # Default activation function; can be 'relu', 'tanh', or 'leaky_relu'

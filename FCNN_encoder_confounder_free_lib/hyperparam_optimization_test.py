@@ -65,7 +65,7 @@ def run_trial(trial_config, num_epochs=50):
 
     # Use 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    fold_test_recalls = []
+    fold_test_f1s = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Trial fold {fold+1} out of 5")
@@ -143,14 +143,14 @@ def run_trial(trial_config, num_epochs=50):
         )
         
         # Get the final test recall from this fold.
-        fold_test_recall = Results["test"]["recall"][-1]
-        print(f"Fold {fold+1} test recall: {fold_test_recall:.4f}")
-        fold_test_recalls.append(fold_test_recall)
+        fold_test_f1 = Results["test"]["f1_score"][-1]
+        print(f"Fold {fold+1} test f1: {fold_test_f1:.4f}")
+        fold_test_f1s.append(fold_test_f1)
     
     # Compute the average test recall over all folds.
-    avg_test_recall = np.mean(fold_test_recalls)
-    print(f"Average test recall over 5 folds: {avg_test_recall:.4f}")
-    return avg_test_recall
+    avg_test_f1 = np.mean(fold_test_f1s)
+    print(f"Average test f1 over 5 folds: {avg_test_f1:.4f}")
+    return avg_test_f1
 
 def objective(trial):
     """
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     
     print("Best trial:")
     best_trial = study.best_trial
-    print("  Final test recall:", best_trial.value)
+    print("  Final test F1:", best_trial.value)
     print("  Best hyperparameters:")
     for key, value in best_trial.params.items():
         print(f"    {key}: {value}")

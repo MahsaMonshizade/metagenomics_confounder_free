@@ -50,11 +50,12 @@ def main():
 
     # Overall disease classification.
     X = merged_data_all[feature_columns].values
-    merged_data_all['combined'] = (
-        merged_data_all[disease_col].astype(str) +
-        merged_data_all[confounder_col].astype(str)
-    )
-    y_all = merged_data_all["combined"].values
+    # merged_data_all['combined'] = (
+    #     merged_data_all[disease_col].astype(str) +
+    #     merged_data_all[confounder_col].astype(str)
+    # )
+    # y_all = merged_data_all["combined"].values
+    y_all = merged_data_all[disease_col].values
 
     # Prepare test data (for overall disease prediction).
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
@@ -125,9 +126,9 @@ def main():
 
         # Define loss functions.
         # For the distillation (Pearson correlation) phase.
-        # criterion = PearsonCorrelationLoss().to(device)
+        criterion = PearsonCorrelationLoss().to(device)
         # criterion = KLDivergenceLoss().to(device)
-        criterion = MSEUniformLoss().to(device)
+        # criterion = MSEUniformLoss().to(device)
         # For the confounder classifier branch.
         criterion_classifier = nn.BCEWithLogitsLoss(pos_weight=pos_weight_drug).to(device)
         # For the disease classification branch.
@@ -173,13 +174,13 @@ def main():
                               save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
 
-        num_epochs_actual = len(Results["train"]["gloss_history"])
+        num_epochs_actual = len(Results["train"]["loss_history"])
         epochs = range(1, num_epochs_actual + 1)
 
         # Plot metric histories for this fold.
         plt.figure(figsize=(20, 15))
         plt.subplot(3, 3, 1)
-        plt.plot(epochs, Results["train"]["gloss_history"], label=f'Fold {fold+1}')
+        plt.plot(epochs, Results["train"]["gloss_history"], label=f'Fold {fold+1}') #change it again
         plt.title("Correlation g Loss History")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
@@ -253,7 +254,7 @@ def main():
         plt.close()
 
     # --------------- Aggregate Metrics Across Folds ---------------
-    num_epochs_actual = len(train_metrics_per_fold[0]["gloss_history"])
+    num_epochs_actual = len(train_metrics_per_fold[0]["loss_history"])
     epochs = range(1, num_epochs_actual + 1)
 
     train_avg_metrics = {key: np.zeros(num_epochs_actual) for key in train_metrics_per_fold[0].keys() if key != "confusion_matrix"}
