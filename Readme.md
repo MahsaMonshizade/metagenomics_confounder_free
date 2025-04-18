@@ -73,6 +73,15 @@ we should try to increase recall
 15. Read train.py carefully
 16. Maybe all we have to do is to set the model part we want to freeze in eval mode instead of defining gradient and ...
 
+17. pretraining on the wole crc dataset (Yuhui)
+
+18. add the last layer activatin funciton, latent dim and batch size as hyper parameters (remove dropout as confounder parameter) (Mahsa)
+
+19. add early stop (Mahsa)
+
+20. try to find more crc data for pretraining they need to have gender
+
+
 In FCNN_encoder_confounder_free_lib I set encoder learning rate and classfier learnin rate to 0 but still recall decreased why?
 
 why in FCNN_Plots we see that it converge very fast although we have around 1000 samples wirhg about 170 features

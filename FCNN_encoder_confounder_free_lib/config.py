@@ -11,10 +11,10 @@ config = {
 
     ### Colorectal cancer data with gender as confounder (we also can use age and bmi as confounder as well) (coming from GMrepo database) with new test
     "data": {
-        "train_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB6070.csv",
+        "train_abundance_path": "dataset/CRC_data/new_crc_abundance_PRJEB6070.csv",
         "train_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB6070.csv",
-        "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJNA397219.csv",
-        "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJNA397219.csv",
+        "test_abundance_path": "dataset/CRC_data/crc_abundance_PRJEB27928.csv",
+        "test_metadata_path": "dataset/CRC_data/crc_metadata_PRJEB27928.csv",
         "disease_column": "disease",
         "confounder_column": "sex"
     },
@@ -40,20 +40,20 @@ config = {
     # },
     
     "training": {
-        "num_epochs": 50,
+        "num_epochs": 100,
         "batch_size": 256,
         "learning_rate": 0.0001,             # For disease classifier optimizer
-        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
-        "weight_decay": 1e-4,
+        "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
+        "weight_decay": 0, #1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },
     "model": {
         "latent_dim": 64,                    # Dimension of the latent space
         "num_encoder_layers": 2,             # Number of layers in the encoder (beyond initial projection)
-        "num_classifier_layers": 2,          # Number of layers in each classifier branch
+        "num_classifier_layers": 1,          # Number of layers in each classifier branch
         "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
-        "norm": "batch",                     # Normalization type ("batch" or "layer")
+        "norm": "layer",                     # Normalization type ("batch" or "layer")
         "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
         "activation": "relu"                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
     },
