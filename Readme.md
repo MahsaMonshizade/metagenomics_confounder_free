@@ -71,6 +71,7 @@ we should try to increase recall
 13. Plot pca and tsne on both train and test to see samples distribution
 14. ~~Check utils.py carefully (assigned: Yuhui)~~
 15. Read train.py carefully
+16. Maybe all we have to do is to set the model part we want to freeze in eval mode instead of defining gradient and ...
 
 In FCNN_encoder_confounder_free_lib I set encoder learning rate and classfier learnin rate to 0 but still recall decreased why?
 

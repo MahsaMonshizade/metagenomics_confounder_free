@@ -30,21 +30,10 @@ def restore_encoder_train(module):
 
 
 def train_model(
-    model,
-    criterion,               # PearsonCorrelationLoss for distillation
-    optimizer,               # AdamW for encoder distillation
-    data_loader,             # confounder DataLoader
-    data_all_loader,         # disease DataLoader
-    data_val_loader,
-    data_all_val_loader,
-    data_test_loader,
-    data_all_test_loader,
-    num_epochs,
-    criterion_classifier,    # BCEWithLogitsLoss for confounder
-    optimizer_classifier,    # AdamW for confounder classifier
-    criterion_disease_classifier,  # BCEWithLogitsLoss for disease
-    optimizer_disease_classifier,  # AdamW for disease classifier & encoder
-    device
+     model, criterion, optimizer, data_loader, data_all_loader, data_val_loader, data_all_val_loader,
+    data_test_loader, data_all_test_loader, num_epochs, 
+    criterion_classifier, optimizer_classifier, 
+    criterion_disease_classifier, optimizer_disease_classifier, device
 ):
     """
     Three-phase training per epoch:
@@ -54,21 +43,47 @@ def train_model(
 
     Validation and test only run the disease branch in eval mode.
     """
+
+    # Prepare storage
+    results = {
+       "train": {
+            "gloss_history": [],      # g_loss: distillation phase loss
+            "loss_history": [],       # c_loss: disease classification loss
+            "dcor_history": [],       # Distance correlation measure
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
+        },
+        "val": {
+            "loss_history": [],
+            "dcor_history": [],
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
+        },
+        "test": {
+            "loss_history": [],
+            "dcor_history": [],
+            "accuracy": [],
+            "f1_score": [],
+            "auc_pr": [],
+            "precision": [],
+            "recall": [],
+            "confusion_matrix": []
+        }
+    }
+
     # Move everything to device
     model.to(device)
     criterion.to(device)
     criterion_classifier.to(device)
     criterion_disease_classifier.to(device)
-
-    # Prepare storage
-    results = {
-        "train": {k: [] for k in ["gloss_history","loss_history","dcor_history",
-                                  "accuracy","f1_score","auc_pr","precision","recall","confusion_matrix"]},
-        "val":   {k: [] for k in ["loss_history","dcor_history",
-                                  "accuracy","f1_score","auc_pr","precision","recall","confusion_matrix"]},
-        "test":  {k: [] for k in ["loss_history","dcor_history",
-                                  "accuracy","f1_score","auc_pr","precision","recall","confusion_matrix"]}
-    }
 
     for epoch in range(num_epochs):
         model.train()
@@ -117,7 +132,7 @@ def train_model(
 
             # -- Phase 2: Distillation (adversarial) --
             for p in model.classifier.parameters(): p.requires_grad = False
-            freeze_encoder_stats(model.encoder)
+            # freeze_encoder_stats(model.encoder)
 
             model.zero_grad()
             feats2 = model.encoder(x_conf)
@@ -132,7 +147,7 @@ def train_model(
             epoch_gloss += g_loss.item()
 
             for p in model.classifier.parameters(): p.requires_grad = True
-            restore_encoder_train(model.encoder)
+            # restore_encoder_train(model.encoder)
 
             # -- Phase 3: Disease classification --
             model.encoder.train()

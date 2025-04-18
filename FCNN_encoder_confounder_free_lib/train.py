@@ -6,6 +6,18 @@ from sklearn.metrics import (
     precision_score, recall_score, confusion_matrix
 )
 
+def freeze_batchnorm(module):
+    if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
+        module.eval()
+    for child in module.children():
+        freeze_batchnorm(child)
+
+def unfreeze_batchnorm(module):
+    if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
+        module.train()
+    for child in module.children():
+        unfreeze_batchnorm(child)
+
 def train_model(
     model, criterion, optimizer, data_loader, data_all_loader, data_val_loader, data_all_val_loader,
     data_test_loader, data_all_test_loader, num_epochs, 
@@ -99,6 +111,7 @@ def train_model(
                 # Freeze encoder parameters temporarily.
                 for param in model.encoder.parameters():
                     param.requires_grad = False
+                model.encoder.eval()
                 encoded_features = model.encoder(x_batch)
                 predicted_drug = model.classifier(encoded_features)
                 r_loss = criterion_classifier(predicted_drug, y_batch)
@@ -108,12 +121,15 @@ def train_model(
                 # Unfreeze encoder parameters.
                 for param in model.encoder.parameters():
                     param.requires_grad = True
+                model.encoder.train()
 
                 # -------- Phase 2: Train distillation (alignment) --------
                 model.zero_grad()
                 # Freeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = False
+                # freeze_batchnorm(model.classifier)
+                model.classifier.eval()
                 encoded_features = model.encoder(x_batch)
                 # Use sigmoid on the classifier output.
                 predicted_drug = torch.sigmoid(model.classifier(encoded_features))
@@ -128,6 +144,7 @@ def train_model(
                 # Unfreeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = True
+                model.classifier.train()
 
                 # -------- Phase 3: Train encoder & disease classifier --------
                 model.zero_grad()

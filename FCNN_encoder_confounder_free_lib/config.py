@@ -43,17 +43,17 @@ config = {
         "num_epochs": 50,
         "batch_size": 256,
         "learning_rate": 0.0001,             # For disease classifier optimizer
-        "encoder_lr": 0.0002,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0002,              # For confounder classifier (e.g., 'drug' branch)
-        "weight_decay": 0.0, #1e-4,
+        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
+        "weight_decay": 1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },
     "model": {
         "latent_dim": 64,                    # Dimension of the latent space
         "num_encoder_layers": 2,             # Number of layers in the encoder (beyond initial projection)
-        "num_classifier_layers": 1,          # Number of layers in each classifier branch
+        "num_classifier_layers": 2,          # Number of layers in each classifier branch
         "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
-        "norm": "layer",                     # Normalization type ("batch" or "layer")
+        "norm": "batch",                     # Normalization type ("batch" or "layer")
         "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
         "activation": "relu"                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
     },
