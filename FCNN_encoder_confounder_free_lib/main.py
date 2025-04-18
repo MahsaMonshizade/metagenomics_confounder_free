@@ -121,7 +121,8 @@ def main():
             num_classifier_layers=model_cfg["num_classifier_layers"],
             dropout_rate=model_cfg["dropout_rate"],
             norm=model_cfg["norm"],
-            classifier_hidden_dims=model_cfg["classifier_hidden_dims"]
+            classifier_hidden_dims=model_cfg["classifier_hidden_dims"],
+            activation=model_cfg["activation"], 
         ).to(device)
 
         # Define loss functions.

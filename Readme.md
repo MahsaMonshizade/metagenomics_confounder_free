@@ -17,6 +17,13 @@ Each library has its own `config.py` file. Inside these files, you’ll see that
 
 ### Running the Code
 
+To prepare the datasets: 
+
+```bash
+chmod +x prepare_dataset.sh
+./prepare_dataset.sh
+```
+
 To run the models:
 
 - For the **Fully Connected Network**:
@@ -46,7 +53,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 ## TODO List
 
-1. **Check the code** and modify it if anything looks incorrect. *(Assigned: Yuhui)*
+1. ~~**Check the code** and modify it if anything looks incorrect. *(Assigned: Yuhui)*~~
 2. Perform **hyperparameter optimization** for all datasets.
 3. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
 4. **Find additional test data for CRC**. *(Assigned: Mahsa)*
@@ -61,8 +68,8 @@ we should try to increase recall
 
 11. To change BCEwithlogit with BCEloss
 12. Try different loss function instead of pearson loss function
-13. plot pca and tsne on both train and test to see samples distribution
-14. check utils.py carefully (assigned: Yuhui)
+13. Plot pca and tsne on both train and test to see samples distribution
+14. ~~Check utils.py carefully (assigned: Yuhui)~~
 15. Read train.py carefully
 
 In FCNN_encoder_confounder_free_lib I set encoder learning rate and classfier learnin rate to 0 but still recall decreased why?
