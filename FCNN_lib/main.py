@@ -139,7 +139,7 @@ def main():
         num_epochs_actual = len(Results["train"]["loss_history"])
         epochs = range(1, num_epochs_actual + 1)
 
-        plt.figure(figsize=(20, 15))
+        plt.figure(figsize=(20, 10))
         plt.subplot(2, 3, 1)
         plt.plot(epochs, Results["train"]["loss_history"], label=f"Train {fold+1}")
         plt.plot(epochs, Results["val"]["loss_history"], label=f"Validation {fold+1}")
@@ -242,7 +242,7 @@ def main():
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
     # Plot average metrics across folds (2x3 grid).
-    plt.figure(figsize=(20, 15))
+    plt.figure(figsize=(20, 10))
     plt.subplot(2, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Validation Average")

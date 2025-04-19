@@ -46,7 +46,7 @@ For FCNN:
 
 For Confounder_free
 ```
-python FCNN_encoder_confounder_free_lib/hyperparam_optimization.py
+  python FCNN_encoder_confounder_free_lib/hyperparam_optimization.py
 ```
 
 Currently, the scripts are set to run 10 trials. You can increase this number as needed to improve optimization results.

@@ -5,8 +5,45 @@
 - It seems that the poor generalizability is caused by normalization in the model, where the normalization parameters needed for training, validation, and test are very different. So, optimizing the following hyperparameters may help with this issue. 
 - Optimization: increase `batch_size` to `256`, decrease `weight_decay` to `0`, decrease `dropout_rate` to `0`
 - DEBUG: add a augment (`activation=model_cfg["activation"]`) for GAN in `./FCNN_encoder_confounder_free_lib/main.py`
+- PROBLEM: the results of running `python FCNN_encoder_confounder_free_lib/hyperparam_optimization_test.py` are significantly different
 
-# A backup for ChatGPT's suggestion
+```bash
+# 1st run: 
+Best trial:
+  Final test F1: 0.7211383566634877
+  Best hyperparameters:
+    num_encoder_layers: 1
+    num_classifier_layers: 3
+    dropout_rate: 0.5
+    learning_rate: 0.0005
+    encoder_lr: 0.001
+    classifier_lr: 1e-05
+    activation: relu
+# 2rd run: 
+Best trial:
+  Final test F1: 0.7033427692464809
+  Best hyperparameters:
+    num_encoder_layers: 3
+    num_classifier_layers: 1
+    dropout_rate: 0.5
+    learning_rate: 0.0001
+    encoder_lr: 0.001
+    classifier_lr: 0.0005
+    activation: tanh
+# 3rd run:
+Best trial:
+  Final test F1: 0.7041237995889771
+  Best hyperparameters:
+    num_encoder_layers: 1
+    num_classifier_layers: 2
+    dropout_rate: 0.5
+    learning_rate: 0.001
+    encoder_lr: 0.001
+    classifier_lr: 0.0001
+    activation: relu
+```
+
+## A backup for ChatGPT's suggestion
 
 ```
 In FCNN_encoder_confounder_free_lib I set encoder learning rate and classfier learnin rate to 0 but still recall decreased why?

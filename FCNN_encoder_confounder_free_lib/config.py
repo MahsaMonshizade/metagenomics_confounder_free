@@ -42,9 +42,9 @@ config = {
     "training": {
         "num_epochs": 100,
         "batch_size": 256,
-        "learning_rate": 0.0001,             # For disease classifier optimizer
-        "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
+        "learning_rate": 0.00005,             # For disease classifier optimizer
+        "encoder_lr": 0.00005,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },
