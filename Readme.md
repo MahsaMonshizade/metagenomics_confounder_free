@@ -55,7 +55,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 1. Implement **early stopping** in the training process. (Mahsa)
 2. Add the last layer activatin funciton, latent dim and batch size as hyper parameters (remove dropout as confounder parameter) (Mahsa)
-3. Try to find more crc data for pretraining they need to have gender (Mahsa)
+3. ~~Try to find more crc data for pretraining they need to have gender (Mahsa)~~
 4. Add MicroKPNN confounder free (Mahsa)
 
 5. Read train.py carefully (Yuhui)
@@ -64,3 +64,12 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 7. Try different loss function instead of pearson loss function
 8. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
 9. Plot pca and tsne on both train and test to see samples distribution
+
+
+
+### 📂 For Yuhui
+
+You can find the pretraining data for CRC in the `dataset/pretrain_CRC_data/` directory.
+
+Note that this dataset contains **more features** than the one we use for training (`dataset/CRC_data/new_crc_abundance_PRJEB6070.csv`).  
+Feel free to remove any extra columns that are not present in the training dataset if you think it would improve consistency or simplify the modeling.
