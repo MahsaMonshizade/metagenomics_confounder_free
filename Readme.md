@@ -56,10 +56,11 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 1. Implement **early stopping** in the training process. (Mahsa)
 2. Add the last layer activatin funciton, latent dim and batch size as hyper parameters (remove dropout as confounder parameter) (Mahsa)
 3. Try to find more crc data for pretraining they need to have gender (Mahsa)
+4. Add MicroKPNN confounder free (Mahsa)
 
-4. Read train.py carefully (Yuhui)
-5. Pretraining on the wole crc dataset (Yuhui)
+5. Read train.py carefully (Yuhui)
+6. Pretraining on the wole crc dataset (Yuhui)
 
-6. Try different loss function instead of pearson loss function
-7. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
-8. Plot pca and tsne on both train and test to see samples distribution
+7. Try different loss function instead of pearson loss function
+8. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
+9. Plot pca and tsne on both train and test to see samples distribution
