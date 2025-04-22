@@ -185,6 +185,6 @@ cython_debug/
 /dataset/pretrain_CRC_data/combined_abundance.csv
 /dataset_preprocessing
 /Default_Database
-/MicroKPNN_encoder_confounder_free_lib
+/MicroKPNN_encoder_confounder_free_lib_old
 
 

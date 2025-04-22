@@ -7,21 +7,14 @@ from sklearn.metrics import (
 )
 
 def freeze_batchnorm(module):
-    """
-    Recursively set all BatchNorm layers in the module to eval mode,
-    so that their running statistics are not updated.
-    """
     if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
-        module.eval()  # Freeze running stats
+        module.eval()
     for child in module.children():
         freeze_batchnorm(child)
 
 def unfreeze_batchnorm(module):
-    """
-    Recursively set all BatchNorm layers back to training mode.
-    """
     if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
-        module.train()  # Re-enable updating of running stats
+        module.train()
     for child in module.children():
         unfreeze_batchnorm(child)
 
@@ -33,13 +26,13 @@ def train_model(
 ):
     """
     Train the model using a three-phase procedure:
-      - Phase 1: Confounder classification update using a confounder loss.
-      - Phase 2: Distillation update using PearsonCorrelationLoss.
-      - Phase 3: Disease classification update using disease loss.
+      - Phase 1: Drug/Confounder classification training (r_loss) using data_loader.
+      - Phase 2: Distillation training (g_loss) with PearsonCorrelationLoss.
+      - Phase 3: Disease classification training (c_loss) using data_all_loader.
       
-    During phases 1 and 2 we freeze the encoder's batch normalization layers 
-    (i.e., preserve their internal running statistics) to minimize their perturbation.
+    Metrics for training, validation, and test phases are stored.
     """
+    # Initialize results dictionary to store metric histories.
     results = {
         "train": {
             "gloss_history": [],      # g_loss: distillation phase loss
@@ -74,13 +67,17 @@ def train_model(
         }
     }
 
+    # Move model and loss functions to device.
     model = model.to(device)
     criterion = criterion.to(device)
     criterion_classifier = criterion_classifier.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
 
+    # Begin epoch loop.
     for epoch in range(num_epochs):
-        model.train()  # Ensure overall training mode
+        model.train()  # Enable training mode
+
+        # Initialize accumulators for training phase metrics.
         epoch_gloss = 0
         epoch_train_loss = 0
         epoch_train_preds = []
@@ -89,64 +86,68 @@ def train_model(
         hidden_activations_list = []
         targets_list = []
 
+        # Create iterators for the two DataLoaders used in Phase 1 and Phase 3.
         data_iter = iter(data_loader)
         data_all_iter = iter(data_all_loader)
 
+        # Loop over batches until data_all_iter is exhausted.
         while True:
             try:
                 # ---- Phase 3: Disease classification batch ----
                 x_all_batch, y_all_batch = next(data_all_iter)
                 x_all_batch, y_all_batch = x_all_batch.to(device), y_all_batch.to(device)
 
-                # ---- Phase 1: Confounder classification batch ----
+                # ---- Phase 1: Confounder (drug) classification batch ----
                 try:
                     x_batch, y_batch = next(data_iter)
                 except StopIteration:
+                    # Restart the iterator if exhausted.
                     data_iter = iter(data_loader)
                     x_batch, y_batch = next(data_iter)
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
-                # ------- Phase 1: Train Confounder Classifier -------
+                # -------- Phase 1: Train confounder classifier --------
                 model.zero_grad()
-                # Freeze the encoder’s BN layers to preserve internal state.
-                freeze_batchnorm(model.encoder)
-                # (No need to freeze parameters with requires_grad here since we now rely on optimizer parameter groups.)
+                # Freeze encoder parameters temporarily.
+                for param in model.encoder.parameters():
+                    param.requires_grad = False
+                model.encoder.eval()
                 encoded_features = model.encoder(x_batch)
                 predicted_drug = model.classifier(encoded_features)
                 r_loss = criterion_classifier(predicted_drug, y_batch)
                 optimizer_classifier.zero_grad()
                 r_loss.backward()
                 optimizer_classifier.step()
-                # Restore BN layers to train mode for phase 3.
-                unfreeze_batchnorm(model.encoder)
+                # Unfreeze encoder parameters.
+                for param in model.encoder.parameters():
+                    param.requires_grad = True
+                model.encoder.train()
 
-                # ------- Phase 2: Distillation (Alignment) -------
+                # -------- Phase 2: Train distillation (alignment) --------
                 model.zero_grad()
-                # Freeze BN layers in the encoder to preserve their stats during the forward pass.
-                freeze_batchnorm(model.encoder)
-                # Freeze the confounder classifier parameters by keeping them unchanged.
+                # Freeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = False
+                # freeze_batchnorm(model.classifier)
+                model.classifier.eval()
                 encoded_features = model.encoder(x_batch)
-                # Apply sigmoid to the classifier output
+                # Use sigmoid on the classifier output.
                 predicted_drug = torch.sigmoid(model.classifier(encoded_features))
                 g_loss = criterion(predicted_drug, y_batch)
+                # Save hidden activations and targets for computing distance correlation.
                 hidden_activations_list.append(encoded_features.detach().cpu())
                 targets_list.append(y_batch.detach().cpu())
                 optimizer.zero_grad()
                 g_loss.backward()
                 optimizer.step()
                 epoch_gloss += g_loss.item()
-                # Unfreeze the confounder classifier parameters.
+                # Unfreeze classifier parameters.
                 for param in model.classifier.parameters():
                     param.requires_grad = True
-                # Restore BN layers.
-                unfreeze_batchnorm(model.encoder)
+                model.classifier.train()
 
-                # ------- Phase 3: Train Encoder & Disease Classifier -------
+                # -------- Phase 3: Train encoder & disease classifier --------
                 model.zero_grad()
-                # For this phase, we allow encoder BN layers to update normally.
-                model.encoder.train()  # Ensure all parts (including BN) are in train mode.
                 encoded_features_all = model.encoder(x_all_batch)
                 predicted_disease_all = model.disease_classifier(encoded_features_all)
                 c_loss = criterion_disease_classifier(predicted_disease_all, y_all_batch)
@@ -154,15 +155,16 @@ def train_model(
                 c_loss.backward()
                 optimizer_disease_classifier.step()
                 epoch_train_loss += c_loss.item()
-                prob = torch.sigmoid(predicted_disease_all).detach().cpu()
-                epoch_train_probs.extend(prob)
-                pred_tag = (prob > 0.5).float()
+                pred_prob = torch.sigmoid(predicted_disease_all).detach().cpu()
+                epoch_train_probs.extend(pred_prob)
+                pred_tag = (pred_prob > 0.5).float()
                 epoch_train_preds.append(pred_tag.cpu())
                 epoch_train_labels.append(y_all_batch.cpu())
 
             except StopIteration:
                 break  # End of epoch
 
+        # Compute training metrics over the epoch.
         avg_gloss = epoch_gloss / len(data_all_loader)
         avg_train_loss = epoch_train_loss / len(data_all_loader)
         results["train"]["gloss_history"].append(avg_gloss)
@@ -185,13 +187,13 @@ def train_model(
         train_conf_matrix = confusion_matrix(epoch_train_labels, epoch_train_preds)
         results["train"]["confusion_matrix"].append(train_conf_matrix)
 
-        # Calculate Distance Correlation for training phase.
+        # Compute distance correlation for training phase.
         hidden_activations_all = torch.cat(hidden_activations_list, dim=0)
         targets_all = torch.cat(targets_list, dim=0)
         dcor_value = dcor.distance_correlation_sqr(hidden_activations_all.numpy(), targets_all.numpy())
         results["train"]["dcor_history"].append(dcor_value)
 
-        # ------- Validation Phase -------
+        # -------------- Validation Phase --------------
         model.eval()
         epoch_val_loss = 0
         epoch_val_preds = []
@@ -199,6 +201,7 @@ def train_model(
         epoch_val_probs = []
         val_hidden_activations_list = []
         val_targets_list = []
+
         with torch.no_grad():
             for x_batch, y_batch in data_all_val_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
@@ -206,9 +209,9 @@ def train_model(
                 predicted_disease = model.disease_classifier(encoded_features)
                 c_loss = criterion_disease_classifier(predicted_disease, y_batch)
                 epoch_val_loss += c_loss.item()
-                prob = torch.sigmoid(predicted_disease).detach().cpu()
-                epoch_val_probs.append(prob)
-                pred_tag = (prob > 0.5).float()
+                pred_prob = torch.sigmoid(predicted_disease).detach().cpu()
+                epoch_val_probs.extend(pred_prob)
+                pred_tag = (pred_prob > 0.5).float()
                 epoch_val_preds.append(pred_tag.cpu())
                 epoch_val_labels.append(y_batch.cpu())
             for x_batch, y_batch in data_val_loader:
@@ -216,6 +219,7 @@ def train_model(
                 encoded_features = model.encoder(x_batch)
                 val_hidden_activations_list.append(encoded_features.cpu())
                 val_targets_list.append(y_batch.cpu())
+
         avg_val_loss = epoch_val_loss / len(data_all_val_loader)
         results["val"]["loss_history"].append(avg_val_loss)
         epoch_val_probs = torch.cat(epoch_val_probs)
@@ -239,13 +243,14 @@ def train_model(
         val_conf_matrix = confusion_matrix(epoch_val_labels, epoch_val_preds)
         results["val"]["confusion_matrix"].append(val_conf_matrix)
 
-        # ------- Test Phase -------
+        # -------------- Test Phase --------------
         epoch_test_loss = 0
         epoch_test_preds = []
         epoch_test_labels = []
         epoch_test_probs = []
         test_hidden_activations_list = []
         test_targets_list = []
+
         with torch.no_grad():
             for x_batch, y_batch in data_all_test_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
@@ -253,9 +258,9 @@ def train_model(
                 predicted_disease = model.disease_classifier(encoded_features)
                 c_loss = criterion_disease_classifier(predicted_disease, y_batch)
                 epoch_test_loss += c_loss.item()
-                prob = torch.sigmoid(predicted_disease).detach().cpu()
-                epoch_test_probs.append(prob)
-                pred_tag = (prob > 0.5).float()
+                pred_prob = torch.sigmoid(predicted_disease).detach().cpu()
+                epoch_test_probs.extend(pred_prob)
+                pred_tag = (pred_prob > 0.5).float()
                 epoch_test_preds.append(pred_tag.cpu())
                 epoch_test_labels.append(y_batch.cpu())
             for x_batch, y_batch in data_test_loader:
@@ -263,6 +268,7 @@ def train_model(
                 encoded_features = model.encoder(x_batch)
                 test_hidden_activations_list.append(encoded_features.cpu())
                 test_targets_list.append(y_batch.cpu())
+
         avg_test_loss = epoch_test_loss / len(data_all_test_loader)
         results["test"]["loss_history"].append(avg_test_loss)
         epoch_test_probs = torch.cat(epoch_test_probs)
