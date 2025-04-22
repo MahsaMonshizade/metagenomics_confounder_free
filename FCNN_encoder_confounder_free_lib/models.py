@@ -90,9 +90,10 @@ class GAN(nn.Module):
      one of which, disease_classifier, is used for the main prediction.)
     """
     def __init__(self, input_size, latent_dim, num_encoder_layers, num_classifier_layers,
-                 dropout_rate, norm="batch", classifier_hidden_dims=None, activation="relu"):
+                 dropout_rate, norm="batch", classifier_hidden_dims=None, activation="relu", last_activation = "relu"):
         super(GAN, self).__init__()
         self.activation = activation  # Save the chosen activation
+        self.last_activation = last_activation
         self.encoder = self._build_encoder(input_size, latent_dim, num_encoder_layers,
                                            dropout_rate, norm)
         self.classifier = self._build_classifier(latent_dim, num_classifier_layers,
@@ -144,11 +145,14 @@ class GAN(nn.Module):
                 current_dim = hd
         else:
             # Otherwise, reduce dimension by half in each layer.
-            for _ in range(num_layers):
+            for i in range(num_layers):
                 new_dim = current_dim // 2
                 layers.append(nn.Linear(current_dim, new_dim))
                 layers.append(get_norm_layer(norm, new_dim))
-                layers.append(get_activation(self.activation))
+                if i == num_layers-1:
+                    layers.append(get_activation(self.activation))
+                else:
+                    layers.append(get_activation(self.last_activation))
                 if dropout_rate > 0:
                     layers.append(nn.Dropout(dropout_rate))
                 current_dim = new_dim

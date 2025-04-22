@@ -123,6 +123,7 @@ def main():
             norm=model_cfg["norm"],
             classifier_hidden_dims=model_cfg["classifier_hidden_dims"],
             activation=model_cfg["activation"], 
+            last_activation = model_cfg["last_activation"]
         ).to(device)
 
         # Define loss functions.

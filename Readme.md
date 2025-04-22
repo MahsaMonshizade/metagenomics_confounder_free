@@ -54,7 +54,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 ## TODO List
 
 1. Implement **early stopping** in the training process. (Mahsa)
-2. Add the last layer activatin funciton, latent dim and batch size as hyper parameters (remove dropout as confounder parameter) (Mahsa)
+2. ~~Add the last layer activatin funciton, latent dim, batch size and norm as hyper parameters (remove dropout as confounder parameter) (Mahsa)~~
 3. ~~Try to find more crc data for pretraining they need to have gender (Mahsa)~~
 4. Add MicroKPNN confounder free (Mahsa)
 

@@ -163,11 +163,16 @@ def objective(trial):
     # Set hyperparameters via categorical suggestions.
     trial_config["model"]["num_encoder_layers"] = trial.suggest_categorical("num_encoder_layers", [1, 2, 3])
     trial_config["model"]["num_classifier_layers"] = trial.suggest_categorical("num_classifier_layers", [1, 2, 3])
-    trial_config["model"]["dropout_rate"] = trial.suggest_categorical("dropout_rate", [0.0, 0.3, 0.5])
+    # trial_config["model"]["dropout_rate"] = trial.suggest_categorical("dropout_rate", [0.0, 0.3, 0.5])
     trial_config["training"]["learning_rate"] = trial.suggest_categorical("learning_rate", [1e-5, 1e-4, 5e-4, 1e-3])
     trial_config["training"]["encoder_lr"] = trial.suggest_categorical("encoder_lr", [1e-5, 1e-4, 5e-4, 1e-3])
     trial_config["training"]["classifier_lr"] = trial.suggest_categorical("classifier_lr", [1e-5, 1e-4, 5e-4, 1e-3])
     trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
+    trial_config["model"]["latent_dim"] = trial.suggest_categorical("latent_dim", config["tuning"]["latent_dim"])
+    trial_config["training"]["batch_size"] = trial.suggest_categorical("batch_size", config["tuning"]["batch_size"])
+    trial_config["model"]["norm"] = trial.suggest_categorical("norm", config["tuning"]["norm"])
+    trial_config["model"]["last_activation"] = trial.suggest_categorical("last_activation", config["tuning"]["last_activation"])
+    
     
     # Run the trial with a reduced number of epochs for speed.
     avg_test_recall = run_trial(trial_config, num_epochs=50)
