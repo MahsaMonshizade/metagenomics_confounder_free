@@ -97,14 +97,14 @@ def main():
 
     ###############added
 
-    edge_list = "Default_Database/EdgeList.csv"
+    edge_list = f"Results/MicroKPNN_encoder_confounder_free_plots/required_data/EdgeList.csv"
     # Build masks
     
     mask, parent_dict = build_mask(edge_list, feature_columns)
     print(mask.shape)
     print(mask)
     parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
-    parent_dict_csv_path = "parent_dict_main.csv"
+    parent_dict_csv_path = "Results/MicroKPNN_encoder_confounder_free_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
 
     ########################

@@ -38,6 +38,9 @@ config = {
     #     "disease_column": "PATGROUPFINAL_C",
     #     "confounder_column": "METFORMIN_C"
     # },
+
+    # which level to use when building taxonomy edges (0=superkingdom, …, 5=genus)
+    "taxonomy_level": 5,
     
     "training": {
         "num_epochs": 100,

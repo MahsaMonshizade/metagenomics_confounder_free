@@ -36,6 +36,12 @@ To run the models:
   python FCNN_encoder_confounder_free_lib/main.py
 ```
 
+- For the **MicroKPNN_Confounder-Free Model**:
+```
+  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
+  python MicroKPNN_encoder_confounder_free_lib/main.py
+```
+
 ### Hyperparameter Optimization
 We provide scripts to perform hyperparameter tuning:
 
@@ -49,6 +55,12 @@ For Confounder_free
   python FCNN_encoder_confounder_free_lib/hyperparam_optimization.py
 ```
 
+For MicroKPNN_Confounder_free
+```
+  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
+  python MicroKPNN_encoder_confounder_free_lib/hyperparam_optimization.py
+```
+
 Currently, the scripts are set to run 10 trials. You can increase this number as needed to improve optimization results.
 
 ## TODO List
@@ -57,7 +69,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 2. ~~Add the last layer activatin funciton, latent dim, batch size and norm as hyper parameters (remove dropout as confounder parameter) (Mahsa)~~
 3. ~~Try to find more crc data for pretraining they need to have gender (Mahsa)~~
 4. ~~Add MicroKPNN confounder free (Mahsa)~~
-5. Clean MicroKPNN_Confounder_free_lib and create edges scripts (Mahsa)
+5. ~~Clean MicroKPNN_Confounder_free_lib and create edges scripts (Mahsa)~~
 6. Add EDA for each dataset (Mahsa)
 7. Add explainability script (Mahsa)
 8. Add all benchmarks (MicroKPNN, MicroKPNN-MT, SVM, RF) (Mahsa)

@@ -16,6 +16,24 @@ from sklearn.model_selection import StratifiedKFold
 # Use the device as specified in the configuration.
 device = torch.device(config["training"].get("device", "cpu"))
 
+def build_mask(edge_list, species):
+    # generate the mask
+        edge_df = pd.read_csv(edge_list)
+        
+        edge_df['parent'] = edge_df['parent'].astype(str)
+        parent_nodes = sorted(set(edge_df['parent'].tolist()))  # Sort to ensure consistent order
+        mask = torch.zeros(len(species), len(parent_nodes))
+        child_nodes = species
+
+        parent_dict = {k: i for i, k in enumerate(parent_nodes)}
+        child_dict = {k: i for i, k in enumerate(child_nodes)}
+        
+        for i, row in edge_df.iterrows():
+            if row['child'] != 'Unnamed: 0': 
+                mask[child_dict[str(row['child'])]][parent_dict[row['parent']]] = 1
+
+        return mask.T, parent_dict
+
 def run_trial(trial_config, num_epochs=50):
     """
     Run a training trial using 5-fold cross-validation on the training set and return the average validation accuracy.
@@ -61,7 +79,18 @@ def run_trial(trial_config, num_epochs=50):
     
     # Set up 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    ###############added
+    edge_list = "MicroKPNN_encoder_confounder_free_plots/required_data/EdgeList.csv"
+    # Build masks
     
+    mask, parent_dict = build_mask(edge_list, feature_columns)
+    print(mask.shape)
+    print(mask)
+    parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
+    # parent_dict_csv_path = "parent_dict_main.csv"
+    # parent_df.to_csv(parent_dict_csv_path, index=False)
+    ########################
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Running fold {fold+1} of 5")
         # Split into training and validation subsets.
@@ -103,6 +132,7 @@ def run_trial(trial_config, num_epochs=50):
         
         # Build the model.
         model = GAN(
+            mask = mask,
             input_size=input_size,
             latent_dim=model_cfg["latent_dim"],
             num_encoder_layers=model_cfg["num_encoder_layers"],
