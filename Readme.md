@@ -72,7 +72,8 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 5. ~~Clean MicroKPNN_Confounder_free_lib and create edges scripts (Mahsa)~~
 6. Add EDA for each dataset (Mahsa)
 7. Add explainability script (Mahsa)
-8. Add all benchmarks (MicroKPNN, MicroKPNN-MT, SVM, RF) (Mahsa)
+8. ~~Add all benchmarks (MicroKPNN, SVM, RF) (Mahsa)~~
+9. Implement MicroKPNN-MT as a benchmark (Mahsa)
 
 9. Read train.py carefully (Yuhui)
 10. Pretraining on the wole crc dataset (Yuhui)
