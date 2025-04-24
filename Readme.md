@@ -82,7 +82,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 11. Try different loss function instead of pearson loss function
 12. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
 13. Plot pca and tsne on both train and test to see samples distribution
-14. Data Augmentation
+14. Data Augmentation (phylomix)
 
 
 
