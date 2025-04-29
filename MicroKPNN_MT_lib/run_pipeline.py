@@ -10,7 +10,7 @@ def main():
     # 1) Read paths & taxonomy level from config.py
     inp = config["data"]["train_abundance_path"]
     taxonomy = str(config["taxonomy_level"])      # add "taxonomy_level": <0–5> in your config.py
-    out = "Results/MicroKPNN_encoder_confounder_free_plots/required_data/"
+    out = "Results/MicroKPNN_MT_plots/required_data/"
 
     # 2) Prepare output folder
     os.makedirs(out, exist_ok=True)
@@ -18,7 +18,7 @@ def main():
     # 3) Run taxonomy_info.py → species_info.pkl
     print("[1/3] Running taxonomy_info.py …")
     subprocess.check_call([
-        sys.executable, "MicroKPNN_encoder_confounder_free_lib/taxonomy_info.py",
+        sys.executable, "MicroKPNN_MT_lib/taxonomy_info.py",
         "--inp", inp,
         "--out", out
     ])
@@ -26,7 +26,7 @@ def main():
     # 4) Run create_edges.py → EdgeList.csv + node lists
     print("[2/3] Running create_edges.py …")
     subprocess.check_call([
-        sys.executable, "MicroKPNN_encoder_confounder_free_lib/create_edges.py",
+        sys.executable, "MicroKPNN_MT_lib/create_edges.py",
         "--inp", inp,
         "--taxonomy", taxonomy,
         "--out", out
@@ -35,7 +35,7 @@ def main():
 
     # # 5) Run your main training & plotting script
     # print("[3/3] Running main.py …")
-    # subprocess.check_call([sys.executable, "MicroKPNN_encoder_confounder_free_lib/main.py"])
+    # subprocess.check_call([sys.executable, "MicroKPNN_MT_lib/main.py"])
 
     # print("\n✅ Pipeline complete — all outputs in", out)
 

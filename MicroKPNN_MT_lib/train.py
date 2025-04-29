@@ -35,9 +35,9 @@ def train_model(
     # Initialize results dictionary to store metric histories.
     results = {
         "train": {
-            "gloss_history": [],      # g_loss: distillation phase loss
+            # "gloss_history": [],      # g_loss: distillation phase loss
             "loss_history": [],       # c_loss: disease classification loss
-            "dcor_history": [],       # Distance correlation measure
+            # "dcor_history": [],       # Distance correlation measure
             "accuracy": [],
             "f1_score": [],
             "auc_pr": [],
@@ -47,7 +47,7 @@ def train_model(
         },
         "val": {
             "loss_history": [],
-            "dcor_history": [],
+            # "dcor_history": [],
             "accuracy": [],
             "f1_score": [],
             "auc_pr": [],
@@ -57,7 +57,7 @@ def train_model(
         },
         "test": {
             "loss_history": [],
-            "dcor_history": [],
+            # "dcor_history": [],
             "accuracy": [],
             "f1_score": [],
             "auc_pr": [],
@@ -69,7 +69,6 @@ def train_model(
 
     # Move model and loss functions to device.
     model = model.to(device)
-    criterion = criterion.to(device)
     criterion_classifier = criterion_classifier.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
 
@@ -93,6 +92,8 @@ def train_model(
                 break
             x_batch, y_batch_disease, y_batch_confounder = x_batch.to(device), y_batch_disease.to(device), y_batch_confounder.to(device)
             encoded_features = model.encoder(x_batch)
+
+
             predicted_confounder = model.classifier(encoded_features)   
             prob_confounder   = torch.sigmoid(predicted_confounder)  
             pred_tag_confounder   = (prob_confounder > 0.5).float()            

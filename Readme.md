@@ -73,7 +73,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 6. Add EDA for each dataset (Mahsa)
 7. Add explainability script (Mahsa)
 8. ~~Add all benchmarks (MicroKPNN, SVM, RF) (Mahsa)~~
-9. Implement MicroKPNN-MT as a benchmark (Mahsa)
+9. ~~Implement MicroKPNN-MT as a benchmark (Mahsa)~~
 10. try our model on metacardis data again (Mahsa)
 
 10. Read train.py carefully (Yuhui)

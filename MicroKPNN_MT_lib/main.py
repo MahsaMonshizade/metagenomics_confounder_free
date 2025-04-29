@@ -93,14 +93,14 @@ def main():
 
     ###############added
 
-    edge_list = f"Results/MicroKPNN_encoder_confounder_free_plots/required_data/EdgeList.csv"
+    edge_list = f"Results/MicroKPNN_MT_plots/required_data/EdgeList.csv"
     # Build masks
     
     mask, parent_dict = build_mask(edge_list, feature_columns)
     print(mask.shape)
     print(mask)
     parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
-    parent_dict_csv_path = "Results/MicroKPNN_encoder_confounder_free_plots/required_data/parent_dict_main.csv"
+    parent_dict_csv_path = "Results/MicroKPNN_MT_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
 
     ########################
@@ -169,8 +169,8 @@ def main():
         )
 
         # Save model and features.
-        torch.save(model.state_dict(), f"Results/MicroKPNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
-        pd.Series(feature_columns).to_csv("Results/MicroKPNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
+        torch.save(model.state_dict(), f"Results/MicroKPNN_MT_plots/trained_model_fold{fold+1}.pth")
+        pd.Series(feature_columns).to_csv("Results/MicroKPNN_MT_plots/feature_columns.csv", index=False)
         print("Model and feature columns saved for fold", fold+1)
 
         train_metrics_per_fold.append(Results["train"])
@@ -180,15 +180,15 @@ def main():
         # Plot per-fold confusion matrices.
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
+                              save_path=f"Results/MicroKPNN_MT_plots/fold_{fold+1}_train_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["val"]["confusion_matrix"][-1],
                               title=f"Validation Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
+                              save_path=f"Results/MicroKPNN_MT_plots/fold_{fold+1}_val_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["test"]["confusion_matrix"][-1],
                               title=f"Test Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
+                              save_path=f"Results/MicroKPNN_MT_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
 
         num_epochs_actual = len(Results["train"]["loss_history"])
@@ -267,7 +267,7 @@ def main():
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig(f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_metrics.png")
+        plt.savefig(f"Results/MicroKPNN_MT_plots/fold_{fold+1}_metrics.png")
         plt.close()
 
     # --------------- Aggregate Metrics Across Folds ---------------
@@ -385,21 +385,21 @@ def main():
     # plt.legend()
 
     plt.tight_layout()
-    plt.savefig("Results/MicroKPNN_encoder_confounder_free_plots/average_metrics.png")
+    plt.savefig("Results/MicroKPNN_MT_plots/average_metrics.png")
     plt.close()
 
     # Plot aggregated confusion matrices.
     plot_confusion_matrix(train_conf_matrix_avg[-1],
                           title="Average Train Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
+                          save_path="Results/MicroKPNN_MT_plots/average_train_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(val_conf_matrix_avg[-1],
                           title="Average Validation Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
+                          save_path="Results/MicroKPNN_MT_plots/average_val_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(test_conf_matrix_avg[-1],
                           title="Average Test Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
+                          save_path="Results/MicroKPNN_MT_plots/average_test_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
 
     avg_test_acc = test_avg_metrics["accuracy"][-1]
@@ -451,8 +451,8 @@ def main():
     ]
     metrics_data.append(avg_data)
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
-    metrics_df.to_csv("Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
-    print("Metrics summary saved to 'Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+    metrics_df.to_csv("Results/MicroKPNN_MT_plots/metrics_summary.csv", index=False)
+    print("Metrics summary saved to 'Results/MicroKPNN_MT_plots/metrics_summary.csv'.")
 
 if __name__ == "__main__":
     main()

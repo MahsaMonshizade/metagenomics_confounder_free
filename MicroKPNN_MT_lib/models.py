@@ -172,7 +172,7 @@ class GAN(nn.Module):
             layers.append(nn.Dropout(dropout_rate))
         return nn.Sequential(*layers)
 
-    def _build_classifier(self, disease, latent_dim, num_layers, dropout_rate, norm, hidden_dims):
+    def _build_classifier(self, latent_dim, disease, num_layers, dropout_rate, norm, hidden_dims):
         layers = []
         if disease:
             current_dim = latent_dim+1
