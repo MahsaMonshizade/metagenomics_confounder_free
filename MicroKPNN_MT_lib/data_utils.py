@@ -12,7 +12,7 @@ def load_and_transform_data(file_path, pseudocount=1e-6):
     uid = data['SampleID']
     df_features = data.drop(columns=['SampleID'])
     
-    # Normalize each row so that it sums to 1 (converting to proportions)
+    # Normalize each row so that it sums to 1 (convert to proportions)
     row_sums = df_features.sum(axis=1)
     df_normalized = df_features.div(row_sums, axis=0)
     

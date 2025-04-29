@@ -49,6 +49,7 @@ def main():
     df_relative_abundance = pd.read_csv(args.inp, index_col=0)
     species_ids = df_relative_abundance.columns.values.tolist()
     print('hi')
+    print(species_ids)
     print(os.getcwd())
     nodes = parse_nodes(nodes_file)
     names = parse_names(names_file)

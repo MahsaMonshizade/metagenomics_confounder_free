@@ -94,17 +94,6 @@ def create_edges_for_hidden(species_ids, num_hidden):
     print(f"Number of hidden nodes: {len(set(meaningless_nodes))}")
     return edges, meaningless_nodes
 
-def create_output_edges(edges):
-    output_edges = []
-
-    for e in edges:
-        output_edges.extend([
-            ('phenotype', e[0]),
-            ('gender', e[0]),
-        ])
-
-    output_edges = list(set(output_edges))
-    return output_edges
 
 def save_nodes_to_csv(nodes, file_path):
     df = pd.DataFrame({'nodes': nodes})
@@ -139,8 +128,7 @@ def main():
     community_edges, community_nodes = create_edges_from_graph(species_ids, read_gml(community_file))
     metabolite_edges, metabolite_nodes = create_edges_from_metabolites(species_ids, taxonomy_infos, read_metabolite_file(metabolite_file))
 
-    output_edges = create_output_edges(taxonomy_edges + community_edges + metabolite_edges)
-    all_edges = output_edges + taxonomy_edges + community_edges + metabolite_edges
+    all_edges = taxonomy_edges + community_edges + metabolite_edges
     
     # Save nodes to CSV
     save_nodes_to_csv(list(set(taxonomy_nodes)), args.out + '/taxonomyNodes.csv')
