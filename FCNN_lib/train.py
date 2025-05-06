@@ -75,11 +75,11 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
         epoch_train_labels = torch.cat(epoch_train_labels)
         
         train_acc = balanced_accuracy_score(epoch_train_labels, epoch_train_preds)
-        train_f1 = f1_score(epoch_train_labels, epoch_train_preds)
-        precision, recall, _ = precision_recall_curve(epoch_train_labels, epoch_train_probs)
+        train_f1 = f1_score(epoch_train_labels, epoch_train_preds, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_train_labels.view(-1), epoch_train_probs)
         train_auc_pr = auc(recall, precision)
-        train_precision = precision_score(epoch_train_labels, epoch_train_preds)
-        train_recall = recall_score(epoch_train_labels, epoch_train_preds)
+        train_precision = precision_score(epoch_train_labels, epoch_train_preds, zero_division=0)
+        train_recall = recall_score(epoch_train_labels, epoch_train_preds, zero_division=0)
         train_conf_matrix = confusion_matrix(epoch_train_labels, epoch_train_preds)
         
         results["train"]["accuracy"].append(train_acc)
@@ -115,11 +115,11 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
         epoch_val_labels = torch.cat(epoch_val_labels)
         
         val_acc = balanced_accuracy_score(epoch_val_labels, epoch_val_preds)
-        val_f1 = f1_score(epoch_val_labels, epoch_val_preds)
-        precision, recall, _ = precision_recall_curve(epoch_val_labels, epoch_val_probs)
+        val_f1 = f1_score(epoch_val_labels, epoch_val_preds, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_val_labels.view(-1), epoch_val_probs)
         val_auc_pr = auc(recall, precision)
-        val_precision = precision_score(epoch_val_labels, epoch_val_preds)
-        val_recall = recall_score(epoch_val_labels, epoch_val_preds)
+        val_precision = precision_score(epoch_val_labels, epoch_val_preds, zero_division=0)
+        val_recall = recall_score(epoch_val_labels, epoch_val_preds, zero_division=0)
         val_conf_matrix = confusion_matrix(epoch_val_labels, epoch_val_preds)
         
         results["val"]["accuracy"].append(val_acc)
@@ -154,11 +154,11 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
         epoch_test_labels = torch.cat(epoch_test_labels)
         
         test_acc = balanced_accuracy_score(epoch_test_labels, epoch_test_preds)
-        test_f1 = f1_score(epoch_test_labels, epoch_test_preds)
-        precision, recall, _ = precision_recall_curve(epoch_test_labels, epoch_test_probs)
+        test_f1 = f1_score(epoch_test_labels, epoch_test_preds, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_test_labels.view(-1), epoch_test_probs)
         test_auc_pr = auc(recall, precision)
-        test_precision = precision_score(epoch_test_labels, epoch_test_preds)
-        test_recall = recall_score(epoch_test_labels, epoch_test_preds)
+        test_precision = precision_score(epoch_test_labels, epoch_test_preds, zero_division=0)
+        test_recall = recall_score(epoch_test_labels, epoch_test_preds, zero_division=0)
         test_conf_matrix = confusion_matrix(epoch_test_labels, epoch_test_preds)
         
         results["test"]["accuracy"].append(test_acc)

@@ -96,6 +96,9 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
 
     dataset = TensorDataset(x_train, y_train)
     batch_sampler = StratifiedBatchSampler(batches)
-    data_loader = DataLoader(dataset, batch_sampler=batch_sampler)
+    g = torch.Generator()
+    g.manual_seed(42)
+    data_loader = DataLoader(dataset, batch_sampler=batch_sampler, shuffle=False, num_workers=4,worker_init_fn=lambda wid: torch.manual_seed(42 + wid), generator=g)
+
 
     return data_loader

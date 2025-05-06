@@ -65,7 +65,7 @@ def run_trial(trial_config, num_epochs=50):
 
     # Use 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    fold_test_f1s = []
+    fold_test_losses = []
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Trial fold {fold+1} out of 5")
@@ -143,14 +143,14 @@ def run_trial(trial_config, num_epochs=50):
         )
         
         # Get the final test recall from this fold.
-        fold_test_f1 = Results["test"]["f1_score"][-1]
-        print(f"Fold {fold+1} test f1: {fold_test_f1:.4f}")
-        fold_test_f1s.append(fold_test_f1)
+        fold_test_loss = Results["test"]["loss_history"][-1]
+        print(f"Fold {fold+1} test loss: {fold_test_loss:.4f}")
+        fold_test_losses.append(fold_test_loss)
     
     # Compute the average test recall over all folds.
-    avg_test_f1 = np.mean(fold_test_f1s)
-    print(f"Average test f1 over 5 folds: {avg_test_f1:.4f}")
-    return avg_test_f1
+    avg_test_loss = np.mean(fold_test_losses)
+    print(f"Average test loss over 5 folds: {avg_test_loss:.4f}")
+    return avg_test_loss
 
 def objective(trial):
     """
@@ -179,7 +179,7 @@ def objective(trial):
     return avg_test_recall
 
 if __name__ == "__main__":
-    study = optuna.create_study(direction="maximize")
+    study = optuna.create_study(direction="minimize")
     study.optimize(objective, n_trials=10)
     
     print("Best trial:")
