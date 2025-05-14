@@ -39,8 +39,8 @@ def main():
     confounder_col = data_cfg["confounder_column"]
 
     # Load training and test data using the CLR transform.
-    merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
-    merged_test_data_all = get_data(data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"],
+                                                     data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
 
     # Define feature columns (exclude metadata columns and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()

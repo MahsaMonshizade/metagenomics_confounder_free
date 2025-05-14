@@ -52,10 +52,11 @@ def main():
     confounder_col = data_cfg["confounder_column"]
 
     # Load training and test data.
-    merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
-    merged_test_data_all = get_data(data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"],
+                                                    data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
     # TMP: Load the tmp data for preprocessing.
-    merged_tmp_data_all = get_data(tmp_cfg["train_abundance_path"], tmp_cfg["train_metadata_path"])
+    merged_tmp_data_all = get_data(tmp_cfg["train_abundance_path"], tmp_cfg["train_metadata_path"], 
+                                   tmp_cfg["test_abundance_path"], tmp_cfg["test_metadata_path"])[0]
 
     # TMP: Convert confounder column and disease to binary values [move to preprocessing script]. 
     merged_data_all[confounder_col] = merged_data_all[confounder_col].apply(convert_sex_to_binary)
