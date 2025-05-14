@@ -36,6 +36,12 @@ To run the models:
   python FCNN_encoder_confounder_free_lib/main.py
 ```
 
+- For the **Confounder-Free Model** with **pre-training**:
+```
+  python FCNN_encoder_confounder_free_lib/pretrain_main.py
+  python FCNN_encoder_confounder_free_lib/finetune_main.py
+```
+
 - For the **MicroKPNN_Confounder-Free Model**:
 ```
   python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
@@ -76,8 +82,9 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 9. ~~Implement MicroKPNN-MT as a benchmark (Mahsa)~~
 10. try our model on metacardis data again (Mahsa)
 
-10. Read train.py carefully (Yuhui)
-11. Pretraining on the wole crc dataset (Yuhui)
+10. ~~Read train.py carefully (Yuhui)~~
+11. ~~Pretraining on the wole crc dataset (Yuhui)~~
+12. Early stop control (*Yuhui: I observed that different folds converge at different epochs, so an early stopping strategy needs to be implemented.*)
 
 11. Try different loss function instead of pearson loss function
 13. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
