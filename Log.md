@@ -1,5 +1,39 @@
 # Log
 
+## 05/14/2025
+
+Explanation of why we do not make pre-training on RF and SVM: 
+
+**Can I pre-train a RF as auto-encoder?**
+
+Random Forests (RFs) are not typically used as autoencoders because their structure isn't well-suited for this purpose. Autoencoders are usually implemented using neural networks because they need:
+
+1. An encoder part that compresses input data into a lower-dimensional representation
+2. A decoder part that reconstructs the original input from this compressed representation
+
+Random Forests have some fundamental limitations for autoencoder functionality:
+
+* RFs are primarily supervised learning algorithms designed for classification and regression
+* They don't naturally create a continuous latent space like neural network autoencoders
+* Tree-based methods don't easily support the end-to-end differentiable training needed for reconstruction tasks
+
+If you're interested in exploring tree-based methods that can perform dimensionality reduction (which is part of what autoencoders do), you might consider:
+
+Using Random Forests for feature importance to identify the most relevant features
+Exploring decision tree-based dimensionality reduction techniques like Random Projection Forests
+
+However, if you specifically need autoencoder functionality (unsupervised learning with reconstruction capabilities), neural network-based approaches remain the standard approach.
+
+**How about SVM? Can we do pre-training as auto-encoder on SVM?**
+
+Support Vector Machines (SVMs) also cannot be effectively used as autoencoders for pre-training. Here's why:
+
+1. Architectural mismatch: SVMs are designed for supervised classification and regression tasks with a clear decision boundary objective. They lack the encoder-decoder structure necessary for autoencoder functionality.
+2. No natural reconstruction mechanism: SVMs don't have a built-in way to reconstruct input data from their internal representations. The SVM algorithm optimizes for maximum margin classification or regression, not data reconstruction.
+3. Non-generative nature: SVMs are discriminative models that learn decision boundaries between classes rather than generative models that can recreate data distributions.
+4. Limited representation learning: While SVMs can use kernel functions to transform data into higher dimensions, they don't create the kind of hierarchical feature representations that make neural network pre-training valuable.
+5. Optimization objectives: SVMs optimize for different mathematical objectives (maximum margin) than autoencoders (minimizing reconstruction error).
+
 ## 05/05/2025
 
 ### 📂 For Yuhui
