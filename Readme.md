@@ -88,6 +88,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 10. ~~Read train.py carefully (Yuhui)~~
 11. ~~Pretraining on the wole crc dataset (Yuhui)~~
 12. Early stop control (*Yuhui: I observed that different folds converge at different epochs, so an early stopping strategy needs to be implemented.*)
+13. Make the configurations for different datasets been used separately
 
 11. Try different loss function instead of pearson loss function
 13. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
@@ -104,10 +105,3 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 |SVM|0.999|0.999|0.999|1.0|0.999|0.990|0.991|0.999|0.993|0.989|0.654|0.711|0.796|0.660|0.771|
 |FCNN|1.0|1.0|1.0|1.0|1.0|0.985|0.987|0.999|0.982|0.993|0.667|0.712|0.794|0.677|0.751|
 
-
-### 📂 For Yuhui
-
-You can find the pretraining data for CRC in the `dataset/pretrain_CRC_data/` directory.
-
-Note that this dataset contains **more features** than the one we use for training (`dataset/CRC_data/new_crc_abundance_PRJEB6070.csv`).  
-Feel free to remove any extra columns that are not present in the training dataset if you think it would improve consistency or simplify the modeling.

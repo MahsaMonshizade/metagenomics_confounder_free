@@ -2,6 +2,15 @@
 
 ## 05/05/2025
 
+### 📂 For Yuhui
+
+You can find the pretraining data for CRC in the `dataset/pretrain_CRC_data/` directory.
+
+Note that this dataset contains **more features** than the one we use for training (`dataset/CRC_data/new_crc_abundance_PRJEB6070.csv`).  
+Feel free to remove any extra columns that are not present in the training dataset if you think it would improve consistency or simplify the modeling.
+
+### Updates
+
 - Why when setting different 'num_epochs', the results are significantly different? 
 - Different folds converge at different epochs, so an early stopping strategy needs to be implemented
 **Add to preprocessing**: 
