@@ -13,7 +13,10 @@ from models import GAN, PearsonCorrelationLoss
 from utils import create_stratified_dataloader
 from train import train_model
 from config import config
+import random
+import os
 
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
 # Select device.
 device = torch.device(config["training"].get("device", "cpu"))
 
@@ -43,6 +46,24 @@ def build_mask(edge_list, species):
         return mask.T, parent_dict
 
 def main():
+
+    os.environ["PYTHONHASHSEED"] = str(42)
+
+    # 2) Seed Python built-ins and numpy
+    random.seed(42)
+    np.random.seed(42)
+
+    # 3) Seed PyTorch (both CPU and all GPUs)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed_all(42)
+
+    # 4) Force cuDNN deterministic, disable benchmark
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark     = False
+
+    # 5) (Optional) Enforce PyTorch to error on nondeterministic ops
+    torch.use_deterministic_algorithms(True)
+
     os.makedirs("Results/MicroKPNN_plots", exist_ok=True)
 
     # Extract configurations.
@@ -54,9 +75,8 @@ def main():
     disease_col = data_cfg["disease_column"]
     confounder_col = data_cfg["confounder_column"]
 
-    # Load merged training and testing data.
-    merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
-    merged_test_data_all = get_data(data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
+     # Load training and test data using the CLR transform.
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
 
     # Define feature columns (exclude metadata and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()
@@ -188,7 +208,7 @@ def main():
         plt.plot(epochs, Results["test"]["accuracy"], label=f"Test {fold+1}")
         plt.title("Accuracy History")
         plt.xlabel("Epoch")
-        plt.ylabel("Accuracy")
+        plt.ylabel("Balanced Accuracy")
         plt.legend()
 
         plt.subplot(2, 3, 3)
@@ -291,7 +311,7 @@ def main():
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
+    plt.ylabel("Balanced Accuracy")
     plt.legend()
 
     plt.subplot(2, 3, 3)

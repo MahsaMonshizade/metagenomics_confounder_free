@@ -134,11 +134,11 @@ def train_model(
         epoch_train_labels_confounder = torch.cat(epoch_train_labels_confounder)
         
         train_acc = balanced_accuracy_score(epoch_train_labels_disease, epoch_train_preds_disease)
-        train_f1 = f1_score(epoch_train_labels_disease, epoch_train_preds_disease)
-        precision, recall, _ = precision_recall_curve(epoch_train_labels_disease, epoch_train_probs_disease)
+        train_f1 = f1_score(epoch_train_labels_disease, epoch_train_preds_disease, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_train_labels_disease.view(-1), epoch_train_probs_disease)
         train_auc_pr = auc(recall, precision)
-        train_precision = precision_score(epoch_train_labels_disease, epoch_train_preds_disease)
-        train_recall = recall_score(epoch_train_labels_disease, epoch_train_preds_disease)
+        train_precision = precision_score(epoch_train_labels_disease, epoch_train_preds_disease, zero_division=0)
+        train_recall = recall_score(epoch_train_labels_disease, epoch_train_preds_disease, zero_division=0)
         train_conf_matrix = confusion_matrix(epoch_train_labels_disease, epoch_train_preds_disease)
         
         results["train"]["accuracy"].append(train_acc)
@@ -200,11 +200,11 @@ def train_model(
         epoch_val_labels_confounder = torch.cat(epoch_val_labels_confounder)
         
         val_acc = balanced_accuracy_score(epoch_val_labels_disease, epoch_val_preds_disease)
-        val_f1 = f1_score(epoch_val_labels_disease, epoch_val_preds_disease)
-        precision, recall, _ = precision_recall_curve(epoch_val_labels_disease, epoch_val_probs_disease)
+        val_f1 = f1_score(epoch_val_labels_disease, epoch_val_preds_disease, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_val_labels_disease.view(-1), epoch_val_probs_disease)
         val_auc_pr = auc(recall, precision)
-        val_precision = precision_score(epoch_val_labels_disease, epoch_val_preds_disease)
-        val_recall = recall_score(epoch_val_labels_disease, epoch_val_preds_disease)
+        val_precision = precision_score(epoch_val_labels_disease, epoch_val_preds_disease, zero_division=0)
+        val_recall = recall_score(epoch_val_labels_disease, epoch_val_preds_disease, zero_division=0)
         val_conf_matrix = confusion_matrix(epoch_val_labels_disease, epoch_val_preds_disease)
         
         results["val"]["accuracy"].append(val_acc)
@@ -264,11 +264,11 @@ def train_model(
         epoch_test_labels_confounder = torch.cat(epoch_test_labels_confounder)
         
         test_acc = balanced_accuracy_score(epoch_test_labels_disease, epoch_test_preds_disease)
-        test_f1 = f1_score(epoch_test_labels_disease, epoch_test_preds_disease)
-        precision, recall, _ = precision_recall_curve(epoch_test_labels_disease, epoch_test_probs_disease)
+        test_f1 = f1_score(epoch_test_labels_disease, epoch_test_preds_disease, zero_division=0)
+        precision, recall, _ = precision_recall_curve(epoch_test_labels_disease.view(-1), epoch_test_probs_disease)
         test_auc_pr = auc(recall, precision)
-        test_precision = precision_score(epoch_test_labels_disease, epoch_test_preds_disease)
-        test_recall = recall_score(epoch_test_labels_disease, epoch_test_preds_disease)
+        test_precision = precision_score(epoch_test_labels_disease, epoch_test_preds_disease, zero_division=0)
+        test_recall = recall_score(epoch_test_labels_disease, epoch_test_preds_disease, zero_division=0)
         test_conf_matrix = confusion_matrix(epoch_test_labels_disease, epoch_test_preds_disease)
         
         results["test"]["accuracy"].append(test_acc)
