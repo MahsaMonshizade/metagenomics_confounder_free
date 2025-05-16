@@ -37,13 +37,13 @@ To run the models:
 ```
 
 - For the **Confounder-Free Model** with **pre-training**:
-```
+```bash
   python FCNN_encoder_confounder_free_lib/pretrain_main.py
+  # It is important to keep the batchsize in pretrain and finetune the same. 
   python FCNN_encoder_confounder_free_lib/finetune_main.py
 ```
 
-- For the **MicroKPNN_Confounder-Free Model**:
-*Yuhui: Add code to unzip files in Default_Database?*
+- For the **MicroKPNN_Confounder-Free Model**: 
 ```
   python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
   python MicroKPNN_encoder_confounder_free_lib/main.py
@@ -54,6 +54,7 @@ To run the models:
   # run `python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py` first
   cp -r Results/MicroKPNN_encoder_confounder_free_plots/required_data Results/MicroKPNN_encoder_confounder_free_finetune_plots/
   python MicroKPNN_encoder_confounder_free_lib/pretrain_main.py
+  # It is important to keep the batchsize in pretrain and finetune the same. 
   python MicroKPNN_encoder_confounder_free_lib/finetune_main.py
 ```
 
@@ -80,6 +81,8 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 ## TODO List
 
+**Mahsa**
+
 1. Implement **early stopping** in the training process. (Mahsa)
 2. ~~Add the last layer activatin funciton, latent dim, batch size and norm as hyper parameters (remove dropout as confounder parameter) (Mahsa)~~
 3. ~~Try to find more crc data for pretraining they need to have gender (Mahsa)~~
@@ -94,10 +97,13 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 12. try to fine tune FCNN_confounder_free (Mahsa)
 13. try to fine tune microkpnn_mt and make sure the code is correct (Mahsa)
 
+**Yuhui**
+
 10. ~~Read train.py carefully (Yuhui)~~
 11. ~~Pretraining on the wole crc dataset (Yuhui)~~
-12. Early stop control (*Yuhui: I observed that different folds converge at different epochs, so an early stopping strategy needs to be implemented.*)
-13. Make the configurations for different datasets been used separately
+12. ~~Early stop control/Save the results of best epoch rather than the last epoch. (*Yuhui: I observed that different folds converge at different epochs, so an early stopping strategy needs to be implemented.*)~~ (Save the performance of the best epoch for each fold, and average the performances among the best epochs.)
+
+**Later**
 
 11. Try different loss function instead of pearson loss function
 13. For the **CRC dataset**, remove **age** and **BMI** as they are potential confounders.
@@ -108,9 +114,24 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 ### Results:
 
-| Model | train_accuracy | train_f1_score | train_auc_pr | train_precision | train_recall | val_accuracy | val_f1_score | val_auc_pr | val_precision | val_recall | test_accuracy | test_f1_score | test_auc_pr | test_precision | test_recall |
-|------|----------------|----------------|--------------|-----------------|--------------|--------------|--------------|------------|---------------|------------|---------------|---------------|-------------|----------------|-------------|
-| RF    |1.0|1.0|1.0| 1.0 |         1.0 |0.984      |0.985 |0.999  |0.986 |0.986 |0.683 |0.732 |0.838 |0.686 |0.786 |
-|SVM|0.999|0.999|0.999|1.0|0.999|0.990|0.991|0.999|0.993|0.989|0.654|0.711|0.796|0.660|0.771|
-|FCNN|1.0|1.0|1.0|1.0|1.0|0.985|0.987|0.999|0.982|0.993|0.667|0.712|0.794|0.677|0.751|
+| Model | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
+|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+|       | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
+|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| RF    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.984      | 0.985     | 0.999     | 0.986     | 0.986     | 0.683     | 0.732     | 0.838     | 0.686     | 0.786     |
+| SVM   | 0.999     | 0.999     | 0.999     | 1.000     | 0.999     | 0.990      | 0.991     | 0.999     | 0.993     | 0.989     | 0.654     | 0.711     | 0.796     | 0.660     | 0.771     |
+| FCNN  | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.985      | 0.987     | 0.999     | 0.982     | 0.993     | 0.667     | 0.712     | 0.794     | 0.677     | 0.751     |
 
+**CRC data**
+
+| Model | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
+|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+|       | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
+|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| FCNN-CF    | 0.993     | 0.993     | 0.999     | 0.999     | 0.986     | 0.985      | 0.986     | 0.996     | 0.990     | 0.981     | 0.593     | 0.707     | 0.734     | 0.597     | **0.865** |
+| FCNN-CF FT | 0.922     | 0.925     | 0.981     | 0.953     | 0.900     | 0.885      | 0.895     | 0.958     | 0.909     | 0.881     | 0.595     | **0.709** | **0.744** | 0.607     | 0.853     |
+| MicroKPNN-CF    | 0.982     | 0.984     | 0.996     | 0.985     | 0.984     | 0.946      | 0.952     | 0.983     | 0.950     | 0.955     | 0.617     | **0.709** | 0.715     | 0.619     | 0.830     |
+| MicroKPNN-CF FT | 0.937     | 0.944     | 0.970     | 0.947     | 0.941     | 0.897      | 0.905     | 0.938     | 0.917     | 0.894     | **0.625** | **0.709** | 0.687     | **0.627** | 0.817     |
+
+- Now, the best epoch is calculated by validation accuracy. The average caculation is applied on the best epoch across folds.
+- It is important to acknowledge that epoch selection based on validation set performance will inevitably introduce some degree of overfitting, meaning that optimal performance on the test set may **not** be selected. The above table demonstrates that the FT models exhibit smaller gaps between validation and test performance, indicating better generalizability. Furthermore, the FT versions of each architecture outperform their non-FT counterparts on the test set. 
