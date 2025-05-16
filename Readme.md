@@ -105,6 +105,13 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 15. Data Augmentation (phylomix)
 
 
+Mahsa:
+1. add fine tuning to FCNN, MicroKPNN and MicroKPN_MT
+2. Modufy code to sav the best epoch (based on accuracy) for FCNN, MicroKPNN and MicroKPN_MT
+3. hyper parameter optimization for FCNN, MicroKPNN and MicroKPN_MT
+4. add the final results to readme for FCNN, MicroKPNN and MicroKPN_MT
+
+
 
 ### Results:
 
