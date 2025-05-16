@@ -344,8 +344,14 @@ def main():
     metrics_columns = ["Fold", "Train_Accuracy", "Val_Accuracy", "Test_Accuracy",
                        "Train_F1", "Val_F1", "Test_F1", "Train_AUCPR", "Val_AUCPR", "Test_AUCPR",
                        "Train_Precision", "Val_Precision", "Test_Precision",
-                       "Train_Recall", "Val_Recall", "Test_Recall"]
+                       "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
     metrics_data = []
+
+    # Find the best epoch for each fold. 
+    best_epoch = []
+    for i in range(n_splits):
+        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+
     for i in range(n_splits):
         fold_data = [
             i+1,
@@ -363,30 +369,39 @@ def main():
             test_metrics_per_fold[i]["precision"][-1],
             train_metrics_per_fold[i]["recall"][-1],
             val_metrics_per_fold[i]["recall"][-1],
-            test_metrics_per_fold[i]["recall"][-1]
+            test_metrics_per_fold[i]["recall"][-1], 
+            best_epoch[i], 
         ]
         metrics_data.append(fold_data)
-    # Append the average across folds.
-    avg_data = [
-        "Average",
-        train_avg_metrics["accuracy"][-1],
-        val_avg_metrics["accuracy"][-1],
-        test_avg_metrics["accuracy"][-1],
-        train_avg_metrics["f1_score"][-1],
-        val_avg_metrics["f1_score"][-1],
-        test_avg_metrics["f1_score"][-1],
-        train_avg_metrics["auc_pr"][-1],
-        val_avg_metrics["auc_pr"][-1],
-        test_avg_metrics["auc_pr"][-1],
-        train_avg_metrics["precision"][-1],
-        val_avg_metrics["precision"][-1],
-        test_avg_metrics["precision"][-1],
-        train_avg_metrics["recall"][-1],
-        val_avg_metrics["recall"][-1],
-        test_avg_metrics["recall"][-1]
-    ]
-    metrics_data.append(avg_data)
+    # # Append the average across folds.
+    # avg_data = [
+    #     "Average",
+    #     train_avg_metrics["accuracy"][-1],
+    #     val_avg_metrics["accuracy"][-1],
+    #     test_avg_metrics["accuracy"][-1],
+    #     train_avg_metrics["f1_score"][-1],
+    #     val_avg_metrics["f1_score"][-1],
+    #     test_avg_metrics["f1_score"][-1],
+    #     train_avg_metrics["auc_pr"][-1],
+    #     val_avg_metrics["auc_pr"][-1],
+    #     test_avg_metrics["auc_pr"][-1],
+    #     train_avg_metrics["precision"][-1],
+    #     val_avg_metrics["precision"][-1],
+    #     test_avg_metrics["precision"][-1],
+    #     train_avg_metrics["recall"][-1],
+    #     val_avg_metrics["recall"][-1],
+    #     test_avg_metrics["recall"][-1]
+    # ]
+    # metrics_data.append(avg_data)
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
+
+    # Average metrics across folds.
+    avg_results = metrics_df.mean(numeric_only=True) # Calculate the average across all folds
+    avg_row = pd.DataFrame([avg_results])
+    avg_row["Fold"] = "Average" # Correct the Fold column for the average
+    avg_row["Best_Epoch"] = np.nan
+    metrics_df = pd.concat([metrics_df, avg_row]) # Concatenate the original results with the average row
+    
     metrics_df.to_csv("Results/FCNN_plots/metrics_summary.csv", index=False)
     print("Average metrics, plots, and metrics summary saved.")
 

@@ -218,7 +218,7 @@ def main():
         train_metrics_per_fold.append(Results["train"])
         val_metrics_per_fold.append(Results["val"])
         test_metrics_per_fold.append(Results["test"])
-
+        
         # Plot per-fold confusion matrices.
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
@@ -350,12 +350,19 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
+    # Find the best epoch for each fold. 
+    best_epoch = []
+    for i in range(n_splits):
+        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
     plt.subplot(3, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
+    plt.scatter(np.range(best_epoch), val_avg_metrics["loss_history"][best_epoch], 
+                color='red', s=100, zorder=5, label=f"Best Epoch ({avg_best_epoch+1})")
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -453,12 +460,6 @@ def main():
                        "Train_Precision", "Val_Precision", "Test_Precision",
                        "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
     metrics_data = []
-
-    # Find the best epoch for each fold. 
-    best_epoch = []
-    for i in range(n_splits):
-        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-
     for i in range(n_splits):
         fold_data = [
             i+1,
