@@ -1,7 +1,7 @@
 # Modified models.py
 import torch
 import torch.nn as nn
-from models import get_activation, get_norm_layer, previous_power_of_two
+from models import get_activation, get_norm_layer, previous_power_of_two, MaskedLinear
 
 
 
@@ -10,14 +10,14 @@ class preGAN(nn.Module):
     GAN model with a configurable encoder, confounder classifier, and reconstructor.
     This version is designed for pre-training on unlabeled data using reconstruction.
     """
-    def __init__(self, input_size, latent_dim, num_encoder_layers, num_classifier_layers,
-                 dropout_rate, norm="batch", classifier_hidden_dims=None, activation="relu", last_activation="relu"):
+    def __init__(self, mask, input_size, latent_dim, num_encoder_layers, num_classifier_layers,
+                 dropout_rate, norm="batch", classifier_hidden_dims=None, activation="relu", last_activation = "relu"):
         super(preGAN, self).__init__()
         self.activation = activation  # Save the chosen activation
         self.last_activation = last_activation
         self.input_size = input_size  # Save input size for reconstructor
         
-        self.encoder = self._build_encoder(input_size, latent_dim, num_encoder_layers,
+        self.encoder = self._build_encoder(mask, input_size, latent_dim, num_encoder_layers,
                                            dropout_rate, norm)
         self.classifier = self._build_classifier(latent_dim, num_classifier_layers,
                                                  dropout_rate, norm, classifier_hidden_dims)
@@ -25,11 +25,16 @@ class preGAN(nn.Module):
         self.reconstructor = self._build_reconstructor(latent_dim, num_encoder_layers,
                                                       dropout_rate, norm)
 
-    def _build_encoder(self, input_size, latent_dim, num_layers, dropout_rate, norm):
+    def _build_encoder(self, mask, input_size, latent_dim, num_layers, dropout_rate, norm):
         layers = []
         # Starting layer: use the largest power of two ≤ input_size.
-        first_layer_dim = previous_power_of_two(input_size)
-        layers.append(nn.Linear(input_size, first_layer_dim))
+        layers = []
+        input_size = mask.shape[1]
+        first_layer_dim = mask.shape[0]
+            
+        # Create a MaskedLinear layer and add to layers
+        layers.append(MaskedLinear(input_size, first_layer_dim, mask))
+        
         layers.append(get_norm_layer(norm, first_layer_dim))
         layers.append(get_activation(self.activation))
         if dropout_rate > 0:
@@ -38,7 +43,7 @@ class preGAN(nn.Module):
         current_dim = first_layer_dim
         # Add extra encoder layers if requested.
         for _ in range(num_layers - 1):
-            new_dim = current_dim // 2
+            new_dim = previous_power_of_two(current_dim) // 2
             layers.append(nn.Linear(current_dim, new_dim))
             layers.append(get_norm_layer(norm, new_dim))
             layers.append(get_activation(self.activation))

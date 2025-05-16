@@ -22,7 +22,8 @@ def train_model(
     model, criterion, optimizer, data_loader, data_all_loader, data_val_loader, data_all_val_loader,
     data_test_loader, data_all_test_loader, num_epochs, 
     criterion_classifier, optimizer_classifier, 
-    criterion_disease_classifier, optimizer_disease_classifier, device
+    criterion_disease_classifier, optimizer_disease_classifier, device,
+    pretrained_model_path=None, # FINETUNE: path to pretrained model
 ):
     """
     Train the model using a three-phase procedure:
@@ -73,6 +74,21 @@ def train_model(
     criterion_classifier = criterion_classifier.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
 
+    # Load the pretrained model if provided
+    if pretrained_model_path: 
+        state_dict = torch.load(pretrained_model_path, map_location=device, weights_only=True)
+        
+        # Create a filtered state dict containing only encoder and classifier weights
+        filtered_state_dict = {}
+        for key, value in state_dict.items():
+            # Only keep parameters for encoder and classifier
+            if key.startswith('encoder.') or key.startswith('classifier.'):
+                filtered_state_dict[key] = value
+        
+        # Load the filtered state dictionary
+        model.load_state_dict(filtered_state_dict, strict=False)
+        print(f"Loaded pretrained [encoder] and [classifier] weights from {pretrained_model_path}")
+        
     # Begin epoch loop.
     for epoch in range(num_epochs):
         model.train()  # Enable training mode
