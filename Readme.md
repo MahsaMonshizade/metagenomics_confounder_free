@@ -43,9 +43,18 @@ To run the models:
 ```
 
 - For the **MicroKPNN_Confounder-Free Model**:
+*Yuhui: Add code to unzip files in Default_Database?*
 ```
   python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
   python MicroKPNN_encoder_confounder_free_lib/main.py
+```
+
+- For the **MicroKPNN_Confounder-Free Model** with **pre-training**:
+```bash
+  # run `python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py` first
+  cp -r Results/MicroKPNN_encoder_confounder_free_plots/required_data Results/MicroKPNN_encoder_confounder_free_finetune_plots/
+  python MicroKPNN_encoder_confounder_free_lib/pretrain_main.py
+  python MicroKPNN_encoder_confounder_free_lib/finetune_main.py
 ```
 
 ### Hyperparameter Optimization
