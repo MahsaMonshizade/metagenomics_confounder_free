@@ -95,8 +95,8 @@ config = {
     "pretrain_training": {
         "num_epochs": 400,
         "batch_size": 64,
-        "learning_rate": 0.00001,             # For disease classifier optimizer
-        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
+        "learning_rate": 0.00001,             # For reconstruction loss optimizer
+        "encoder_lr": 0.001,                  # For encoder (e.g., for distillation phase)
         "classifier_lr": 0.0001,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                    # Change to "cpu" if GPU is unavailable
