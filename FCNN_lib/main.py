@@ -266,12 +266,19 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
+    # Find the best epoch for each fold. 
+    best_epoch = []
+    for i in range(n_splits):
+        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+
     # Plot average metrics across folds (2x3 grid).
     plt.figure(figsize=(20, 10))
     plt.subplot(2, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -281,6 +288,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["accuracy"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["accuracy"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
     plt.ylabel("Balanced Accuracy")
@@ -290,6 +299,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["f1_score"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["f1_score"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["f1_score"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
@@ -299,6 +310,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["auc_pr"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["auc_pr"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["auc_pr"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average AUCPR History")
     plt.xlabel("Epoch")
     plt.ylabel("AUCPR")
@@ -308,6 +321,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["precision"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["precision"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["precision"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Precision History")
     plt.xlabel("Epoch")
     plt.ylabel("Precision")
@@ -317,6 +332,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["recall"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["recall"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["recall"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Recall History")
     plt.xlabel("Epoch")
     plt.ylabel("Recall")
@@ -347,11 +364,7 @@ def main():
                        "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
     metrics_data = []
 
-    # Find the best epoch for each fold. 
-    best_epoch = []
-    for i in range(n_splits):
-        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-
+    
     for i in range(n_splits):
         fold_data = [
             i+1,

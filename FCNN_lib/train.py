@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from sklearn.metrics import balanced_accuracy_score, f1_score, precision_recall_curve, auc, precision_score, recall_score, confusion_matrix
 
-def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loader, num_epochs, criterion_disease_classifier, optimizer_disease_classifier, device):
+def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loader, num_epochs, criterion_disease_classifier, optimizer_disease_classifier, device, pretrained_model_path=None,):
     """
     Train the model while recording metrics for training, validation, and testing.
     """
@@ -38,6 +38,21 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
 
     model = model.to(device)
     criterion_disease_classifier = criterion_disease_classifier.to(device)
+
+    if pretrained_model_path: 
+        state_dict = torch.load(pretrained_model_path, map_location=device, weights_only=True)
+        
+        # Create a filtered state dict containing only encoder and classifier weights
+        filtered_state_dict = {}
+        for key, value in state_dict.items():
+            # Only keep parameters for encoder and classifier
+            if key.startswith('encoder.'):
+                filtered_state_dict[key] = value
+        
+        # Load the filtered state dictionary
+        model.load_state_dict(filtered_state_dict, strict=False)
+        print(f"Loaded pretrained [encoder] weights from {pretrained_model_path}")
+
 
     for epoch in range(num_epochs):
         model.train()
