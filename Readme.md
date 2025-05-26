@@ -112,11 +112,14 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 15. Data Augmentation (phylomix)
 
 
-Mahsa:
-1. add fine tuning to FCNN, MicroKPNN and MicroKPN_MT
-2. Modufy code to sav the best epoch (based on accuracy) for FCNN, MicroKPNN and MicroKPN_MT (*Yuhui: I modified the performance saving for FCNN, but please double-check it.*)
-3. hyper parameter optimization for FCNN, MicroKPNN and MicroKPN_MT
-4. add the final results to readme for FCNN, MicroKPNN and MicroKPN_MT
+Mahsa and Yuhui:
+1. Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)
+2. Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)
+3. Mahsa: run svm and rf
+4. Mahsa and Yuhui: MicroKPNN FT check the code
+5. analysis result explanation write it down in readme
+6. Mahsa and Yuhui: Do delong test for the method we optimized
+7. read me the paper "" explanation for table and table 2
 
 
 
