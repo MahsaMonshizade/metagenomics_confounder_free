@@ -147,6 +147,11 @@ Mahsa and Yuhui:
 | MicroKPNN-CF    | 0.982     | 0.984     | 0.996     | 0.985     | 0.984     | 0.946      | 0.952     | 0.983     | 0.950     | 0.955     | 0.617     | 0.709     | 0.715     | 0.619     | 0.830     |
 | MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | **0.643** | **0.722** | 0.756     | **0.650** | 0.813     |
 
-- Now, the best epoch is calculated by validation accuracy. The average caculation is applied on the best epoch across folds.
+- Now, the best epoch is calculated by validation accuracy. The average caculation is applied on the best epoch across folds. 
 - It is important to acknowledge that epoch selection based on validation set performance will inevitably introduce some degree of overfitting, meaning that optimal performance on the test set may **not** be selected. 
-- The above table demonstrates that the FT models exhibit smaller gaps between validation and test performance, indicating better generalizability. Furthermore, the FT versions of each architecture outperform their non-FT counterparts on the test set. 
+
+**Key Insights**
+
+- **Fine-tuning Benefits**: The FT version shows the value of transfer learning, achieving the best overall test performance despite slightly lower training metrics compared to the base model. This suggests better generalization and reduced overfitting.
+- **Confounder-Free Advantage**: The CF approach helps the model focus on true predictive signals rather than spurious correlations, which is especially important in imbalanced datasets where confounders can lead to biased predictions toward the majority class. 
+- **Precision-Recall Trade-off**: MicroKPNN-CF FT achieves the most favorable precision-recall balance for imbalanced data, delivering the highest precision (65.0%) while maintaining strong recall (81.3%). This indicates the model effectively handles class imbalance by being both selective (high precision) and comprehensive (high recall) in its predictions, resulting in the best F1 score (72.2%) - a metric particularly valuable for imbalanced datasets. 
