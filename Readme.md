@@ -113,11 +113,11 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 
 
 Mahsa and Yuhui:
-1. Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)
+1. ~~Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)~~
 2. Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)
 3. Mahsa: run svm and rf
 4. Mahsa and Yuhui: MicroKPNN FT check the code
-5. analysis result explanation write it down in readme
+5. ~~analysis result explanation write it down in readme~~
 6. Mahsa and Yuhui: Do delong test for the method we optimized
 7. read me the paper "" explanation for table and table 2
 
@@ -147,8 +147,8 @@ Mahsa and Yuhui:
 | MicroKPNN-CF    | 0.982     | 0.984     | 0.996     | 0.985     | 0.984     | 0.946      | 0.952     | 0.983     | 0.950     | 0.955     | 0.617     | 0.709     | 0.715     | 0.619     | 0.830     |
 | MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | **0.643** | **0.722** | 0.756     | **0.650** | 0.813     |
 
-- Now, the best epoch is calculated by validation accuracy. The average caculation is applied on the best epoch across folds. 
-- It is important to acknowledge that epoch selection based on validation set performance will inevitably introduce some degree of overfitting, meaning that optimal performance on the test set may **not** be selected. 
+- Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
+- Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance.
 
 **Key Insights**
 
