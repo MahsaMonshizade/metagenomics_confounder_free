@@ -118,8 +118,10 @@ Mahsa and Yuhui:
 3. Mahsa: run svm and rf
 4. Mahsa and Yuhui: MicroKPNN FT check the code
 5. ~~analysis result explanation write it down in readme~~
-6. Mahsa and Yuhui: Do delong test for the method we optimized
+6. Mahsa and Yuhui: should text for significance, e.g. by DeLong test or other test, to demonstrate our approach is beneficial
 7. read me the paper "" explanation for table and table 2
+8. The manuscript would benefit from a discussion on potentioal strategies to optimize both accuracy and interpretability
+9. Explainability figures for this new dataset
 
 
 
