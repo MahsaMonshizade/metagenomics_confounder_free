@@ -111,17 +111,15 @@ def main():
     input_size = len(feature_columns)
 
     ###############added
-
     edge_list = f"Results/MicroKPNN_plots/required_data/EdgeList.csv"
+
     # Build masks
-    
     mask, parent_dict = build_mask(edge_list, feature_columns)
     print(mask.shape)
     print(mask)
     parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
     parent_dict_csv_path = "Results/MicroKPNN_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
-
     ########################
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):

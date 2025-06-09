@@ -59,8 +59,8 @@ def main():
     confounder_col = data_cfg["confounder_column"]
 
     # Load training and test data using the CLR transform.
-    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
-    
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], 
+                                                        data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
 
     # Define feature columns (exclude metadata columns and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()
@@ -315,7 +315,7 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # Find the best epoch for each fold. 
+    # Find the best epoch for each fold according to accuracy on validation set. 
     best_epoch = []
     for i in range(n_splits):
         best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))

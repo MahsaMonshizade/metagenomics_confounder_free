@@ -35,6 +35,8 @@ def run_trial(trial_config, num_epochs=50):
     data_cfg = trial_config["data"]
     train_cfg = trial_config["training"]
     model_cfg = trial_config["model"]
+    # TMP: For loading the pre-trained model [fix it to somewhere as other paths].
+    pretrained_model_path = "Results/FCNN_encoder_confounder_free_pretraining/pretrained_model.pth"
     
     # Load merged training data. 
     merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
@@ -137,7 +139,8 @@ def run_trial(trial_config, num_epochs=50):
             data_val_loader, data_all_val_loader, num_epochs,
             criterion_classifier, optimizer_classifier,
             criterion_disease_classifier, optimizer_disease_classifier,
-            device
+            device,
+            pretrained_model_path, 
         )
         
         # Extract the final validation accuracy from this fold.
@@ -277,7 +280,7 @@ if __name__ == "__main__":
     # Configuration for parallel execution
     N_WORKERS = 4  # Adjust based on your CPU cores
     TRIALS_PER_WORKER = 4  # Each worker runs 4 trials
-    STORAGE_FILE = "fcnn_cf_hyperparameter_optimization.db"
+    STORAGE_FILE = "fcnn_cf_ft_hyperparameter_optimization.db"
     if os.path.exists(STORAGE_FILE):
         os.remove(STORAGE_FILE)
         

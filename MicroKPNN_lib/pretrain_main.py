@@ -143,14 +143,6 @@ def main():
     x_all_val = torch.tensor(X_val, dtype=torch.float32)
     x_all_test = torch.tensor(X_test, dtype=torch.float32)
 
-    # Stratified k-fold cross-validation.
-    n_splits = 5
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-
-    train_metrics_per_fold = []
-    val_metrics_per_fold = []
-    test_metrics_per_fold = []
-
     # Optionally, recalculate input size from feature columns.
     input_size = len(feature_columns)
 
@@ -177,8 +169,8 @@ def main():
     )
 
     edge_list = f"Results/MicroKPNN_plots/required_data/EdgeList.csv"
-    # Build masks
     
+    # Build masks
     mask, parent_dict = build_mask(edge_list, feature_columns)
     print(mask.shape)
     print(mask)
@@ -186,9 +178,7 @@ def main():
     parent_dict_csv_path = "Results/MicroKPNN_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
 
-    
-
-        # Build the model.
+    # Build the model.
     model = preGAN(
             mask = mask, 
             input_size=input_size,  # Using the actual number of features
@@ -207,10 +197,10 @@ def main():
         lr=train_cfg["learning_rate"], weight_decay=train_cfg["weight_decay"]
     )
 
-        # Train the model.
+    # Train the model.
     Results = train_model(model, data_all_loader,data_all_val_loader, data_all_test_loader, train_cfg["num_epochs"], criterion_reconstructor, optimizer_reconstructor, device)
 
-        # Save model.
+    # Save model.
     torch.save(model.state_dict(), f"Results/MicroKPNN_pretraining/pretrained_model.pth")
     pd.Series(feature_columns).to_csv("Results/MicroKPNN_pretraining/feature_columns.csv", index=False)
     print("Model and feature columns saved")

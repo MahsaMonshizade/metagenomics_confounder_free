@@ -1,5 +1,168 @@
 # Log
 
+
+
+## 06/06/2025
+
+Hyper-parameters finetunning in parallel: 
+
+1. FCNN-CF
+
+```bash
+============================================================
+OPTIMIZATION COMPLETED
+============================================================
+Total trials completed: 16
+Best trial:
+  Final validation accuracy: 0.802479
+  Best hyperparameters:
+    learning_rate: 1e-05
+    encoder_lr: 0.0001
+    classifier_lr: 0.0001
+
+Trial History:
+  Trial 6: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 0.0001}
+  Trial 7: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+  Trial 8: PRUNED/FAILED - {'learning_rate': 1e-05, 'encoder_lr': 1e-05, 'classifier_lr': 0.0001}
+  Trial 9: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.001, 'classifier_lr': 0.002}
+  Trial 10: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 11: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.0001, 'classifier_lr': 1e-05}
+  Trial 12: PRUNED/FAILED - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 1e-05}
+  Trial 13: 0.735873 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 14: 0.796124 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+  Trial 15: 0.802479 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+```
+
+2. FCNN-CF FT
+
+```bash
+============================================================
+OPTIMIZATION COMPLETED
+============================================================
+Total trials completed: 16
+Best trial:
+  Final validation accuracy: 0.664551
+  Best hyperparameters:
+    learning_rate: 1e-05
+    encoder_lr: 0.0001
+    classifier_lr: 0.001
+
+Trial History:
+  Trial 0: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.0001, 'classifier_lr': 0.002}
+  Trial 1: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 1e-05, 'classifier_lr': 0.001}
+  Trial 2: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 3: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 1e-05, 'classifier_lr': 0.002}
+  Trial 4: PRUNED/FAILED - {'learning_rate': 0.0001, 'encoder_lr': 1e-05, 'classifier_lr': 1e-05}
+  Trial 5: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 1e-05, 'classifier_lr': 1e-05}
+  Trial 6: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+  Trial 7: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 1e-05, 'classifier_lr': 0.002}
+  Trial 8: PRUNED/FAILED - {'learning_rate': 0.0001, 'encoder_lr': 1e-05, 'classifier_lr': 0.002}
+  Trial 9: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.002, 'classifier_lr': 0.0001}
+  Trial 10: 0.647930 - {'learning_rate': 1e-05, 'encoder_lr': 0.002, 'classifier_lr': 0.0001}
+  Trial 11: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 12: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 13: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 14: 0.664551 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 15: 0.564656 - {'learning_rate': 1e-05, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+```
+
+3. MicroKPNN-CF <= NOT GOOD
+
+```bash
+============================================================
+OPTIMIZATION COMPLETED
+============================================================
+Total trials completed: 16
+Best trial:
+  Final validation accuracy: 0.980124
+  Best hyperparameters:
+    learning_rate: 0.001
+    encoder_lr: 0.002
+    classifier_lr: 0.002
+
+Trial History:
+  Trial 0: 0.906959 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+  Trial 1: 0.980124 - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 0.002}
+  Trial 2: 0.906959 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+  Trial 3: PRUNED/FAILED - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 1e-05}
+  Trial 4: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.0001, 'classifier_lr': 0.0001}
+  Trial 5: 0.872070 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.002}
+  Trial 6: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 7: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.002, 'classifier_lr': 0.002}
+  Trial 8: 0.860338 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.002}
+  Trial 9: 0.968631 - {'learning_rate': 0.0001, 'encoder_lr': 0.002, 'classifier_lr': 0.002}
+  Trial 10: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.0001, 'classifier_lr': 0.002}
+  Trial 11: PRUNED/FAILED - {'learning_rate': 0.0001, 'encoder_lr': 0.0001, 'classifier_lr': 1e-05}
+  Trial 12: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 1e-05, 'classifier_lr': 1e-05}
+  Trial 13: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+  Trial 14: 0.923783 - {'learning_rate': 0.0001, 'encoder_lr': 0.002, 'classifier_lr': 0.002}
+  Trial 15: 0.935916 - {'learning_rate': 0.0001, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+```
+
+4. MicroKPNN-CF FT <= NOT GOOD
+
+```bash
+============================================================
+OPTIMIZATION COMPLETED
+============================================================
+Total trials completed: 16
+Best trial:
+  Final validation accuracy: 0.804113
+  Best hyperparameters:
+    learning_rate: 1e-05
+    encoder_lr: 0.0001
+    classifier_lr: 0.001
+
+Trial History:
+  Trial 0: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 1e-05, 'classifier_lr': 0.002}
+  Trial 1: 0.578301 - {'learning_rate': 1e-05, 'encoder_lr': 0.001, 'classifier_lr': 0.001}
+  Trial 2: 0.550276 - {'learning_rate': 1e-05, 'encoder_lr': 0.001, 'classifier_lr': 0.002}
+  Trial 3: PRUNED/FAILED - {'learning_rate': 0.0001, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 4: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 5: PRUNED/FAILED - {'learning_rate': 0.002, 'encoder_lr': 0.001, 'classifier_lr': 1e-05}
+  Trial 6: PRUNED/FAILED - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 1e-05}
+  Trial 7: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 1e-05, 'classifier_lr': 0.0001}
+  Trial 8: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 1e-05}
+  Trial 9: 0.538699 - {'learning_rate': 1e-05, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+  Trial 10: PRUNED/FAILED - {'learning_rate': 0.001, 'encoder_lr': 0.002, 'classifier_lr': 0.001}
+  Trial 11: 0.804113 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 12: 0.534239 - {'learning_rate': 1e-05, 'encoder_lr': 0.001, 'classifier_lr': 0.002}
+  Trial 13: 0.777782 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 14: 0.777782 - {'learning_rate': 1e-05, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+  Trial 15: PRUNED/FAILED - {'learning_rate': 0.0001, 'encoder_lr': 0.0001, 'classifier_lr': 0.001}
+```
+
+5. MicroKPNN FT <= NOT GOOD
+
+```bash
+============================================================
+OPTIMIZATION COMPLETED
+============================================================
+Total trials completed: 16
+Best trial:
+  Final validation accuracy: 0.987766
+  Best hyperparameters:
+    learning_rate: 0.001
+
+Trial History:
+  Trial 0: 0.926781 - {'learning_rate': 1e-05}
+  Trial 1: 0.926781 - {'learning_rate': 1e-05}
+  Trial 2: 0.982214 - {'learning_rate': 0.0001}
+  Trial 3: 0.983920 - {'learning_rate': 0.001}
+  Trial 4: 0.921289 - {'learning_rate': 1e-05}
+  Trial 5: 0.987766 - {'learning_rate': 0.001}
+  Trial 6: 0.979840 - {'learning_rate': 0.0001}
+  Trial 7: 0.921289 - {'learning_rate': 1e-05}
+  Trial 8: 0.985437 - {'learning_rate': 0.001}
+  Trial 9: 0.985437 - {'learning_rate': 0.001}
+  Trial 10: 0.976858 - {'learning_rate': 0.0001}
+  Trial 11: 0.985437 - {'learning_rate': 0.001}
+  Trial 12: 0.986679 - {'learning_rate': 0.001}
+  Trial 13: 0.984335 - {'learning_rate': 0.002}
+  Trial 14: 0.984335 - {'learning_rate': 0.002}
+  Trial 15: 0.984335 - {'learning_rate': 0.002}
+```
+
 ## 05/14/2025
 
 Explanation of why we do not make pre-training on RF and SVM: 

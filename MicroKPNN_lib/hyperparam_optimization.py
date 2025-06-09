@@ -12,6 +12,8 @@ from models import GAN, PearsonCorrelationLoss
 from utils import create_stratified_dataloader
 from train import train_model
 from sklearn.model_selection import StratifiedKFold
+from multiprocessing import Process
+import os
 
 # Use the device specified in the configuration.
 device = torch.device(config["training"].get("device", "cpu"))
@@ -59,8 +61,11 @@ def run_trial(trial_config, num_epochs=10):
     model_cfg = trial_config["model"]
 
     # Load merged training data.
-    merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
-
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], 
+                                                    data_cfg["train_metadata_path"], 
+                                                    data_cfg["test_abundance_path"], 
+                                                    data_cfg["test_metadata_path"])
+    
     # Get column names from config (must exist in the config file).
     disease_col = data_cfg["disease_column"]
     confounder_col = data_cfg["confounder_column"]
@@ -158,30 +163,135 @@ def run_trial(trial_config, num_epochs=10):
 
 def objective(trial):
     """
-    Objective function for Optuna: Suggest discrete hyperparameter values,
-    update the configuration, run a training trial using 5-fold cross-validation,
-    and return the average validation accuracy for maximization.
+    Objective function with constraints on learning rates.
     """
     trial_config = copy.deepcopy(config)
+
+    # Sample learning rates
+    learning_rate = trial.suggest_categorical("learning_rate", config["tuning"]["learning_rate"])
     
-    # Suggest categorical (discrete) hyperparameter values from the tuning space.
-    trial_config["model"]["num_encoder_layers"] = trial.suggest_categorical("num_encoder_layers", config["tuning"]["num_encoder_layers"])
-    trial_config["model"]["num_classifier_layers"] = trial.suggest_categorical("num_classifier_layers", config["tuning"]["num_classifier_layers"])
-    trial_config["model"]["dropout_rate"] = trial.suggest_categorical("dropout_rate", config["tuning"]["dropout_rate"])
-    trial_config["training"]["learning_rate"] = trial.suggest_categorical("learning_rate", config["tuning"]["learning_rate"])
-    trial_config["model"]["activation"] = trial.suggest_categorical("activation", config["tuning"]["activation"])
+    # Assign valid values to config
+    trial_config["training"]["learning_rate"] = learning_rate
     
-    # Run the trial with a reduced number of epochs for speed.
-    avg_val_accuracy = run_trial(trial_config, num_epochs=10)
+    # Run the trial
+    avg_val_accuracy = run_trial(trial_config, num_epochs=100)
     return avg_val_accuracy
 
-if __name__ == "__main__":
-    study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=10)
+def worker_process(worker_id, study_name, storage_url, n_trials):
+    """
+    Worker function for parallel execution.
+    Each worker loads the same study and runs optimization independently.
+    """
+    print(f"Worker {worker_id} starting with PID {os.getpid()}")
     
-    print("Best trial:")
-    best_trial = study.best_trial
-    print("  Final validation accuracy:", best_trial.value)
-    print("  Best hyperparameters:")
-    for key, value in best_trial.params.items():
-        print(f"    {key}: {value}")
+    try:
+        # Load the existing study from shared storage
+        study = optuna.load_study(
+            study_name=study_name, 
+            storage=storage_url
+        )
+        
+        # Run optimization for specified number of trials
+        study.optimize(objective, n_trials=n_trials)
+        
+        print(f"Worker {worker_id} completed {n_trials} trials successfully!")
+        
+    except Exception as e:
+        print(f"Worker {worker_id} encountered error: {e}")
+        import traceback
+        traceback.print_exc()
+
+def run_parallel_optimization(n_workers=4, trials_per_worker=4, storage_file="optuna_study.db"):
+    """
+    Run parallel hyperparameter optimization using multiple processes.
+    
+    Args:
+        n_workers: Number of parallel worker processes
+        trials_per_worker: Number of trials each worker should run
+        storage_file: SQLite database file to store study results
+    """
+    storage_url = f"sqlite:///{storage_file}"
+    study_name = "microkpnn_cf_learning_rate_optimization"  # Changed study name for MicroKPNN-CF
+    
+    print(f"Starting parallel optimization with {n_workers} workers")
+    print(f"Each worker will run {trials_per_worker} trials")
+    print(f"Total trials: {n_workers * trials_per_worker}")
+    print(f"Storage: {storage_file}")
+    print("-" * 60)
+    
+    # Create the study once (this will create the database)
+    try:
+        study = optuna.create_study(
+            direction="maximize",
+            storage=storage_url,
+            study_name=study_name,
+            load_if_exists=True  # Don't fail if study already exists
+        )
+        print(f"Created/loaded study: {study_name}")
+    except Exception as e:
+        print(f"Error creating study: {e}")
+        return
+    
+    # Launch parallel worker processes
+    processes = []
+    
+    for worker_id in range(n_workers):
+        p = Process(
+            target=worker_process,
+            args=(worker_id, study_name, storage_url, trials_per_worker)
+        )
+        p.start()
+        processes.append(p)
+        print(f"Launched worker {worker_id} (PID: {p.pid})")
+    
+    # Wait for all processes to complete
+    print("\nWaiting for all workers to complete...")
+    for i, p in enumerate(processes):
+        p.join()
+        print(f"Worker {i} finished")
+    
+    # Load final results and display best trial
+    print("\n" + "="*60)
+    print("OPTIMIZATION COMPLETED")
+    print("="*60)
+    
+    try:
+        final_study = optuna.load_study(study_name=study_name, storage=storage_url)
+        
+        print(f"Total trials completed: {len(final_study.trials)}")
+        print(f"Best trial:")
+        print(f"  Final validation accuracy: {final_study.best_trial.value:.6f}")
+        print(f"  Best hyperparameters:")
+        for key, value in final_study.best_trial.params.items():
+            print(f"    {key}: {value}")
+        
+        # Show trial history
+        print(f"\nTrial History:")
+        for i, trial in enumerate(final_study.trials):  # Show all trials
+            if trial.value is not None: 
+                print(f"  Trial {trial.number}: {trial.value:.6f} - {trial.params}")
+            else: 
+                print(f"  Trial {trial.number}: PRUNED/FAILED - {trial.params}")
+                
+    except Exception as e:
+        print(f"Error loading final results: {e}")
+
+if __name__ == "__main__":
+    # Configuration for parallel execution
+    N_WORKERS = 4  # Adjust based on your CPU cores
+    TRIALS_PER_WORKER = 4  # Each worker runs 4 trials
+    STORAGE_FILE = "microkpnn_hyperparameter_optimization.db"  # Changed filename for MicroKPNN-CF
+    if os.path.exists(STORAGE_FILE):
+        os.remove(STORAGE_FILE)
+        
+    # For debugging/testing, you can run single-threaded:
+    # study = optuna.create_study(direction="maximize")
+    # study.optimize(objective, n_trials=20) # 14 trials in total
+    # print("Best trial:", study.best_trial)
+    
+    # Run parallel optimization
+    run_parallel_optimization(
+        n_workers=N_WORKERS, 
+        trials_per_worker=TRIALS_PER_WORKER,
+        storage_file=STORAGE_FILE
+    )

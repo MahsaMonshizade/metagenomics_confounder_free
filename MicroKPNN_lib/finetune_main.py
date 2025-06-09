@@ -17,7 +17,8 @@ import random
 import os
 
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
-
+# Select device.
+device = torch.device(config["training"].get("device", "cpu"))
 
 def plot_confusion_matrix(conf_matrix, title, save_path, class_names=None):
     disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=class_names)
@@ -72,10 +73,6 @@ def main():
     # TMP: For loading the pre-trained model [fix it to somewhere as other paths].
     pretrained_model_path = "Results/MicroKPNN_pretraining/pretrained_model.pth"
 
-    default_device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = torch.device(train_cfg.get("device", default_device))
-
-
     # Get the column names for disease and confounder.
     disease_col = data_cfg["disease_column"]
     confounder_col = data_cfg["confounder_column"]
@@ -116,17 +113,15 @@ def main():
     input_size = len(feature_columns)
 
     ###############added
+    edge_list = f"Results/MicroKPNN_finetune_plots/required_data/EdgeList.csv"
 
-    edge_list = f"Results/MicroKPNN_plots/required_data/EdgeList.csv"
     # Build masks
-    
     mask, parent_dict = build_mask(edge_list, feature_columns)
     print(mask.shape)
     print(mask)
     parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
-    parent_dict_csv_path = "Results/MicroKPNN_plots/required_data/parent_dict_main.csv"
+    parent_dict_csv_path = "Results/MicroKPNN_finetune_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
-
     ########################
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
@@ -170,7 +165,8 @@ def main():
         )
 
         # Train the model.
-        Results = train_model(model, train_loader, val_loader, test_loader, train_cfg["num_epochs"], criterion, optimizer, device, pretrained_model_path)
+        Results = train_model(model, train_loader, val_loader, test_loader, 
+                                train_cfg["num_epochs"], criterion, optimizer, device, pretrained_model_path)
 
         # Save model.
         torch.save(model.state_dict(), f"Results/MicroKPNN_finetune_plots/trained_model_fold{fold+1}.pth")
@@ -253,7 +249,7 @@ def main():
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig(f"Results/MicroKPNN_plots/fold_{fold+1}_metrics.png")
+        plt.savefig(f"Results/MicroKPNN_finetune_plots/fold_{fold+1}_metrics.png")
         plt.close()
 
     # -----------------------------------------------------------
@@ -299,19 +295,12 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # Find the best epoch for each fold. 
-    best_epoch = []
-    for i in range(n_splits):
-        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
-
     # Plot average metrics across folds (2x3 grid).
     plt.figure(figsize=(20, 10))
     plt.subplot(2, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -321,8 +310,6 @@ def main():
     plt.plot(epochs, train_avg_metrics["accuracy"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["accuracy"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
     plt.ylabel("Balanced Accuracy")
@@ -332,8 +319,6 @@ def main():
     plt.plot(epochs, train_avg_metrics["f1_score"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["f1_score"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["f1_score"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
@@ -343,8 +328,6 @@ def main():
     plt.plot(epochs, train_avg_metrics["auc_pr"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["auc_pr"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["auc_pr"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average AUCPR History")
     plt.xlabel("Epoch")
     plt.ylabel("AUCPR")
@@ -354,8 +337,6 @@ def main():
     plt.plot(epochs, train_avg_metrics["precision"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["precision"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["precision"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Precision History")
     plt.xlabel("Epoch")
     plt.ylabel("Precision")
@@ -365,8 +346,6 @@ def main():
     plt.plot(epochs, train_avg_metrics["recall"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["recall"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["recall"], label="Test Average")
-    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Recall History")
     plt.xlabel("Epoch")
     plt.ylabel("Recall")
@@ -394,57 +373,49 @@ def main():
     metrics_columns = ["Fold", "Train_Accuracy", "Val_Accuracy", "Test_Accuracy",
                        "Train_F1", "Val_F1", "Test_F1", "Train_AUCPR", "Val_AUCPR", "Test_AUCPR",
                        "Train_Precision", "Val_Precision", "Test_Precision",
-                       "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
+                       "Train_Recall", "Val_Recall", "Test_Recall"]
     metrics_data = []
-    for i in range(n_splits): 
+    for i in range(n_splits):
         fold_data = [
             i+1,
-            train_metrics_per_fold[i]["accuracy"][best_epoch[i]],
-            val_metrics_per_fold[i]["accuracy"][best_epoch[i]],
-            test_metrics_per_fold[i]["accuracy"][best_epoch[i]],
-            train_metrics_per_fold[i]["f1_score"][best_epoch[i]],
-            val_metrics_per_fold[i]["f1_score"][best_epoch[i]],
-            test_metrics_per_fold[i]["f1_score"][best_epoch[i]],
-            train_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
-            val_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
-            test_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
-            train_metrics_per_fold[i]["precision"][best_epoch[i]],
-            val_metrics_per_fold[i]["precision"][best_epoch[i]],
-            test_metrics_per_fold[i]["precision"][best_epoch[i]],
-            train_metrics_per_fold[i]["recall"][best_epoch[i]],
-            val_metrics_per_fold[i]["recall"][best_epoch[i]],
-            test_metrics_per_fold[i]["recall"][best_epoch[i]],
-            best_epoch[i], 
+            train_metrics_per_fold[i]["accuracy"][-1],
+            val_metrics_per_fold[i]["accuracy"][-1],
+            test_metrics_per_fold[i]["accuracy"][-1],
+            train_metrics_per_fold[i]["f1_score"][-1],
+            val_metrics_per_fold[i]["f1_score"][-1],
+            test_metrics_per_fold[i]["f1_score"][-1],
+            train_metrics_per_fold[i]["auc_pr"][-1],
+            val_metrics_per_fold[i]["auc_pr"][-1],
+            test_metrics_per_fold[i]["auc_pr"][-1],
+            train_metrics_per_fold[i]["precision"][-1],
+            val_metrics_per_fold[i]["precision"][-1],
+            test_metrics_per_fold[i]["precision"][-1],
+            train_metrics_per_fold[i]["recall"][-1],
+            val_metrics_per_fold[i]["recall"][-1],
+            test_metrics_per_fold[i]["recall"][-1]
         ]
         metrics_data.append(fold_data)
-    # # Append the average across folds.
-    # avg_data = [
-    #     "Average",
-    #     train_avg_metrics["accuracy"][-1],
-    #     val_avg_metrics["accuracy"][-1],
-    #     test_avg_metrics["accuracy"][-1],
-    #     train_avg_metrics["f1_score"][-1],
-    #     val_avg_metrics["f1_score"][-1],
-    #     test_avg_metrics["f1_score"][-1],
-    #     train_avg_metrics["auc_pr"][-1],
-    #     val_avg_metrics["auc_pr"][-1],
-    #     test_avg_metrics["auc_pr"][-1],
-    #     train_avg_metrics["precision"][-1],
-    #     val_avg_metrics["precision"][-1],
-    #     test_avg_metrics["precision"][-1],
-    #     train_avg_metrics["recall"][-1],
-    #     val_avg_metrics["recall"][-1],
-    #     test_avg_metrics["recall"][-1]
-    # ]
-    # metrics_data.append(avg_data)
+    # Append the average across folds.
+    avg_data = [
+        "Average",
+        train_avg_metrics["accuracy"][-1],
+        val_avg_metrics["accuracy"][-1],
+        test_avg_metrics["accuracy"][-1],
+        train_avg_metrics["f1_score"][-1],
+        val_avg_metrics["f1_score"][-1],
+        test_avg_metrics["f1_score"][-1],
+        train_avg_metrics["auc_pr"][-1],
+        val_avg_metrics["auc_pr"][-1],
+        test_avg_metrics["auc_pr"][-1],
+        train_avg_metrics["precision"][-1],
+        val_avg_metrics["precision"][-1],
+        test_avg_metrics["precision"][-1],
+        train_avg_metrics["recall"][-1],
+        val_avg_metrics["recall"][-1],
+        test_avg_metrics["recall"][-1]
+    ]
+    metrics_data.append(avg_data)
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
-    # Average metrics across folds.
-    avg_results = metrics_df.mean(numeric_only=True) # Calculate the average across all folds
-    avg_row = pd.DataFrame([avg_results])
-    avg_row["Fold"] = "Average" # Correct the Fold column for the average
-    avg_row["Best_Epoch"] = np.nan
-    metrics_df = pd.concat([metrics_df, avg_row]) # Concatenate the original results with the average row
-
     metrics_df.to_csv("Results/MicroKPNN_finetune_plots/metrics_summary.csv", index=False)
     print("Average metrics, plots, and metrics summary saved.")
 

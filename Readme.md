@@ -27,30 +27,41 @@ chmod +x prepare_dataset.sh
 To run the models:
 
 - For the **Fully Connected Network**:
-```
+```bash
   python FCNN_lib/main.py
+
+  # With pre-training
+  python FCNN_lib/pretrain_main.py
+  python FCNN_lib/finetune_main.py
 ```
 
 - For the **Confounder-Free Model**:
-```
-  python FCNN_encoder_confounder_free_lib/main.py
-```
-
-- For the **Confounder-Free Model** with **pre-training**:
 ```bash
+  python FCNN_encoder_confounder_free_lib/main.py
+
+  # With pre-training
   python FCNN_encoder_confounder_free_lib/pretrain_main.py
   # It is important to keep the batchsize in pretrain and finetune the same. 
   python FCNN_encoder_confounder_free_lib/finetune_main.py
 ```
 
-- For the **MicroKPNN_Confounder-Free Model**: 
-```
-  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
-  python MicroKPNN_encoder_confounder_free_lib/main.py
+- For the **MicroKPNN Model**:
+```bash
+  python MicroKPNN_lib/run_pipeline.py
+  python MicroKPNN_lib/main.py
+
+  # With pre-training
+  cp -r Results/MicroKPNN_plots/required_data Results/MicroKPNN_finetune_plots/
+  python MicroKPNN_lib/pretrain_main.py
+  python MicroKPNN_lib/finetune_main.py
 ```
 
-- For the **MicroKPNN_Confounder-Free Model** with **pre-training**:
+- For the **MicroKPNN_Confounder-Free Model**: 
 ```bash
+  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
+  python MicroKPNN_encoder_confounder_free_lib/main.py
+
+  # With pre-training
   # run `python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py` first
   cp -r Results/MicroKPNN_encoder_confounder_free_plots/required_data Results/MicroKPNN_encoder_confounder_free_finetune_plots/
   python MicroKPNN_encoder_confounder_free_lib/pretrain_main.py
@@ -59,25 +70,37 @@ To run the models:
 ```
 
 ### Hyperparameter Optimization
+
 We provide scripts to perform hyperparameter tuning:
 
-For FCNN:
-```
+- For FCNN:
+```bash
   python FCNN_lib/hyperparam_optimization.py
 ```
 
-For Confounder_free
-```
+- For Confounder_free: 
+```bash
   python FCNN_encoder_confounder_free_lib/hyperparam_optimization.py
+  python FCNN_encoder_confounder_free_lib/finetune_hyperparam_optimization.py
 ```
 
-For MicroKPNN_Confounder_free
+- For MicroKPNN: 
+```bash
+  python MicroKPNN_lib/run_pipeline.py
+
+  python MicroKPNN_lib/hyperparam_optimization.py 
+  python MicroKPNN_lib/finetune_hyperparam_optimization.py # NOT GOOD
 ```
+
+- For MicroKPNN_Confounder_free: 
+```bash
   python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
-  python MicroKPNN_encoder_confounder_free_lib/hyperparam_optimization.py
+  
+  python MicroKPNN_encoder_confounder_free_lib/hyperparam_optimization.py # NOT GOOD
+  python MicroKPNN_encoder_confounder_free_lib/finetune_hyperparam_optimization.py # NOT GOOD
 ```
 
-Currently, the scripts are set to run 10 trials. You can increase this number as needed to improve optimization results.
+Currently, the scripts are set to run all trials in parallel. 
 
 ## TODO List
 
@@ -102,7 +125,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 10. ~~Read train.py carefully (Yuhui)~~
 11. ~~Pretraining on the wole crc dataset (Yuhui)~~
 12. ~~Early stop control/Save the results of best epoch rather than the last epoch.~~ (Save the performance of the best epoch according to valid acc for each fold, and average the performances among the best epochs.)
-13. Hyper parameter optimization for FCNN_CF, and MicroKPN_CF
+13. ~~Hyper parameter optimization for FCNN_CF, and MicroKPN_CF~~
 
 **Later**
 
@@ -111,17 +134,17 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 14. Plot pca and tsne on both train and test to see samples distribution
 15. Data Augmentation (phylomix)
 
-
 Mahsa and Yuhui:
+
 1. ~~Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)~~
-2. Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)
+2. ~~Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)~~
 3. Mahsa: run svm and rf
 4. Mahsa and Yuhui: MicroKPNN FT check the code
 5. ~~analysis result explanation write it down in readme~~
-6. Mahsa and Yuhui: Do delong test for the method we optimized
+6. Mahsa and Yuhui: should text for significance, e.g. by DeLong test or other test, to demonstrate our approach is beneficial
 7. read me the paper "" explanation for table and table 2
-
-
+8. The manuscript would benefit from a discussion on potentioal strategies to optimize both accuracy and interpretability
+9. Explainability figures for this new dataset
 
 <!-- ### Results:
 
@@ -138,17 +161,17 @@ Mahsa and Yuhui:
 |-----------------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
 |                 | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
 | FCNN            | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.989      | 0.991     | 0.999     | 0.990     | 0.992     | 0.607     | 0.713     | **0.799** | 0.609     | 0.861     |
-| FCNN FT         | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.992     | 1.000     | 0.992     | 0.991     | 0.615     | 0.728     | 0.770     | 0.610     | **0.903**     |
-| MicroKPNN       | 0.983     | 0.985     | 0.998     | 0.990     | 0.983     | 0.920      | 0.929     | 0.984     | 0.937     | 0.918     | 0.637     | 0.699     | 0.769     | 0.647     | 0.773     |
-| MicroKPNN FT    | 0.982     | 0.983     | 0.999     | 0.990     | 0.977     | 0.938      | 0.940     | 0.988     | 0.967     | 0.916     | 0.579     | 0.661     | 0.714     | 0.598     | 0.740     |
-| MicroKPNN MT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.981      | 0.983     | 0.999     | 0.980     | 0.987     | 0.617     | 0.707     | 0.718     | 0.628     | 0.810     |
-| FCNN-CF         | 0.993     | 0.993     | 0.999     | 0.999     | 0.986     | 0.985      | 0.986     | 0.996     | 0.990     | 0.981     | 0.593     | 0.707     | 0.734     | 0.597     | 0.865 |
-| FCNN-CF FT      | 0.901     | 0.900     | 0.974     | 0.958     | 0.848     | 0.863      | 0.863     | 0.952     | 0.919     | 0.817     | 0.631     | 0.708     | 0.756     | 0.643     | 0.789     |
+| FCNN FT         | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.992     | 1.000     | 0.992     | 0.991     | 0.615     | **0.728** | 0.770     | 0.610     | **0.903** |
+| MicroKPNN       | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.991      | 0.991     | 0.997     | 0.995     | 0.988     | 0.642     | 0.715     | 0.728     | 0.643     | 0.807     |
+| MicroKPNN FT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.991     | 0.992     | 0.992     | 0.991     | 0.581     | 0.667     | 0.672     | 0.598     | 0.753     |
+| MicroKPNN-MT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.981      | 0.983     | 0.999     | 0.980     | 0.987     | 0.617     | 0.707     | 0.718     | 0.628     | 0.810     |
+| FCNN-CF         | 0.927     | 0.932     | 0.981     | 0.949     | 0.916     | 0.866      | 0.881     | 0.947     | 0.881     | 0.884     | 0.606     | 0.699     | 0.760     | 0.612     | 0.815     |
+| FCNN-CF FT      | 0.873     | 0.868     | 0.964     | 0.946     | 0.804     | 0.842      | 0.834     | 0.940     | 0.923     | 0.769     | **0.663** | 0.727     | 0.792     | **0.671** | 0.799     |
 | MicroKPNN-CF    | 0.982     | 0.984     | 0.996     | 0.985     | 0.984     | 0.946      | 0.952     | 0.983     | 0.950     | 0.955     | 0.617     | 0.709     | 0.715     | 0.619     | 0.830     |
-| MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | **0.643** | **0.722** | 0.756     | **0.650** | 0.813     |
+| MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | 0.643     | **0.728** | 0.756     | 0.650     | 0.813     |
 
 - Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
-- Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance.
+- Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance. 
 
 **Key Insights**
 

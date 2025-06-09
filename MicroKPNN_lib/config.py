@@ -43,7 +43,7 @@ config = {
     "taxonomy_level": 5,
     
     "training": {
-        "learning_rate": 0.00001,
+        "learning_rate": 0.002,
         "num_epochs": 100,
         "batch_size": 64,
         "device": "cuda:0",  # Use "cpu" if no GPU available
@@ -56,20 +56,18 @@ config = {
         "dropout_rate": 0.0,
         "norm": "layer",            # Options: "batch" or "layer"
         "classifier_hidden_dims": [],  # If provided, these override the halving rule
-        "activation": "leaky_relu"        # Default activation function; can be 'relu', 'tanh', or 'leaky_relu'
+        "activation": "relu"        # Default activation function; can be 'relu', 'tanh', or 'leaky_relu'
     },
     "tuning": {
-        # Discrete hyperparameter search space:
-        "learning_rate": [1e-5, 2e-5, 5e-5,
-                          1e-4, 2e-4, 5e-4,
-                          1e-3, 2e-3, 5e-3,
-                          1e-2, 2e-2, 5e-2,
-                          1e-1],
-        "dropout_rate": [0.0, 0.3, 0.5],
-        "num_encoder_layers": [1, 2, 3],
-        "num_classifier_layers": [1, 2, 3],
-        "activation": ["relu", "tanh", "leaky_relu"]
-    },
+        # (Optional) Define search spaces for hyperparameter optimization.
+        # The other hyper-paramters are fixed in the training config.
+        "learning_rate": [1e-6,
+                          1e-5, 
+                          1e-4,
+                          1e-3,
+                          1e-2,],
+    }, 
+    
     ### pre-training 
     "pretrain_data": {
         "train_abundance_path": "dataset/pretrain_CRC_data/combined_abundance.csv",
@@ -81,11 +79,9 @@ config = {
         "threshold_feature_sum": 20, # For filtering low-abundance samples
     }, 
     "pretrain_training": {
-        "num_epochs": 400,
+        "num_epochs": 200,
         "batch_size": 64,
         "learning_rate": 0.00002,             # For disease classifier optimizer
-        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0001,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     }, 
@@ -93,9 +89,9 @@ config = {
 
     ### fine-tuning
     "finetuning_training": {
-        "num_epochs": 100,
+        "num_epochs": 200,
         "batch_size": 64,
-        "learning_rate": 0.00002,             # For disease classifier optimize            
+        "learning_rate": 1e-6,             # For disease classifier optimize            
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },

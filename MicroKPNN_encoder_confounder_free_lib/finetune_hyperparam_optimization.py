@@ -19,6 +19,24 @@ from sklearn.model_selection import StratifiedKFold
 # Use the device as specified in the configuration.
 device = torch.device(config["training"].get("device", "cpu"))
 
+def build_mask(edge_list, species):
+    # generate the mask
+    edge_df = pd.read_csv(edge_list)
+    
+    edge_df['parent'] = edge_df['parent'].astype(str)
+    parent_nodes = sorted(set(edge_df['parent'].tolist()))  # Sort to ensure consistent order
+    mask = torch.zeros(len(species), len(parent_nodes))
+    child_nodes = species
+
+    parent_dict = {k: i for i, k in enumerate(parent_nodes)}
+    child_dict = {k: i for i, k in enumerate(child_nodes)}
+    
+    for i, row in edge_df.iterrows():
+        if row['child'] != 'Unnamed: 0': 
+            mask[child_dict[str(row['child'])]][parent_dict[row['parent']]] = 1
+
+    return mask.T, parent_dict
+
 def run_trial(trial_config, num_epochs=50):
     """
     Run a training trial using 5-fold cross-validation on the training set and return the average validation accuracy.
@@ -35,6 +53,8 @@ def run_trial(trial_config, num_epochs=50):
     data_cfg = trial_config["data"]
     train_cfg = trial_config["training"]
     model_cfg = trial_config["model"]
+    # TMP: For loading the pre-trained model [fix it to somewhere as other paths].
+    pretrained_model_path = "Results/MicroKPNN_encoder_confounder_free_pretraining/pretrained_model.pth"
     
     # Load merged training data. 
     merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
@@ -64,6 +84,17 @@ def run_trial(trial_config, num_epochs=50):
     
     # Set up 5-fold stratified cross-validation on the training data.
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    ###############added - Build masks for MicroKPNN
+    edge_list = "./Results/MicroKPNN_encoder_confounder_free_plots/required_data/EdgeList.csv"
+    # Build masks
+    mask, parent_dict = build_mask(edge_list, feature_columns)
+    print(mask.shape)
+    print(mask)
+    parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
+    # parent_dict_csv_path = "parent_dict_main.csv"
+    # parent_df.to_csv(parent_dict_csv_path, index=False)
+    ########################
     
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Running fold {fold+1} of 5")
@@ -104,8 +135,9 @@ def run_trial(trial_config, num_epochs=50):
         pos_weight_value_drug = num_neg_drug / num_pos_drug
         pos_weight_drug = torch.tensor([pos_weight_value_drug], dtype=torch.float32).to(device)
         
-        # Build the model.
+        # Build the model - INCLUDING MASK for MicroKPNN
         model = GAN(
+            mask=mask,  # Added mask parameter for MicroKPNN
             input_size=input_size,
             latent_dim=model_cfg["latent_dim"],
             num_encoder_layers=model_cfg["num_encoder_layers"],
@@ -137,7 +169,8 @@ def run_trial(trial_config, num_epochs=50):
             data_val_loader, data_all_val_loader, num_epochs,
             criterion_classifier, optimizer_classifier,
             criterion_disease_classifier, optimizer_disease_classifier,
-            device
+            device,
+            pretrained_model_path, 
         )
         
         # Extract the final validation accuracy from this fold.
@@ -277,7 +310,7 @@ if __name__ == "__main__":
     # Configuration for parallel execution
     N_WORKERS = 4  # Adjust based on your CPU cores
     TRIALS_PER_WORKER = 4  # Each worker runs 4 trials
-    STORAGE_FILE = "fcnn_cf_hyperparameter_optimization.db"
+    STORAGE_FILE = "microkpnn_cf_ft_hyperparameter_optimization.db"
     if os.path.exists(STORAGE_FILE):
         os.remove(STORAGE_FILE)
         
