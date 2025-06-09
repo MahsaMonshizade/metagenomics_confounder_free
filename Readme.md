@@ -145,7 +145,7 @@ Mahsa and Yuhui:
 7. read me the paper "" explanation for table and table 2
 8. The manuscript would benefit from a discussion on potentioal strategies to optimize both accuracy and interpretability
 9. Explainability figures for this new dataset
-
+10. MicroKPNN-MT for the meformine dataset (The one that we have in the paper already )
 <!-- ### Results:
 
 | Model | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
