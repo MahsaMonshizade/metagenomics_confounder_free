@@ -139,7 +139,7 @@ Mahsa and Yuhui:
 1. ~~Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)~~
 2. ~~Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)~~
 3. Mahsa: run svm and rf
-4. Mahsa and Yuhui: MicroKPNN FT check the code
+4. Mahsa and Yuhui: MicroKPNN FT check the code (Yuhui: I checked the code, and the performance has been improved from 0.579 to 0.581, still not good enough.)
 5. ~~analysis result explanation write it down in readme~~
 6. Mahsa and Yuhui: should text for significance, e.g. by DeLong test or other test, to demonstrate our approach is beneficial
 7. read me the paper "" explanation for table and table 2
