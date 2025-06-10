@@ -146,20 +146,15 @@ Mahsa and Yuhui:
 8. The manuscript would benefit from a discussion on potentioal strategies to optimize both accuracy and interpretability
 9. Explainability figures for this new dataset
 10. MicroKPNN-MT for the meformine dataset (The one that we have in the paper already )
-<!-- ### Results:
 
-| Model | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
-|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-|       | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
-| RF    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.984      | 0.985     | 0.999     | 0.986     | 0.986     | 0.683     | 0.732     | 0.838     | 0.686     | 0.786     |
-| SVM   | 0.999     | 0.999     | 0.999     | 1.000     | 0.999     | 0.990      | 0.991     | 0.999     | 0.993     | 0.989     | 0.654     | 0.711     | 0.796     | 0.660     | 0.771     |
-| FCNN  | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.985      | 0.987     | 0.999     | 0.982     | 0.993     | 0.667     | 0.712     | 0.794     | 0.677     | 0.751     | -->
 
 **CRC data**
 
 | Model           | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
 |-----------------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
 |                 | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | 
+| SVM             | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.952     | 0.957     | 0.993     | 0.957     | 0.957     | 0.594     | 0.690     | 0.781 | 0.603     | 0.804     |
+
 | FCNN            | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.989      | 0.991     | 0.999     | 0.990     | 0.992     | 0.607     | 0.713     | **0.799** | 0.609     | 0.861     |
 | FCNN FT         | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.992     | 1.000     | 0.992     | 0.991     | 0.615     | 0.728     | 0.770     | 0.610     | **0.903** |
 | MicroKPNN       | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.991      | 0.991     | 0.997     | 0.995     | 0.988     | 0.642     | 0.715     | 0.728     | 0.643     | 0.807     |
