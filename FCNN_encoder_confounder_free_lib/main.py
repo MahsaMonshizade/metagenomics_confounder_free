@@ -82,6 +82,8 @@ def main():
     # Prepare test data (for overall disease prediction).
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
     y_test_all = torch.tensor(merged_test_data_all[disease_col].values, dtype=torch.float32).unsqueeze(1)
+    idx_test_all = merged_test_data_all["SampleID"].values # DELONG: Save the SampleID for test data.
+    assert len(idx_test_all) == len(y_test_all), "Mismatch in test data SampleID and labels length."
 
     # In the confounder-free setup, we further use a “drug” (or confounder) classification branch.
     # Here, we select test patients with disease==1 and use their 'sex' as the confounder label.
@@ -97,6 +99,10 @@ def main():
     train_metrics_per_fold = []
     val_metrics_per_fold = []
     test_metrics_per_fold = []
+    pred_probs = [] # DELONG: Save the predicted probabilities of the best epoch.
+    labels = [] # DELONG: Save all the labels.
+    sample_ids = [] # DELONG: Save the test IDs for each fold.
+    best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Fold {fold+1}")
@@ -123,7 +129,8 @@ def main():
         data_val_loader = create_stratified_dataloader(x_disease_val, y_disease_val, train_cfg["batch_size"])
         data_all_val_loader = create_stratified_dataloader(x_all_val, y_all_val, train_cfg["batch_size"])
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, train_cfg["batch_size"])
-        data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"])
+        data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"], 
+                                    sampleid=idx_test_all) # DELONG: Include SampleID in the test DataLoader.
 
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -184,7 +191,12 @@ def main():
         val_metrics_per_fold.append(Results["val"])
         test_metrics_per_fold.append(Results["test"])
 
-        # Plot per-fold confusion matrices.
+        pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.
+        labels.append(Results["best_test"]["labels"]) # DELONG: Save the labels for this fold.
+        sample_ids.append(Results["best_test"]["sample_id"]) # DELONG: Save the test IDs for this fold.
+        best_epoch.append(Results["best_test"]["epoch"]) # DELONG: Save the best epoch for this fold.
+
+        # Plot per-fold confusion matrices. 
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
@@ -315,10 +327,11 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # Find the best epoch for each fold according to accuracy on validation set. 
-    best_epoch = []
-    for i in range(n_splits):
-        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+    # DELONG: this is removed to the 'train' function, and the best epoch is now saved in Results.
+    # # Find the best epoch for each fold according to accuracy on validation set. 
+    # best_epoch = []
+    # for i in range(n_splits):
+    #     best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
         
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
@@ -488,6 +501,16 @@ def main():
     
     metrics_df.to_csv("Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
     print("Metrics summary saved to 'Results/FCNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+
+    # DELONG: Save all the predicted probabilities and labels.
+    pred_probs = np.concatenate(pred_probs)
+    labels = np.concatenate(labels)
+    sample_ids = np.concatenate(sample_ids) 
+    np.savez("Results/FCNN_encoder_confounder_free_plots/test_results.npz", 
+         pred_probs=pred_probs,
+         labels=labels,
+         sample_ids=sample_ids)
+    print("Test results saved to 'Results/FCNN_encoder_confounder_free_plots/test_results.npz'.")
 
 if __name__ == "__main__":
     main()
