@@ -48,7 +48,7 @@ def build_mask(edge_list, species):
         return mask.T, parent_dict
     
 
-def main():
+def main(config, output_dir):
 
     os.environ["PYTHONHASHSEED"] = str(42)
 
@@ -67,7 +67,7 @@ def main():
     # 5) (Optional) Enforce PyTorch to error on nondeterministic ops
     torch.use_deterministic_algorithms(True)
 
-    os.makedirs("Results/MicroKPNN_encoder_confounder_free_plots", exist_ok=True)
+    os.makedirs(f"{output_dir}", exist_ok=True)
 
     # Extract parameters from config.
     model_cfg = config["model"]
@@ -82,8 +82,8 @@ def main():
     confounder_col = data_cfg["confounder_column"]
 
     # Load training and test data using the CLR transform.
-    merged_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"])
-    merged_test_data_all = get_data(data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
+     # Load training and test data using the CLR transform.
+    merged_data_all, merged_test_data_all = get_data(data_cfg["train_abundance_path"], data_cfg["train_metadata_path"], data_cfg["test_abundance_path"], data_cfg["test_metadata_path"])
 
     # Define feature columns (exclude metadata columns and SampleID).
     metadata_columns = pd.read_csv(data_cfg["train_metadata_path"]).columns.tolist()
@@ -132,6 +132,8 @@ def main():
     parent_df = pd.DataFrame(list(parent_dict.items()), columns=['Parent', 'Index'])
     parent_dict_csv_path = "Results/MicroKPNN_encoder_confounder_free_plots/required_data/parent_dict_main.csv"
     parent_df.to_csv(parent_dict_csv_path, index=False)
+
+    pretrained_model_path = "Results/MicroKPNN_encoder_confounder_free_pretraining/pretrained_model.pth"
 
     ########################
 
@@ -210,12 +212,12 @@ def main():
             data_loader, data_all_loader, data_val_loader, data_all_val_loader,
             data_test_loader, data_all_test_loader, train_cfg["num_epochs"],
             criterion_classifier, optimizer_classifier,
-            criterion_disease_classifier, optimizer_disease_classifier, device
+            criterion_disease_classifier, optimizer_disease_classifier, device, pretrained_model_path
         )
 
         # Save model and features.
-        torch.save(model.state_dict(), f"Results/MicroKPNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
-        pd.Series(feature_columns).to_csv("Results/MicroKPNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
+        torch.save(model.state_dict(), f"{output_dir}/trained_model_fold{fold+1}.pth")
+        pd.Series(feature_columns).to_csv(f"{output_dir}/feature_columns.csv", index=False)
         print("Model and feature columns saved for fold", fold+1)
 
         train_metrics_per_fold.append(Results["train"])
@@ -225,15 +227,15 @@ def main():
         # Plot per-fold confusion matrices.
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
+                              save_path=f"{output_dir}/fold_{fold+1}_train_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["val"]["confusion_matrix"][-1],
                               title=f"Validation Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
+                              save_path=f"{output_dir}/fold_{fold+1}_val_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
         plot_confusion_matrix(Results["test"]["confusion_matrix"][-1],
                               title=f"Test Confusion Matrix - Fold {fold+1}",
-                              save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
+                              save_path=f"{output_dir}/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
 
         num_epochs_actual = len(Results["train"]["loss_history"])
@@ -312,7 +314,7 @@ def main():
         plt.legend()
 
         plt.tight_layout()
-        plt.savefig(f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_metrics.png")
+        plt.savefig(f"{output_dir}/fold_{fold+1}_metrics.png")
         plt.close()
 
     # --------------- Aggregate Metrics Across Folds ---------------
@@ -353,12 +355,19 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
+    # Find the best epoch for each fold. 
+    best_epoch = []
+    for i in range(n_splits):
+        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
     plt.subplot(3, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -368,6 +377,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["accuracy"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["accuracy"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
@@ -377,6 +388,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["f1_score"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["f1_score"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["f1_score"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
@@ -386,6 +399,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["auc_pr"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["auc_pr"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["auc_pr"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average AUCPR History")
     plt.xlabel("Epoch")
     plt.ylabel("AUCPR")
@@ -395,6 +410,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["precision"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["precision"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["precision"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Precision History")
     plt.xlabel("Epoch")
     plt.ylabel("Precision")
@@ -404,6 +421,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["recall"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["recall"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["recall"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Recall History")
     plt.xlabel("Epoch")
     plt.ylabel("Recall")
@@ -424,6 +443,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["dcor_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["dcor_history"], label="Val Average")
     plt.plot(epochs, test_avg_metrics["dcor_history"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Distance Correlation History")
     plt.xlabel("Epoch")
     plt.ylabel("Distance Correlation")
@@ -436,15 +457,15 @@ def main():
     # Plot aggregated confusion matrices.
     plot_confusion_matrix(train_conf_matrix_avg[-1],
                           title="Average Train Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
+                          save_path=f"{output_dir}/average_train_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(val_conf_matrix_avg[-1],
                           title="Average Validation Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
+                          save_path=f"{output_dir}/average_val_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
     plot_confusion_matrix(test_conf_matrix_avg[-1],
                           title="Average Test Confusion Matrix",
-                          save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
+                          save_path=f"{output_dir}/average_test_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
 
     avg_test_acc = test_avg_metrics["accuracy"][-1]
@@ -454,7 +475,7 @@ def main():
     metrics_columns = ["Fold", "Train_Accuracy", "Val_Accuracy", "Test_Accuracy",
                        "Train_F1", "Val_F1", "Test_F1", "Train_AUCPR", "Val_AUCPR", "Test_AUCPR",
                        "Train_Precision", "Val_Precision", "Test_Precision",
-                       "Train_Recall", "Val_Recall", "Test_Recall"]
+                       "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
     metrics_data = []
     for i in range(n_splits):
         fold_data = [
@@ -473,31 +494,33 @@ def main():
             test_metrics_per_fold[i]["precision"][-1],
             train_metrics_per_fold[i]["recall"][-1],
             val_metrics_per_fold[i]["recall"][-1],
-            test_metrics_per_fold[i]["recall"][-1]
+            test_metrics_per_fold[i]["recall"][-1],
+            best_epoch[i], 
         ]
         metrics_data.append(fold_data)
-    avg_data = [
-        "Average",
-        train_avg_metrics["accuracy"][-1],
-        val_avg_metrics["accuracy"][-1],
-        test_avg_metrics["accuracy"][-1],
-        train_avg_metrics["f1_score"][-1],
-        val_avg_metrics["f1_score"][-1],
-        test_avg_metrics["f1_score"][-1],
-        train_avg_metrics["auc_pr"][-1],
-        val_avg_metrics["auc_pr"][-1],
-        test_avg_metrics["auc_pr"][-1],
-        train_avg_metrics["precision"][-1],
-        val_avg_metrics["precision"][-1],
-        test_avg_metrics["precision"][-1],
-        train_avg_metrics["recall"][-1],
-        val_avg_metrics["recall"][-1],
-        test_avg_metrics["recall"][-1]
-    ]
-    metrics_data.append(avg_data)
+    # avg_data = [
+    #     "Average",
+    #     train_avg_metrics["accuracy"][-1],
+    #     val_avg_metrics["accuracy"][-1],
+    #     test_avg_metrics["accuracy"][-1],
+    #     train_avg_metrics["f1_score"][-1],
+    #     val_avg_metrics["f1_score"][-1],
+    #     test_avg_metrics["f1_score"][-1],
+    #     train_avg_metrics["auc_pr"][-1],
+    #     val_avg_metrics["auc_pr"][-1],
+    #     test_avg_metrics["auc_pr"][-1],
+    #     train_avg_metrics["precision"][-1],
+    #     val_avg_metrics["precision"][-1],
+    #     test_avg_metrics["precision"][-1],
+    #     train_avg_metrics["recall"][-1],
+    #     val_avg_metrics["recall"][-1],
+    #     test_avg_metrics["recall"][-1]
+    # ]
+    # metrics_data.append(avg_data)
+    # metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
-    metrics_df.to_csv("Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
-    print("Metrics summary saved to 'Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+    metrics_df.to_csv(f"{output_dir}/metrics_summary.csv", index=False)
+    print(f"Metrics summary saved to '{output_dir}/metrics_summary.csv'.")
 
 if __name__ == "__main__":
     # Parameter grid
@@ -508,7 +531,7 @@ if __name__ == "__main__":
     for idx, combo in enumerate(itertools.product(*values), start=1):
         params = dict(zip(keys, combo))
         # Create output folder
-        output_dir = f"Results/FCNN{idx}_plots"
+        output_dir = f"Results/MicroKPNN_encoder_confounder_free_finetune_{idx}_plots"
         os.makedirs(output_dir, exist_ok=True)
 
         # Save hyperparameters used

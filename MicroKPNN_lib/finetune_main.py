@@ -68,7 +68,7 @@ def main():
 
     # Extract configurations.
     model_cfg = config["model"]
-    train_cfg = config["training"]
+    train_cfg = config["finetuning_training"]
     data_cfg = config["data"]
     # TMP: For loading the pre-trained model [fix it to somewhere as other paths].
     pretrained_model_path = "Results/MicroKPNN_pretraining/pretrained_model.pth"

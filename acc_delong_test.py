@@ -9,6 +9,63 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from scipy import stats
 import pandas as pd
+from sklearn.metrics import roc_auc_score
+from scipy.stats import norm
+
+def delong_roc_variance(ground_truth, predictions):
+    """
+    Computes AUC and its variance using the DeLong method for binary classification.
+    """
+    ground_truth = np.asarray(ground_truth)
+    predictions = np.asarray(predictions)
+
+    assert set(np.unique(ground_truth)) <= {0, 1}, "Only binary labels supported"
+
+    pos_preds = predictions[ground_truth == 1]
+    neg_preds = predictions[ground_truth == 0]
+
+    m = len(pos_preds)
+    n = len(neg_preds)
+
+    if m == 0 or n == 0:
+        raise ValueError("Both positive and negative samples must be present.")
+
+    # Compute AUC
+    auc = roc_auc_score(ground_truth, predictions)
+
+    # Pairwise comparisons
+    comparisons = np.array([
+        [1 if p > n_ else 0.5 if p == n_ else 0 for n_ in neg_preds]
+        for p in pos_preds
+    ])
+    
+    v10 = np.mean(comparisons, axis=1)
+    v01 = np.mean(comparisons, axis=0)
+
+    s10 = np.var(v10, ddof=1)
+    s01 = np.var(v01, ddof=1)
+    auc_var = s10 / m + s01 / n
+
+    return auc, auc_var
+
+
+
+def delong_test(y_true, prob1, prob2):
+    auc1, var1 = delong_roc_variance(y_true, prob1)
+    auc2, var2 = delong_roc_variance(y_true, prob2)
+
+    diff = auc1 - auc2
+    var_diff = var1 + var2
+    z_score = diff / np.sqrt(var_diff)
+    p_value = 2 * norm.sf(abs(z_score))
+
+    return {
+        "auc1": auc1,
+        "auc2": auc2,
+        "auc_diff": diff,
+        "z_score": z_score,
+        "p_value": p_value
+    }
 
 def mcnemar_test(y_true, y_pred1, y_pred2):
     """
@@ -117,74 +174,57 @@ def paired_accuracy_test(y_true, y_pred1, y_pred2):
 def match_samples_by_id(data1, data2, prob_key='pred_probs', label_key='labels', id_key='sample_ids'):
     """
     Match and reorder samples between two datasets based on sample IDs.
-    
-    Parameters:
-    data1: dict-like, first dataset (e.g., loaded .npz file)
-    data2: dict-like, second dataset
-    prob_key: str, key for predicted probabilities
-    label_key: str, key for true labels
-    id_key: str, key for sample IDs
-    
+
     Returns:
-    tuple: (matched_data1, matched_data2, common_ids) where matched data contains only common samples in same order
+    matched_data1, matched_data2, common_ids (with aligned ordering)
     """
-    
-    # Get sample IDs
+    # Extract sample IDs
     ids1 = data1[id_key]
     ids2 = data2[id_key]
-    
-    # Convert to strings if needed for consistent comparison
+
+    # Decode if byte-encoded
     if isinstance(ids1[0], bytes):
         ids1 = [id_.decode('utf-8') for id_ in ids1]
     if isinstance(ids2[0], bytes):
         ids2 = [id_.decode('utf-8') for id_ in ids2]
-    
+
     ids1 = np.array(ids1)
     ids2 = np.array(ids2)
-    
-    # Find common sample IDs
+
+    # Find common IDs and sort them to enforce consistent ordering
     common_ids = np.intersect1d(ids1, ids2)
     print(f"Total samples in model 1: {len(ids1)}")
     print(f"Total samples in model 2: {len(ids2)}")
     print(f"Common samples found: {len(common_ids)}")
-    
+
     if len(common_ids) == 0:
         raise ValueError("No common sample IDs found between the two datasets!")
-    
-    # Create masks for common samples
-    mask1 = np.isin(ids1, common_ids)
-    mask2 = np.isin(ids2, common_ids)
-    
-    # Extract common samples
-    common_ids1 = ids1[mask1]
-    common_ids2 = ids2[mask2]
-    
-    # Create sorting indices to match order
-    # Sort both by the common IDs to ensure same order
-    sort_idx1 = np.argsort(common_ids1)
-    sort_idx2 = np.argsort(common_ids2)
-    
-    # Get indices in original arrays
-    original_indices1 = np.where(mask1)[0][sort_idx1]
-    original_indices2 = np.where(mask2)[0][sort_idx2]
-    
-    # Extract and reorder data
+
+    # Create ID-to-index maps
+    id_to_index1 = {id_: i for i, id_ in enumerate(ids1)}
+    id_to_index2 = {id_: i for i, id_ in enumerate(ids2)}
+
+    # Ensure same order using sorted common_ids
+    common_ids_sorted = sorted(common_ids)
+    indices1 = [id_to_index1[id_] for id_ in common_ids_sorted]
+    indices2 = [id_to_index2[id_] for id_ in common_ids_sorted]
+
     matched_data1 = {
-        prob_key: data1[prob_key][original_indices1],
-        label_key: data1[label_key][original_indices1],
-        id_key: ids1[original_indices1]
+        prob_key: data1[prob_key][indices1],
+        label_key: data1[label_key][indices1],
+        id_key: ids1[indices1]
     }
-    
+
     matched_data2 = {
-        prob_key: data2[prob_key][original_indices2],
-        label_key: data2[label_key][original_indices2],
-        id_key: ids2[original_indices2]
+        prob_key: data2[prob_key][indices2],
+        label_key: data2[label_key][indices2],
+        id_key: ids2[indices2]
     }
-    
-    # Verify matching worked
+
+    # Final check
     assert np.array_equal(matched_data1[id_key], matched_data2[id_key]), "Sample ID matching failed!"
-    
-    return matched_data1, matched_data2, common_ids
+
+    return matched_data1, matched_data2, common_ids_sorted
 
 def compare_accuracy(file1_path, file2_path, model1_name="Model 1", model2_name="Model 2", 
                     prob_key='pred_probs', label_key='labels', id_key='sample_ids',
@@ -237,6 +277,27 @@ def compare_accuracy(file1_path, file2_path, model1_name="Model 1", model2_name=
         y_pred2 = np.argmax(matched_data2[prob_key], axis=1)
     else:
         y_pred2 = (matched_data2[prob_key] > 0.5).astype(int)
+
+    # Extract predicted probabilities (for ROC AUC comparison)
+    prob1 = matched_data1[prob_key]
+    prob2 = matched_data2[prob_key]
+
+    # Convert to positive class probabilities if needed (for binary classification)
+    # Normalize prob shape
+    if prob1.ndim == 2 and prob1.shape[1] == 1:
+        prob1 = prob1[:, 0]  # Just take the single column
+    elif prob1.ndim == 2 and prob1.shape[1] == 2:
+        prob1 = prob1[:, 1]  # Use class 1 probability
+
+    if prob2.ndim == 2 and prob2.shape[1] == 1:
+        prob2 = prob2[:, 0]
+    elif prob2.ndim == 2 and prob2.shape[1] == 2:
+        prob2 = prob2[:, 1]
+
+
+    # Run DeLong test
+    print("Running DeLong test on predicted probabilities...")
+    delong_results = delong_test(y_true, prob1, prob2)
     
     print("Performing statistical tests...")
     # Perform statistical tests
@@ -383,14 +444,25 @@ def compare_accuracy(file1_path, file2_path, model1_name="Model 1", model2_name=
         print(f"  Statistical significance: NO")
         print(f"  Conclusion: No significant difference in performance detected")
     
+    print(f"\n  DeLong Test for AUC:")
+    print(f"    {model1_name} AUC: {delong_results['auc1']:.4f}")
+    print(f"    {model2_name} AUC: {delong_results['auc2']:.4f}")
+    print(f"    AUC difference: {delong_results['auc_diff']:.4f}")
+    print(f"    Z-score: {delong_results['z_score']:.4f}")
+    print(f"    P-value: {delong_results['p_value']:.6f}")
+    delong_significant = "significant" if delong_results['p_value'] < 0.05 else "not significant"
+    print(f"    Result: AUC difference is {delong_significant} (α = 0.05)")
+
     return {
         'accuracy_results': accuracy_results,
         'mcnemar_results': mcnemar_results,
         'confusion_matrix1': cm1,
         'confusion_matrix2': cm2,
         'matched_samples': len(common_ids),
-        'common_ids': common_ids
+        'common_ids': common_ids,
+        'delong_results': delong_results
     }
+
 
 # Example usage
 if __name__ == "__main__":

@@ -292,12 +292,19 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
+    # Find the best epoch for each fold. 
+    best_epoch = []
+    for i in range(n_splits):
+        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+
     # Plot average metrics across folds (2x3 grid).
     plt.figure(figsize=(20, 10))
     plt.subplot(2, 3, 1)
     plt.plot(epochs, train_avg_metrics["loss_history"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -307,6 +314,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["accuracy"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["accuracy"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
     plt.ylabel("Balanced Accuracy")
@@ -316,6 +325,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["f1_score"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["f1_score"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["f1_score"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
@@ -325,6 +336,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["auc_pr"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["auc_pr"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["auc_pr"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average AUCPR History")
     plt.xlabel("Epoch")
     plt.ylabel("AUCPR")
@@ -334,6 +347,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["precision"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["precision"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["precision"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Precision History")
     plt.xlabel("Epoch")
     plt.ylabel("Precision")
@@ -343,6 +358,8 @@ def main():
     plt.plot(epochs, train_avg_metrics["recall"], label="Train Average")
     plt.plot(epochs, val_avg_metrics["recall"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["recall"], label="Test Average")
+    for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
     plt.title("Average Recall History")
     plt.xlabel("Epoch")
     plt.ylabel("Recall")
@@ -370,49 +387,57 @@ def main():
     metrics_columns = ["Fold", "Train_Accuracy", "Val_Accuracy", "Test_Accuracy",
                        "Train_F1", "Val_F1", "Test_F1", "Train_AUCPR", "Val_AUCPR", "Test_AUCPR",
                        "Train_Precision", "Val_Precision", "Test_Precision",
-                       "Train_Recall", "Val_Recall", "Test_Recall"]
+                       "Train_Recall", "Val_Recall", "Test_Recall", "Best_Epoch"]
     metrics_data = []
     for i in range(n_splits):
         fold_data = [
             i+1,
-            train_metrics_per_fold[i]["accuracy"][-1],
-            val_metrics_per_fold[i]["accuracy"][-1],
-            test_metrics_per_fold[i]["accuracy"][-1],
-            train_metrics_per_fold[i]["f1_score"][-1],
-            val_metrics_per_fold[i]["f1_score"][-1],
-            test_metrics_per_fold[i]["f1_score"][-1],
-            train_metrics_per_fold[i]["auc_pr"][-1],
-            val_metrics_per_fold[i]["auc_pr"][-1],
-            test_metrics_per_fold[i]["auc_pr"][-1],
-            train_metrics_per_fold[i]["precision"][-1],
-            val_metrics_per_fold[i]["precision"][-1],
-            test_metrics_per_fold[i]["precision"][-1],
-            train_metrics_per_fold[i]["recall"][-1],
-            val_metrics_per_fold[i]["recall"][-1],
-            test_metrics_per_fold[i]["recall"][-1]
+            train_metrics_per_fold[i]["accuracy"][best_epoch[i]],
+            val_metrics_per_fold[i]["accuracy"][best_epoch[i]],
+            test_metrics_per_fold[i]["accuracy"][best_epoch[i]],
+            train_metrics_per_fold[i]["f1_score"][best_epoch[i]],
+            val_metrics_per_fold[i]["f1_score"][best_epoch[i]],
+            test_metrics_per_fold[i]["f1_score"][best_epoch[i]],
+            train_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
+            val_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
+            test_metrics_per_fold[i]["auc_pr"][best_epoch[i]],
+            train_metrics_per_fold[i]["precision"][best_epoch[i]],
+            val_metrics_per_fold[i]["precision"][best_epoch[i]],
+            test_metrics_per_fold[i]["precision"][best_epoch[i]],
+            train_metrics_per_fold[i]["recall"][best_epoch[i]],
+            val_metrics_per_fold[i]["recall"][best_epoch[i]],
+            test_metrics_per_fold[i]["recall"][best_epoch[i]],
+            best_epoch[i]
         ]
         metrics_data.append(fold_data)
-    # Append the average across folds.
-    avg_data = [
-        "Average",
-        train_avg_metrics["accuracy"][-1],
-        val_avg_metrics["accuracy"][-1],
-        test_avg_metrics["accuracy"][-1],
-        train_avg_metrics["f1_score"][-1],
-        val_avg_metrics["f1_score"][-1],
-        test_avg_metrics["f1_score"][-1],
-        train_avg_metrics["auc_pr"][-1],
-        val_avg_metrics["auc_pr"][-1],
-        test_avg_metrics["auc_pr"][-1],
-        train_avg_metrics["precision"][-1],
-        val_avg_metrics["precision"][-1],
-        test_avg_metrics["precision"][-1],
-        train_avg_metrics["recall"][-1],
-        val_avg_metrics["recall"][-1],
-        test_avg_metrics["recall"][-1]
-    ]
-    metrics_data.append(avg_data)
+    # # Append the average across folds.
+    # avg_data = [
+    #     "Average",
+    #     train_avg_metrics["accuracy"][-1],
+    #     val_avg_metrics["accuracy"][-1],
+    #     test_avg_metrics["accuracy"][-1],
+    #     train_avg_metrics["f1_score"][-1],
+    #     val_avg_metrics["f1_score"][-1],
+    #     test_avg_metrics["f1_score"][-1],
+    #     train_avg_metrics["auc_pr"][-1],
+    #     val_avg_metrics["auc_pr"][-1],
+    #     test_avg_metrics["auc_pr"][-1],
+    #     train_avg_metrics["precision"][-1],
+    #     val_avg_metrics["precision"][-1],
+    #     test_avg_metrics["precision"][-1],
+    #     train_avg_metrics["recall"][-1],
+    #     val_avg_metrics["recall"][-1],
+    #     test_avg_metrics["recall"][-1]
+    # ]
+    # metrics_data.append(avg_data)
+   # Average metrics across folds.
     metrics_df = pd.DataFrame(metrics_data, columns=metrics_columns)
+    avg_results = metrics_df.mean(numeric_only=True) # Calculate the average across all folds
+    avg_row = pd.DataFrame([avg_results])
+    avg_row["Fold"] = "Average" # Correct the Fold column for the average
+    avg_row["Best_Epoch"] = np.nan
+    metrics_df = pd.concat([metrics_df, avg_row]) # Concatenate the original results with the average row
+
     metrics_df.to_csv("Results/MicroKPNN_plots/metrics_summary.csv", index=False)
     print("Average metrics, plots, and metrics summary saved.")
 

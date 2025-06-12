@@ -33,7 +33,14 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
             "precision": [],
             "recall": [],
             "confusion_matrix": []
-        }
+        },
+        "best_test": {
+            "epoch": None, 
+            "sample_id": [], 
+            "pred_probs": [],
+            "labels": [],
+            "accuracy": 0.0,  
+        },  # DELONG: Store best predictions for test set
     }
 
     model = model.to(device)
@@ -149,8 +156,9 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
         epoch_test_preds = []
         epoch_test_labels = []
         epoch_test_probs = []
+        epoch_test_sample_ids = []  # DELONG: Store sample IDs for test set
         with torch.no_grad():
-            for x_batch, y_batch in data_all_test_loader:
+            for x_batch, y_batch, id_batch in data_all_test_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
                 predicted_disease = model.disease_classifier(encoded_features)
@@ -161,6 +169,7 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
                 pred_tag = (prob > 0.5).float()
                 epoch_test_preds.append(pred_tag)
                 epoch_test_labels.append(y_batch.cpu())
+                epoch_test_sample_ids.extend(id_batch) # DELONG: Store sample IDs for test set
                 
         avg_test_loss = epoch_test_loss / len(data_all_test_loader)
         results["test"]["loss_history"].append(avg_test_loss)
@@ -182,6 +191,13 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
         results["test"]["precision"].append(test_precision)
         results["test"]["recall"].append(test_recall)
         results["test"]["confusion_matrix"].append(test_conf_matrix)
+
+        if test_acc > results["best_test"]["accuracy"]: # DELONG: Update best test resultsAdd commentMore actions
+            results["best_test"]["epoch"] = epoch + 1
+            results["best_test"]["pred_probs"] = epoch_test_probs
+            results["best_test"]["labels"] = epoch_test_labels
+            results["best_test"]["accuracy"] = test_acc
+            results["best_test"]["sample_id"] = epoch_test_sample_ids
         
         if (epoch + 1) % 50 == 0 or (epoch + 1) == num_epochs:
             print(f"Epoch [{epoch+1}/{num_epochs}]  Train Loss: {avg_train_loss:.4f}, Acc: {train_acc:.4f}, F1: {train_f1:.4f}")

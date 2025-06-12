@@ -73,7 +73,8 @@ def main():
         y_train, y_val = y_all[train_index], y_all[val_index]
 
         # Define and train the SVM classifier
-        clf = SVC(kernel='rbf', probability=True, class_weight='balanced', random_state=42)
+        # clf = SVC(kernel='rbf', probability=True, class_weight='balanced', random_state=42)
+        clf = SVC(kernel='linear', probability=True, random_state=42)
         clf.fit(X_train, y_train)
 
         # Evaluate on train set

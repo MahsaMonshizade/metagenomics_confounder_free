@@ -45,7 +45,7 @@ config = {
     "training": {
         "num_epochs": 100,
         "batch_size": 64,
-        "learning_rate": 0.001,             # For disease classifier optimizer
+        "learning_rate": 0.0001,             # For disease classifier optimizer
         "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
         "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
@@ -63,22 +63,44 @@ config = {
     },
     "tuning": {
         # (Optional) Define search spaces for hyperparameter optimization.
-        # The other hyper-paramters are fixed in the training config.
+        # "num_encoder_layers": [1, 2, 3],
+        # "num_classifier_layers": [1, 2, 3],
+        # "dropout_rate": [0.0],
         "learning_rate": [1e-5, 
+                          2e-5,
+                          5e-5,
                           1e-4, 
+                          2e-4, 
+                          5e-4, 
                           1e-3,
                           2e-3,
-                          1e-2],
+                          5e-3,
+                          ],
         "encoder_lr": [1e-5, 
-                       1e-4, 
-                       1e-3,
-                        2e-3,
-                        1e-2],
+                          2e-5,
+                          5e-5,
+                          1e-4, 
+                          2e-4, 
+                          5e-4, 
+                          1e-3,
+                          2e-3,
+                          5e-3,
+                          ],
         "classifier_lr": [1e-5, 
-                       1e-4, 
-                       1e-3,
-                        2e-3,
-                        1e-2],
+                          2e-5,
+                          5e-5,
+                          1e-4, 
+                          2e-4, 
+                          5e-4, 
+                          1e-3,
+                          2e-3,
+                          5e-3,
+                          ],
+        # "activation": ["relu", "tanh", "leaky_relu"],
+        # "last_activation": ["relu", "tanh", "leaky_relu"],
+        "latent_dim": [64],
+        # "batch_size": [64],
+        # "norm": ["batch", "layer"]
     }, 
 
     ### pre-training 
@@ -94,9 +116,9 @@ config = {
     "pretrain_training": {
         "num_epochs": 400,
         "batch_size": 64,
-        "learning_rate": 0.00001,             # For reconstruction loss optimizer
-        "encoder_lr": 0.0002,                  # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0002,              # For confounder classifier (e.g., 'drug' branch)
+        "learning_rate": 0.0001,             # For reconstruction loss optimizer
+        "encoder_lr": 0.002,                  # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                    # Change to "cpu" if GPU is unavailable
     }, 
@@ -106,9 +128,9 @@ config = {
     "finetuning_training": {
         "num_epochs": 100,
         "batch_size": 64,
-        "learning_rate": 0.00001,             # For disease classifier optimizer
-        "encoder_lr": 0.0002,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0002,              # For confounder classifier (e.g., 'drug' branch)
+        "learning_rate": 2e-05,             # For disease classifier optimizer
+        "encoder_lr": 5e-04,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 5e-04,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                    # Change to "cpu" if GPU is unavailable
     },
