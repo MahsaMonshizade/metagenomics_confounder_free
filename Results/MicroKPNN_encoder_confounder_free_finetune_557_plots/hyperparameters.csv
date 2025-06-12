@@ -1,0 +1,2 @@
+learning_rate,encoder_lr,classifier_lr,latent_dim
+0.001,0.002,0.002,64
