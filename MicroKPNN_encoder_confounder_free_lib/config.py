@@ -63,23 +63,22 @@ config = {
     },
     "tuning": {
         # (Optional) Define search spaces for hyperparameter optimization.
-        "num_encoder_layers": [1, 2, 3],
-        "num_classifier_layers": [1, 2, 3],
-        "dropout_rate": [0.0],
+        # The other hyper-paramters are fixed in the training config.
         "learning_rate": [1e-5, 
                           1e-4, 
-                          1e-3],
+                          1e-3,
+                          2e-3,
+                          1e-2],
         "encoder_lr": [1e-5, 
                        1e-4, 
-                       1e-3],
+                       1e-3,
+                        2e-3,
+                        1e-2],
         "classifier_lr": [1e-5, 
                        1e-4, 
-                       1e-3],
-        "activation": ["relu", "tanh", "leaky_relu"],
-        "last_activation": ["relu", "tanh", "leaky_relu"],
-        "latent_dim": [32, 64, 96, 128],
-        "batch_size": [64, 128, 256],
-        "norm": ["batch", "layer"]
+                       1e-3,
+                        2e-3,
+                        1e-2],
     }, 
 
     ### pre-training 

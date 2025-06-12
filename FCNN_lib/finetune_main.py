@@ -264,7 +264,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["loss_history"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["loss_history"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Loss History")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
@@ -275,7 +275,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["accuracy"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["accuracy"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}')
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}')
     plt.title("Average Accuracy History")
     plt.xlabel("Epoch")
     plt.ylabel("Balanced Accuracy")
@@ -286,7 +286,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["f1_score"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["f1_score"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}') 
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}') 
     plt.title("Average F1 Score History")
     plt.xlabel("Epoch")
     plt.ylabel("F1 Score")
@@ -297,7 +297,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["auc_pr"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["auc_pr"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}') 
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}') 
     plt.title("Average AUCPR History")
     plt.xlabel("Epoch")
     plt.ylabel("AUCPR")
@@ -308,7 +308,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["precision"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["precision"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}') 
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}') 
     plt.title("Average Precision History")
     plt.xlabel("Epoch")
     plt.ylabel("Precision")
@@ -319,7 +319,7 @@ def main():
     plt.plot(epochs, val_avg_metrics["recall"], label="Validation Average")
     plt.plot(epochs, test_avg_metrics["recall"], label="Test Average")
     for i, ep in enumerate(best_epoch): # Add markers for each fold's best epoch
-        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {i+1} for Fold {i+1}') 
+        plt.axvline(x=ep+1, color=f'C{i+3}', linestyle='--', alpha=0.8, label=f'Best Epoch {ep+1} for Fold {i+1}') 
     plt.title("Average Recall History")
     plt.xlabel("Epoch")
     plt.ylabel("Recall")

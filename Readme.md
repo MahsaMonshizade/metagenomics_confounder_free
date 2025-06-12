@@ -27,30 +27,41 @@ chmod +x prepare_dataset.sh
 To run the models:
 
 - For the **Fully Connected Network**:
-```
+```bash
   python FCNN_lib/main.py
+
+  # With pre-training
+  python FCNN_lib/pretrain_main.py
+  python FCNN_lib/finetune_main.py
 ```
 
 - For the **Confounder-Free Model**:
-```
-  python FCNN_encoder_confounder_free_lib/main.py
-```
-
-- For the **Confounder-Free Model** with **pre-training**:
 ```bash
+  python FCNN_encoder_confounder_free_lib/main.py
+
+  # With pre-training
   python FCNN_encoder_confounder_free_lib/pretrain_main.py
   # It is important to keep the batchsize in pretrain and finetune the same. 
   python FCNN_encoder_confounder_free_lib/finetune_main.py
 ```
 
-- For the **MicroKPNN_Confounder-Free Model**: 
-```
-  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
-  python MicroKPNN_encoder_confounder_free_lib/main.py
+- For the **MicroKPNN Model**:
+```bash
+  python MicroKPNN_lib/run_pipeline.py
+  python MicroKPNN_lib/main.py
+
+  # With pre-training
+  cp -r Results/MicroKPNN_plots/required_data Results/MicroKPNN_finetune_plots/
+  python MicroKPNN_lib/pretrain_main.py
+  python MicroKPNN_lib/finetune_main.py
 ```
 
-- For the **MicroKPNN_Confounder-Free Model** with **pre-training**:
+- For the **MicroKPNN_Confounder-Free Model**: 
 ```bash
+  python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
+  python MicroKPNN_encoder_confounder_free_lib/main.py
+
+  # With pre-training
   # run `python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py` first
   cp -r Results/MicroKPNN_encoder_confounder_free_plots/required_data Results/MicroKPNN_encoder_confounder_free_finetune_plots/
   python MicroKPNN_encoder_confounder_free_lib/pretrain_main.py
@@ -59,25 +70,37 @@ To run the models:
 ```
 
 ### Hyperparameter Optimization
+
 We provide scripts to perform hyperparameter tuning:
 
-For FCNN:
-```
+- For FCNN:
+```bash
   python FCNN_lib/hyperparam_optimization.py
 ```
 
-For Confounder_free
-```
+- For Confounder_free: 
+```bash
   python FCNN_encoder_confounder_free_lib/hyperparam_optimization.py
+  python FCNN_encoder_confounder_free_lib/finetune_hyperparam_optimization.py
 ```
 
-For MicroKPNN_Confounder_free
+- For MicroKPNN: 
+```bash
+  python MicroKPNN_lib/run_pipeline.py
+
+  python MicroKPNN_lib/hyperparam_optimization.py 
+  python MicroKPNN_lib/finetune_hyperparam_optimization.py # NOT GOOD
 ```
+
+- For MicroKPNN_Confounder_free: 
+```bash
   python MicroKPNN_encoder_confounder_free_lib/run_pipeline.py
-  python MicroKPNN_encoder_confounder_free_lib/hyperparam_optimization.py
+  
+  python MicroKPNN_encoder_confounder_free_lib/hyperparam_optimization.py # NOT GOOD
+  python MicroKPNN_encoder_confounder_free_lib/finetune_hyperparam_optimization.py # NOT GOOD
 ```
 
-Currently, the scripts are set to run 10 trials. You can increase this number as needed to improve optimization results.
+Currently, the scripts are set to run all trials in parallel. 
 
 ## TODO List
 
@@ -102,7 +125,7 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 10. ~~Read train.py carefully (Yuhui)~~
 11. ~~Pretraining on the wole crc dataset (Yuhui)~~
 12. ~~Early stop control/Save the results of best epoch rather than the last epoch.~~ (Save the performance of the best epoch according to valid acc for each fold, and average the performances among the best epochs.)
-13. Hyper parameter optimization for FCNN_CF, and MicroKPN_CF
+13. ~~Hyper parameter optimization for FCNN_CF, and MicroKPN_CF~~
 
 **Later**
 
@@ -111,42 +134,43 @@ Currently, the scripts are set to run 10 trials. You can increase this number as
 14. Plot pca and tsne on both train and test to see samples distribution
 15. Data Augmentation (phylomix)
 
-
 Mahsa and Yuhui:
-1. Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)
-2. Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)
+
+1. ~~Yuhui: hyper parameter optimization (FCNN_encoder_confounder_free)~~
+2. ~~Mahsa: hyper parameter optimization (MicroKPNN_encoder confounder free)~~
 3. Mahsa: run svm and rf
-4. Mahsa and Yuhui: MicroKPNN FT check the code
-5. analysis result explanation write it down in readme
-6. Mahsa and Yuhui: Do delong test for the method we optimized
+4. Mahsa and Yuhui: MicroKPNN FT check the code (Yuhui: I checked the code, and the performance has been improved from 0.579 to 0.581, still not good enough.)
+5. ~~analysis result explanation write it down in readme~~
+6. Mahsa and Yuhui: should text for significance, e.g. by DeLong test or other test, to demonstrate our approach is beneficial
 7. read me the paper "" explanation for table and table 2
+8. The manuscript would benefit from a discussion on potentioal strategies to optimize both accuracy and interpretability
+9. Explainability figures for this new dataset
+10. MicroKPNN-MT for the meformine dataset (The one that we have in the paper already )
 
+<!--| MicroKPNN FT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.991     | 0.992     | 0.992     | 0.991     | 0.581     | 0.667     | 0.672     | 0.598     | 0.753     |--->
+<!--| FCNN FT         | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.992     | 1.000     | 0.992     | 0.991     | 0.615     | 0.728     | 0.770     | 0.610     | **0.903** |--->
+<!--| FCNN-CF         | 0.927     | 0.932     | 0.981     | 0.949     | 0.916     | 0.866      | 0.881     | 0.947     | 0.881     | 0.884     | 0.606     | 0.699     | 0.760     | 0.612     | 0.815     |--->
+<!--| MicroKPNN-CF    | 0.998     | 0.999     | 1.000     | 0.999     | 0.998     | 0.996      | 0.996     | 0.987     | 0.997     | 0.995     | 0.635     | 0.722     | 0.689     | 0.642     | **0.828** |--->
 
-
-<!-- ### Results:
-
-| Model | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
-|-------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-|       | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
-| RF    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.984      | 0.985     | 0.999     | 0.986     | 0.986     | 0.683     | 0.732     | 0.838     | 0.686     | 0.786     |
-| SVM   | 0.999     | 0.999     | 0.999     | 1.000     | 0.999     | 0.990      | 0.991     | 0.999     | 0.993     | 0.989     | 0.654     | 0.711     | 0.796     | 0.660     | 0.771     |
-| FCNN  | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.985      | 0.987     | 0.999     | 0.982     | 0.993     | 0.667     | 0.712     | 0.794     | 0.677     | 0.751     | -->
 
 **CRC data**
 
 | Model           | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
 |-----------------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-|                 | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    |
-| FCNN            | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.989      | 0.991     | 0.999     | 0.990     | 0.992     | 0.607     | 0.713     | **0.799** | 0.609     | 0.861     |
-| FCNN FT         | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.990      | 0.992     | 1.000     | 0.992     | 0.991     | 0.615     | 0.728     | 0.770     | 0.610     | **0.903**     |
-| MicroKPNN       | 0.983     | 0.985     | 0.998     | 0.990     | 0.983     | 0.920      | 0.929     | 0.984     | 0.937     | 0.918     | 0.637     | 0.699     | 0.769     | 0.647     | 0.773     |
-| MicroKPNN FT    | 0.982     | 0.983     | 0.999     | 0.990     | 0.977     | 0.938      | 0.940     | 0.988     | 0.967     | 0.916     | 0.579     | 0.661     | 0.714     | 0.598     | 0.740     |
-| MicroKPNN MT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.981      | 0.983     | 0.999     | 0.980     | 0.987     | 0.617     | 0.707     | 0.718     | 0.628     | 0.810     |
-| FCNN-CF         | 0.993     | 0.993     | 0.999     | 0.999     | 0.986     | 0.985      | 0.986     | 0.996     | 0.990     | 0.981     | 0.593     | 0.707     | 0.734     | 0.597     | 0.865 |
-| FCNN-CF FT      | 0.901     | 0.900     | 0.974     | 0.958     | 0.848     | 0.863      | 0.863     | 0.952     | 0.919     | 0.817     | 0.631     | 0.708     | 0.756     | 0.643     | 0.789     |
-| MicroKPNN-CF    | 0.982     | 0.984     | 0.996     | 0.985     | 0.984     | 0.946      | 0.952     | 0.983     | 0.950     | 0.955     | 0.617     | 0.709     | 0.715     | 0.619     | 0.830     |
-| MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | **0.643** | **0.722** | 0.756     | **0.650** | 0.813     |
+|                 | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | Precision | Recall    | 
+| SVM             | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.952     | 0.957     | 0.993     | 0.957     | 0.957     | 0.594     | 0.690     | 0.603     | 0.804     |
+| RF              | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.984     | 0.985     | 0.999     | 0.985     | 0.986     | 0.581     | 0.705     | 0.588     | **0.881**     |
+| FCNN            | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.989      | 0.991     | 0.999     | 0.990     | 0.992     | 0.607     | 0.713     | 0.609     | 0.861     |
+| MicroKPNN       | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.991      | 0.991     | 0.997     | 0.995     | 0.988     | 0.642     | 0.715     | 0.643     | 0.807     |
+| MicroKPNN-MT    | 1.000     | 1.000     | 1.000     | 1.000     | 1.000     | 0.981      | 0.983     | 0.999     | 0.980     | 0.987     | 0.617     | 0.707     | 0.628     | 0.810     |
+| FCNN-CF FT      | 0.873     | 0.868     | 0.964     | 0.946     | 0.804     | 0.842      | 0.834     | 0.940     | 0.923     | 0.769     | **0.663** | 0.727     | **0.671** | 0.799     |
+| MicroKPNN-CF FT | 0.979     | 0.981     | 0.995     | 0.987     | 0.974     | 0.959      | 0.962     | 0.978     | 0.967     | 0.959     | 0.643     | **0.728** | 0.650     | 0.813     |
 
-- Now, the best epoch is calculated by validation accuracy. The average caculation is applied on the best epoch across folds.
-- It is important to acknowledge that epoch selection based on validation set performance will inevitably introduce some degree of overfitting, meaning that optimal performance on the test set may **not** be selected. 
-- The above table demonstrates that the FT models exhibit smaller gaps between validation and test performance, indicating better generalizability. Furthermore, the FT versions of each architecture outperform their non-FT counterparts on the test set. 
+- Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
+- Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance. 
+
+**Key Insights**
+
+- **Fine-tuning Benefits**: The FT version shows the value of transfer learning, achieving the best overall test performance despite slightly lower training metrics compared to the base model. This suggests better generalization and reduced overfitting.
+- **Confounder-Free Advantage**: The CF approach helps the model focus on true predictive signals rather than spurious correlations, which is especially important in imbalanced datasets where confounders can lead to biased predictions toward the majority class. 
+- **Precision-Recall Trade-off**: MicroKPNN-CF FT achieves the most favorable precision-recall balance for imbalanced data, delivering the highest precision (65.0%) while maintaining strong recall (81.3%). This indicates the model effectively handles class imbalance by being both selective (high precision) and comprehensive (high recall) in its predictions, resulting in the best F1 score (72.2%) - a metric particularly valuable for imbalanced datasets. 
