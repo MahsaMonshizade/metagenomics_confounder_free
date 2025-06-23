@@ -179,8 +179,49 @@ Mahsa and Yuhui:
 | FCNN             | 0.9538    | 0.9624    | 0.9969    | 0.9888    | 0.9374    | 0.7231     | 0.8279    | 0.9270    | 0.8691    | 0.7939    | 0.7245    | 0.6171    | 0.6684    | 0.5371    | 0.7318    |
 | MicroKPNN        | 0.9221    | 0.9398    | 0.9893    | 0.9758    | 0.9066    | 0.7513     | 0.8589    | 0.9221    | 0.8756    | 0.8444    | 0.7689    | 0.6770    | 0.7128    | 0.6314    | 0.7318    |
 | MicroKPNN-MT     | 0.9952    | 0.9952    | 0.9997    | 1.0000    | 0.9904    | 0.7335     | 0.8832    | 0.9416    | 0.8554    | 0.9135    | 0.7762    | 0.6722    | 0.7554    | 0.5575    | 0.8542    |
-| FCNN-CF          | 0.9514    | 0.9636    | 0.9935    | 0.9844    | 0.9439    | 0.7368     | 0.8464    | 0.9272    | 0.8700    | 0.8263    | 0.8051    | 0.7213    | 0.7373    | 0.6672    | 0.8000    |
-| MicroKPNN-CF     | 0.8770    | 0.9126    | 0.9793    | 0.9525    | 0.8803    | 0.8046     | 0.8718    | 0.9444    | 0.9165    | 0.8346    | 0.7105    | 0.5964    | 0.6801    | 0.6029    | 0.6083    |
+| FCNN-CF          | 0.8894    | 0.9135    | 0.9779    | 0.9636    | 0.8697    | 0.7602     | 0.8337    | 0.9169    | 0.8937    | 0.7818    | 0.7942    | 0.7084    | 0.7544    | 0.6617    | 0.7682    |
+| MicroKPNN-CF     | 0.8898    | 0.9182    | 0.9661    | 0.9601    | 0.8803    | 0.7780     | 0.8500    | 0.9073    | 0.9004    | 0.8061    | 0.7424    | 0.6415    | 0.6676    | 0.6159    | 0.6727    |
+
+
+FCNN_CF:
+"training": {
+        "num_epochs": 150,
+        "batch_size": 256,
+        "learning_rate": 0.001,             # For disease classifier optimizer
+        "encoder_lr": 0.02,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.02,              # For confounder classifier (e.g., 'drug' branch)
+        "weight_decay": 0, #1e-4,
+        "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
+    },
+    "model": {
+        "latent_dim": 64,                    # Dimension of the latent space
+        "num_encoder_layers": 1,             # Number of layers in the encoder (beyond initial projection)
+        "num_classifier_layers": 1,          # Number of layers in each classifier branch
+        "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
+        "norm": "layer",                     # Normalization type ("batch" or "layer")
+        "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
+        "activation": "leaky_relu",                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
+        "last_activation": "tanh"}
+
+MicroKPNN_CF:
+"training": {
+        "num_epochs": 150,
+        "batch_size": 256,
+        "learning_rate": 0.0002,             # For disease classifier optimizer
+        "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.002,              # For confounder classifier (e.g., 'drug' branch)
+        "weight_decay": 0, #1e-4,
+        "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
+    },
+    "model": {
+        "latent_dim": 64,                    # Dimension of the latent space
+        "num_encoder_layers": 3,             # Number of layers in the encoder (beyond initial projection)
+        "num_classifier_layers": 2,          # Number of layers in each classifier branch
+        "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
+        "norm": "layer",                     # Normalization type ("batch" or "layer")
+        "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
+        "activation": "relu",                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
+        "last_activation": "leaky_relu"}
 
 
 ### main Todo list:
