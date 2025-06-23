@@ -169,6 +169,27 @@ Mahsa and Yuhui:
 - Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
 - Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance. 
 
+**T2D Metformine data**
+
+| Model           | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
+|-----------------|-----------|-----------|-----------|-----------|-----------|------------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+|                 | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | Accuracy   | F1 Score  | AUC PR    | Precision | Recall    | Accuracy  | F1 Score  | AUC PR    | Precision | Recall    | 
+| SVM              | 1.0000    | 1.0000    | 1.0000    | 1.0000    | 1.0000    | 0.6782     | 0.8174    | 0.8972    | 0.8360    | 0.8000    | 0.7005    | 0.5918    | 0.6240    | 0.4964    | 0.7364    |
+| RF               | 1.0000    | 1.0000    | 1.0000    | 1.0000    | 1.0000    | 0.6319     | 0.8748    | 0.9482    | 0.7943    | 0.9737    | 0.6174    | 0.5328    | 0.7453    | 0.3731    | 0.9318    |
+| FCNN             | 0.8922    | 0.9098    | 0.9873    | 0.9708    | 0.8596    | 0.6764     | 0.7766    | 0.9009    | 0.8508    | 0.7232    | 0.6742    | 0.5514    | 0.5963    | 0.5041    | 0.6273    |
+| MicroKPNN        | 0.9221    | 0.9398    | 0.9893    | 0.9758    | 0.9066    | 0.7513     | 0.8589    | 0.9221    | 0.8756    | 0.8444    | 0.7689    | 0.6770    | 0.7128    | 0.6314    | 0.7318    |
+| MicroKPNN-MT     | 0.9952    | 0.9952    | 0.9997    | 1.0000    | 0.9904    | 0.7335     | 0.8832    | 0.9416    | 0.8554    | 0.9135    | 0.7762    | 0.6722    | 0.7554    | 0.5575    | 0.8542    |
+| FCNN-CF          | 0.9514    | 0.9636    | 0.9935    | 0.9844    | 0.9439    | 0.7368     | 0.8464    | 0.9272    | 0.8700    | 0.8263    | 0.8051    | 0.7213    | 0.7373    | 0.6672    | 0.8000    |
+| MicroKPNN-CF     | 0.8770    | 0.9126    | 0.9793    | 0.9525    | 0.8803    | 0.8046     | 0.8718    | 0.9444    | 0.9165    | 0.8346    | 0.7105    | 0.5964    | 0.6801    | 0.6029    | 0.6083    |
+
+
+### main Todo list:
+1. reRun all the models for metformine (T2D) dataset
+2. calculate delong
+3. do the pca and tsne again
+4. probably do interpretation again
+5. Add the results for crc adn interpretation as well
+6. If confusion looks good for removing false positive we can add that to the paper as well
 **Key Insights**
 
 - **Fine-tuning Benefits**: The FT version shows the value of transfer learning, achieving the best overall test performance despite slightly lower training metrics compared to the base model. This suggests better generalization and reduced overfitting.
