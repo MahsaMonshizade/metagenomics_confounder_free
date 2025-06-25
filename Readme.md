@@ -179,8 +179,8 @@ Mahsa and Yuhui:
 | FCNN             | 0.9538    | 0.9624    | 0.9969    | 0.9888    | 0.9374    | 0.7231     | 0.8279    | 0.9270    | 0.8691    | 0.7939    | 0.7245    | 0.6171    | 0.6684    | 0.5371    | 0.7318    |
 | MicroKPNN        | 0.9221    | 0.9398    | 0.9893    | 0.9758    | 0.9066    | 0.7513     | 0.8589    | 0.9221    | 0.8756    | 0.8444    | 0.7689    | 0.6770    | 0.7128    | 0.6314    | 0.7318    |
 | MicroKPNN-MT     | 0.9952    | 0.9952    | 0.9997    | 1.0000    | 0.9904    | 0.7335     | 0.8832    | 0.9416    | 0.8554    | 0.9135    | 0.7762    | 0.6722    | 0.7554    | 0.5575    | 0.8542    |
-| FCNN-CF          | 0.8894    | 0.9135    | 0.9779    | 0.9636    | 0.8697    | 0.7602     | 0.8337    | 0.9169    | 0.8937    | 0.7818    | 0.7942    | 0.7084    | 0.7544    | 0.6617    | 0.7682    |
-| MicroKPNN-CF     | 0.8898    | 0.9182    | 0.9661    | 0.9601    | 0.8803    | 0.7780     | 0.8500    | 0.9073    | 0.9004    | 0.8061    | 0.7424    | 0.6415    | 0.6676    | 0.6159    | 0.6727    |
+| FCNN-CF          | 0.9182    | 0.9379    | 0.9886    | 0.9734    | 0.9061    | 0.7588     | 0.8550    | 0.9339    | 0.8822    | 0.8303    | 0.8091    | 0.7291    | 0.7899    | 0.6884    | 0.7818    |
+| MicroKPNN-CF     | 0.8604    | 0.8953    | 0.9670    | 0.9477    | 0.8500    | 0.7909     | 0.8657    | 0.9254    | 0.9055    | 0.8323    | 0.7601    | 0.6667    | 0.7375    | 0.6842    | 0.6636    |
 
 
 FCNN_CF:
@@ -190,12 +190,12 @@ FCNN_CF:
 
         "batch_size": 256,
 
-        "learning_rate": 0.001,             # For disease classifier optimizer
+        "learning_rate": 0.0005,             # For disease classifier optimizer
 
         
-        "encoder_lr": 0.02,                 # For encoder (e.g., for distillation phase)
+        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
         
-        "classifier_lr": 0.02,              # For confounder classifier (e.g., 'drug' branch)
+        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
         
         "weight_decay": 0, #1e-4,
         
@@ -257,7 +257,7 @@ MicroKPNN_CF:
         
         "leaky_relu")
         
-        "last_activation": "leaky_relu"}
+        "last_activation": "tanh"}
 
 
 ### main Todo list:
