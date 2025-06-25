@@ -1,0 +1,12 @@
+{
+    "num_encoder_layers": 3,
+    "num_classifier_layers": 0,
+    "learning_rate": 0.0005,
+    "encoder_lr": 5e-05,
+    "classifier_lr": 0.002,
+    "activation": "leaky_relu",
+    "latent_dim": 64,
+    "batch_size": 256,
+    "norm": "layer",
+    "last_activation": "relu"
+}

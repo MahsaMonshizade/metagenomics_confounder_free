@@ -131,6 +131,11 @@ def main():
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, train_cfg["batch_size"])
         data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"], 
                                     sampleid=idx_test_all) # DELONG: Include SampleID in the test DataLoader.
+        # print("hi")
+        # for x_batch, y_batch, id_batch in data_all_test_loader:
+        #     print(id_batch)
+        #     print(x_batch.shape)
+        #     print(y_batch.shape)
 
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -194,7 +199,7 @@ def main():
         pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.
         labels.append(Results["best_test"]["labels"]) # DELONG: Save the labels for this fold.
         sample_ids.append(Results["best_test"]["sample_id"]) # DELONG: Save the test IDs for this fold.
-        best_epoch.append(Results["best_test"]["epoch"]) # DELONG: Save the best epoch for this fold.
+        best_epoch.append(Results["best_test"]["epoch"]-1) # DELONG: Save the best epoch for this fold.
 
         # Plot per-fold confusion matrices. 
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
