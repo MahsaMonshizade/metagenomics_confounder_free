@@ -42,15 +42,15 @@ config = {
     "training": {
         "num_epochs": 150,
         "batch_size": 256,
-        "learning_rate": 0.0001,             # For disease classifier optimizer
-        "encoder_lr": 0.0005,                 # For encoder (e.g., for distillation phase)
-        "classifier_lr": 0.0005,              # For confounder classifier (e.g., 'drug' branch)
+        "learning_rate": 0.0005,             # For disease classifier optimizer
+        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
+        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
         "weight_decay": 0, #1e-4,
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },
     "model": {
         "latent_dim": 64,                    # Dimension of the latent space
-        "num_encoder_layers": 2,             # Number of layers in the encoder (beyond initial projection)
+        "num_encoder_layers": 1,             # Number of layers in the encoder (beyond initial projection)
         "num_classifier_layers": 1,          # Number of layers in each classifier branch
         "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
         "norm": "layer",                     # Normalization type ("batch" or "layer")

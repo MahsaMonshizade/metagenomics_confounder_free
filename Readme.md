@@ -169,6 +169,66 @@ Mahsa and Yuhui:
 - Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
 - Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance. 
 
+## 🧪 Age as a Potential Confounder in Microbiome Composition
+
+To assess whether **host age** acts as a **confounding variable** in our microbiome-based disease analysis, we evaluated its association with both the **disease label** and **microbial composition** using the following statistical tests:
+
+---
+
+### 1. 🧠 Association Between Age and Disease Label
+
+We performed a **Mann–Whitney U test** comparing the distribution of age across disease groups:
+
+- **P-value**: `2.7 × 10⁻¹¹`
+
+✅ This extremely low P-value indicates that **age significantly differs between disease groups**, satisfying the first condition for a confounder.
+
+---
+
+### 2. 🧬 Association Between Age and Microbiome Composition
+
+#### a. **Linear Regression R²**
+
+We used linear regression to estimate how much of the **total variance in microbiome composition** (based on all species/features) is explained by **age**:
+
+- **R²**: `0.009`
+
+🔍 This means age explains approximately **0.9% of the overall microbiota variation** — a small but measurable effect.
+
+#### b. **Permutation Test**
+
+To assess whether this R² value was significant, we ran a **permutation test** (shuffling age labels 1000 times):
+
+- **Permutation P-value**: `0.0`
+
+✅ This confirms the observed R² is **highly significant**, i.e., **age is truly associated with microbial variation**.
+
+---
+
+### 3. 🔬 Feature-Wise Correlation: Spearman Analysis
+
+We calculated **Spearman correlations** between **age** and the relative abundance of each microbial feature:
+
+- Features with strong positive or negative correlations (e.g., IDs `853`, `218538`, `39485`) showed **statistically significant associations** with age (many with **P < 1e-10**).
+- These results highlight **age-dependent shifts in specific microbial taxa**.
+
+---
+
+### ✅ Conclusion
+
+Both global and feature-level analyses support that:
+
+> **Host age is a statistically significant confounder** in this dataset, as it is associated with both the disease label and the microbiome composition.
+
+---
+
+### 📌 Recommendations
+
+To ensure unbiased microbiome-disease association models:
+- **Include age as a covariate** in downstream analysis
+- Or use **confounder-control techniques** (e.g., adversarial learning, stratified modeling)
+
+
 **T2D Metformine data**
 
 | Model           | Train     |           |           |           |           | Validation |           |           |           |           | Test      |           |           |           |           |
@@ -181,6 +241,69 @@ Mahsa and Yuhui:
 | MicroKPNN-MT     | 0.9952    | 0.9952    | 0.9997    | 1.0000    | 0.9904    | 0.7335     | 0.8832    | 0.9416    | 0.8554    | 0.9135    | 0.7762    | 0.6722    | 0.7554    | 0.5575    | 0.8542    |
 | FCNN-CF          | 0.9182    | 0.9379    | 0.9886    | 0.9734    | 0.9061    | 0.7588     | 0.8550    | 0.9339    | 0.8822    | 0.8303    | 0.8091    | 0.7291    | 0.7899    | 0.6884    | 0.7818    |
 | MicroKPNN-CF     | 0.8604    | 0.8953    | 0.9670    | 0.9477    | 0.8500    | 0.7909     | 0.8657    | 0.9254    | 0.9055    | 0.8323    | 0.7601    | 0.6667    | 0.7375    | 0.6842    | 0.6636    |
+
+
+## 🧪 Confounder Analysis: Metformin
+
+We performed a two-step statistical analysis to assess whether **metformin usage** may act as a confounding variable in our **T2D vs. control classification**:
+
+### 1. 📊 Association Between Metformin and Disease Label
+
+A Chi-squared test revealed a **strong, statistically significant association** between metformin usage and T2D diagnosis:
+
+- **Chi-squared P-value**: `3.03e-66`
+
+This result indicates that metformin is **not independently distributed** across T2D and control groups. Individuals with T2D are far more likely to be on metformin, suggesting that **metformin is a potential confounder**.
+
+### 2. 🧬 Microbiome Feature Associations with Metformin
+
+To understand how metformin influences microbial composition, we performed **Mann–Whitney U tests** for each microbial feature:
+
+- **Total Microbial Features Tested**: `360`  
+- **Significantly Associated Features (P < 0.05)**: `88`
+
+This shows that **24% of microbial features** differ significantly between metformin users and non-users. These differences could **bias microbiome-based classifiers** if not properly controlled.
+
+### ✅ Interpretation & Recommendation
+
+Metformin is:
+
+- **Associated with the disease label (T2D)**
+- **Associated with significant microbial variation**
+
+As a result, it should be **explicitly addressed as a confounder** in downstream analyses. Models that do not account for metformin may incorrectly attribute metformin-induced microbial changes as T2D-specific biomarkers.
+
+
+## 🔍 Model Comparison Summary – AUC and Statistical Significance
+
+We compared two models — `FCNN` and `FCNN Encoder Confounder Free` — on a shared test set to evaluate their predictive performance and determine if the observed difference in AUC (Area Under the ROC Curve) is statistically significant using DeLong's test.
+
+### 📌 Sample Information
+- **Total matched samples**: 143  
+- **Positive samples**: 44 (30.8%)  
+- **Negative samples**: 99 (69.2%)  
+- **Common sample IDs**: 143  
+
+### 📊 AUC Results
+| Model                        | AUC     |
+|-----------------------------|---------|
+| FCNN                        | 0.8276  |
+| FCNN Encoder Confounder Free | 0.8370  |
+| **AUC Difference**           | **-0.0094** |
+
+- **95% Confidence Interval**: [-0.0957, 0.0769]
+
+### 🧪 DeLong’s Test for Statistical Significance
+- **Z-statistic**: -0.2138  
+- **Standard Error**: 0.0440  
+- **P-value**: 0.8307  
+- **Significance threshold**: *p* < 0.05  
+- **Result**: AUC difference is **not statistically significant**
+
+### ✅ Conclusion
+While `FCNN Encoder Confounder Free` achieved a slightly higher AUC than the baseline `FCNN`, the improvement is small and **not statistically significant** according to DeLong’s test. This indicates that the observed AUC difference may be due to random chance rather than a true performance gain.
+
+
 
 
 FCNN_CF:
