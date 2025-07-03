@@ -169,64 +169,23 @@ Mahsa and Yuhui:
 - Epoch Selection Method: Best epoch determined by validation accuracy, averaged across folds.
 - Limitation: Validation-based epoch selection introduces overfitting risk - may **not** select optimal test performance. 
 
-## 🧪 Age as a Potential Confounder in Microbiome Composition
+## 🧪 Gender Confounder Analysis Summary
 
-To assess whether **host age** acts as a **confounding variable** in our microbiome-based disease analysis, we evaluated its association with both the **disease label** and **microbial composition** using the following statistical tests:
+**Chi-squared P-value (Gender vs. CRC):** `1.0290e-02`  
+**Significant Microbial Features (P < 0.05):** `57`  
+**Total Features Tested:** `171`  
+**Result File:** `gender_microbiome_association.csv`
 
----
+### 📊 Interpretation
 
-### 1. 🧠 Association Between Age and Disease Label
+The chi-squared test reveals a statistically significant association between gender and colorectal cancer (CRC) status (**p = 0.01029**), suggesting that **gender may act as a potential confounder** in microbiome-based CRC analyses.
 
-We performed a **Mann–Whitney U test** comparing the distribution of age across disease groups:
+Additionally, out of the 171 microbial features tested, **57 features** were found to be significantly associated with gender (**p < 0.05**). This indicates that gender has a notable impact on the microbiome composition.
 
-- **P-value**: `2.7 × 10⁻¹¹`
+> ⚠️ To avoid confounded or biased results, **gender should be accounted for** in any downstream analysis or predictive modeling involving this dataset.
 
-✅ This extremely low P-value indicates that **age significantly differs between disease groups**, satisfying the first condition for a confounder.
+For detailed feature-level results, see: [`gender_microbiome_association.csv`](./gender_microbiome_association.csv)
 
----
-
-### 2. 🧬 Association Between Age and Microbiome Composition
-
-#### a. **Linear Regression R²**
-
-We used linear regression to estimate how much of the **total variance in microbiome composition** (based on all species/features) is explained by **age**:
-
-- **R²**: `0.009`
-
-🔍 This means age explains approximately **0.9% of the overall microbiota variation** — a small but measurable effect.
-
-#### b. **Permutation Test**
-
-To assess whether this R² value was significant, we ran a **permutation test** (shuffling age labels 1000 times):
-
-- **Permutation P-value**: `0.0`
-
-✅ This confirms the observed R² is **highly significant**, i.e., **age is truly associated with microbial variation**.
-
----
-
-### 3. 🔬 Feature-Wise Correlation: Spearman Analysis
-
-We calculated **Spearman correlations** between **age** and the relative abundance of each microbial feature:
-
-- Features with strong positive or negative correlations (e.g., IDs `853`, `218538`, `39485`) showed **statistically significant associations** with age (many with **P < 1e-10**).
-- These results highlight **age-dependent shifts in specific microbial taxa**.
-
----
-
-### ✅ Conclusion
-
-Both global and feature-level analyses support that:
-
-> **Host age is a statistically significant confounder** in this dataset, as it is associated with both the disease label and the microbiome composition.
-
----
-
-### 📌 Recommendations
-
-To ensure unbiased microbiome-disease association models:
-- **Include age as a covariate** in downstream analysis
-- Or use **confounder-control techniques** (e.g., adversarial learning, stratified modeling)
 
 
 **T2D Metformine data**
@@ -239,7 +198,7 @@ To ensure unbiased microbiome-disease association models:
 | FCNN             | 0.9538    | 0.9624    | 0.9969    | 0.9888    | 0.9374    | 0.7231     | 0.8279    | 0.9270    | 0.8691    | 0.7939    | 0.7245    | 0.6171    | 0.6684    | 0.5371    | 0.7318    |
 | MicroKPNN        | 0.9221    | 0.9398    | 0.9893    | 0.9758    | 0.9066    | 0.7513     | 0.8589    | 0.9221    | 0.8756    | 0.8444    | 0.7689    | 0.6770    | 0.7128    | 0.6314    | 0.7318    |
 | MicroKPNN-MT     | 0.9952    | 0.9952    | 0.9997    | 1.0000    | 0.9904    | 0.7335     | 0.8832    | 0.9416    | 0.8554    | 0.9135    | 0.7762    | 0.6722    | 0.7554    | 0.5575    | 0.8542    |
-| FCNN-CF          | 0.9182    | 0.9379    | 0.9886    | 0.9734    | 0.9061    | 0.7588     | 0.8550    | 0.9339    | 0.8822    | 0.8303    | 0.8091    | 0.7291    | 0.7899    | 0.6884    | 0.7818    |
+| FCNN-CF          | 0.9502    | 0.9660    | 0.9847    | 0.9812    | 0.9515    | 0.7763     | 0.8657    | 0.9171    | 0.8913    | 0.8424    | 0.7927    | 0.7078    | 0.7368    | 0.6678    | 0.7591    |
 | MicroKPNN-CF     | 0.8604    | 0.8953    | 0.9670    | 0.9477    | 0.8500    | 0.7909     | 0.8657    | 0.9254    | 0.9055    | 0.8323    | 0.7601    | 0.6667    | 0.7375    | 0.6842    | 0.6636    |
 
 
@@ -307,30 +266,30 @@ While `FCNN Encoder Confounder Free` achieved a slightly higher AUC than the bas
 
 
 FCNN_CF:
-"training": {
-  
+ "training": {
+        
         "num_epochs": 150,
-
-        "batch_size": 256,
-
-        "learning_rate": 0.0005,             # For disease classifier optimizer
-
         
-        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
+        "batch_size": 64,
         
-        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
+        "learning_rate": 0.0001,             # For disease classifier optimizer
+        
+        "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
+        
+        "classifier_lr": 0.005,              # For confounder classifier (e.g., 'drug' branch)
         
         "weight_decay": 0, #1e-4,
         
         "device": "cuda:0"                   # Change to "cpu" if GPU is unavailable
     },
+    
     "model": {
         
         "latent_dim": 64,                    # Dimension of the latent space
         
-        "num_encoder_layers": 1,             # Number of layers in the encoder (beyond initial projection)
+        "num_encoder_layers": 3,             # Number of layers in the encoder (beyond initial projection)
         
-        "num_classifier_layers": 1,          # Number of layers in each classifier branch
+        "num_classifier_layers": 2,          # Number of layers in each classifier branch
         
         "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
         
@@ -338,11 +297,10 @@ FCNN_CF:
         
         "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
         
-        "activation": "leaky_relu",                 # Activation function: options (e.g., "relu", "tanh", 
+        "activation": "leaky_relu",                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
         
-        "leaky_relu")
-        
-        "last_activation": "tanh"}
+        "last_activation": "tanh"
+    },
 
 MicroKPNN_CF:
 
