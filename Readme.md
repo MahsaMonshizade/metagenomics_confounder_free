@@ -272,11 +272,11 @@ FCNN_CF:
         
         "batch_size": 64,
         
-        "learning_rate": 0.0001,             # For disease classifier optimizer
+        "learning_rate": 0.00005,             # For disease classifier optimizer
         
-        "encoder_lr": 0.002,                 # For encoder (e.g., for distillation phase)
+        "encoder_lr": 0.001,                 # For encoder (e.g., for distillation phase)
         
-        "classifier_lr": 0.005,              # For confounder classifier (e.g., 'drug' branch)
+        "classifier_lr": 0.001,              # For confounder classifier (e.g., 'drug' branch)
         
         "weight_decay": 0, #1e-4,
         
@@ -284,23 +284,22 @@ FCNN_CF:
     },
     
     "model": {
-        
+    
         "latent_dim": 64,                    # Dimension of the latent space
-        
+    
         "num_encoder_layers": 3,             # Number of layers in the encoder (beyond initial projection)
-        
+    
         "num_classifier_layers": 2,          # Number of layers in each classifier branch
-        
+    
         "dropout_rate": 0.0,                 # Dropout probability (set to 0 to disable)
-        
+    
         "norm": "layer",                     # Normalization type ("batch" or "layer")
-        
+    
         "classifier_hidden_dims": [],        # Optional list; if empty, layers are created via halving
-        
+    
         "activation": "leaky_relu",                 # Activation function: options (e.g., "relu", "tanh", "leaky_relu")
-        
-        "last_activation": "tanh"
-    },
+    
+        "last_activation": "tanh"}
 
 MicroKPNN_CF:
 
@@ -353,3 +352,10 @@ MicroKPNN_CF:
 - **Fine-tuning Benefits**: The FT version shows the value of transfer learning, achieving the best overall test performance despite slightly lower training metrics compared to the base model. This suggests better generalization and reduced overfitting.
 - **Confounder-Free Advantage**: The CF approach helps the model focus on true predictive signals rather than spurious correlations, which is especially important in imbalanced datasets where confounders can lead to biased predictions toward the majority class. 
 - **Precision-Recall Trade-off**: MicroKPNN-CF FT achieves the most favorable precision-recall balance for imbalanced data, delivering the highest precision (65.0%) while maintaining strong recall (81.3%). This indicates the model effectively handles class imbalance by being both selective (high precision) and comprehensive (high recall) in its predictions, resulting in the best F1 score (72.2%) - a metric particularly valuable for imbalanced datasets. 
+
+----
+Look into newrok (metabolite) (new one)
+
+try to compare the important features to the confounder from chi squared method to microkpnn_MT
+
+try to do explainabity for MIcroKPNN and MIcrpoKPNN_CF and find the overlaps and difference
