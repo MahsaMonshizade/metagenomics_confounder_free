@@ -104,6 +104,10 @@ def main():
     sample_ids = [] # DELONG: Save the test IDs for each fold.
     best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
 
+    train_conf_matrix_avg_bestepoch = 0
+    val_conf_matrix_avg_bestepoch = 0
+    test_conf_matrix_avg_bestepoch = 0
+
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Fold {fold+1}")
         train_data = merged_data_all.iloc[train_index]
@@ -202,18 +206,22 @@ def main():
         best_epoch.append(Results["best_test"]["epoch"]-1) # DELONG: Save the best epoch for this fold.
 
         # Plot per-fold confusion matrices. 
-        plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["train"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
-        plot_confusion_matrix(Results["val"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["val"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Validation Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
-        plot_confusion_matrix(Results["test"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["test"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Test Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/FCNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
+        
+        train_conf_matrix_avg_bestepoch += Results["train"]["confusion_matrix"][best_epoch[fold]]
+        val_conf_matrix_avg_bestepoch += Results["val"]["confusion_matrix"][best_epoch[fold]]
+        test_conf_matrix_avg_bestepoch += Results["test"]["confusion_matrix"][best_epoch[fold]]
 
         num_epochs_actual = len(Results["train"]["loss_history"])
         epochs = range(1, num_epochs_actual + 1)
@@ -332,6 +340,8 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
+
+
     # DELONG: this is removed to the 'train' function, and the best epoch is now saved in Results.
     # # Find the best epoch for each fold according to accuracy on validation set. 
     # best_epoch = []
@@ -433,15 +443,15 @@ def main():
     plt.close()
 
     # Plot aggregated confusion matrices.
-    plot_confusion_matrix(train_conf_matrix_avg[-1],
+    plot_confusion_matrix(train_conf_matrix_avg_bestepoch/5,
                           title="Average Train Confusion Matrix",
                           save_path="Results/FCNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
-    plot_confusion_matrix(val_conf_matrix_avg[-1],
+    plot_confusion_matrix(val_conf_matrix_avg_bestepoch/5,
                           title="Average Validation Confusion Matrix",
                           save_path="Results/FCNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
-    plot_confusion_matrix(test_conf_matrix_avg[-1],
+    plot_confusion_matrix(test_conf_matrix_avg_bestepoch/5,
                           title="Average Test Confusion Matrix",
                           save_path="Results/FCNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])

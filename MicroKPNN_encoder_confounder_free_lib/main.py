@@ -137,6 +137,12 @@ def main():
     parent_df.to_csv(parent_dict_csv_path, index=False)
 
     ########################
+    best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
+
+
+    train_conf_matrix_avg_bestepoch = 0
+    val_conf_matrix_avg_bestepoch = 0
+    test_conf_matrix_avg_bestepoch = 0
 
     for fold, (train_index, val_index) in enumerate(skf.split(X, y_all)):
         print(f"Fold {fold+1}")
@@ -232,21 +238,27 @@ def main():
         best_epoch.append(Results["best_test"]["epoch"]) # DELONG: Save the best epoch for this fold.
         
         # Plot per-fold confusion matrices.
-        plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["train"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Train Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_train_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
-        plot_confusion_matrix(Results["val"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["val"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Validation Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_val_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
-        plot_confusion_matrix(Results["test"]["confusion_matrix"][-1],
+        plot_confusion_matrix(Results["test"]["confusion_matrix"][best_epoch[fold]],
                               title=f"Test Confusion Matrix - Fold {fold+1}",
                               save_path=f"Results/MicroKPNN_encoder_confounder_free_plots/fold_{fold+1}_test_conf_matrix.png",
                               class_names=["Class 0", "Class 1"])
 
         num_epochs_actual = len(Results["train"]["loss_history"])
         epochs = range(1, num_epochs_actual + 1)
+
+        train_conf_matrix_avg_bestepoch += Results["train"]["confusion_matrix"][best_epoch[fold]]
+        val_conf_matrix_avg_bestepoch += Results["val"]["confusion_matrix"][best_epoch[fold]]
+        test_conf_matrix_avg_bestepoch += Results["test"]["confusion_matrix"][best_epoch[fold]]
+
+        print(train_conf_matrix_avg_bestepoch)
 
         # Plot metric histories for this fold.
         plt.figure(figsize=(20, 15))
@@ -362,10 +374,10 @@ def main():
     val_conf_matrix_avg = [cm / n_splits for cm in val_conf_matrix_avg]
     test_conf_matrix_avg = [cm / n_splits for cm in test_conf_matrix_avg]
 
-    # Find the best epoch for each fold. 
-    best_epoch = []
-    for i in range(n_splits):
-        best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
+    # # Find the best epoch for each fold. 
+    # best_epoch = []
+    # for i in range(n_splits):
+    #     best_epoch.append(np.argmax(val_metrics_per_fold[i]["accuracy"]))
 
     # Plot aggregated average metrics.
     plt.figure(figsize=(20, 15))
@@ -462,15 +474,15 @@ def main():
     plt.close()
 
     # Plot aggregated confusion matrices.
-    plot_confusion_matrix(train_conf_matrix_avg[-1],
+    plot_confusion_matrix(train_conf_matrix_avg_bestepoch/5,
                           title="Average Train Confusion Matrix",
                           save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_train_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
-    plot_confusion_matrix(val_conf_matrix_avg[-1],
+    plot_confusion_matrix(val_conf_matrix_avg_bestepoch/5,
                           title="Average Validation Confusion Matrix",
                           save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_val_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
-    plot_confusion_matrix(test_conf_matrix_avg[-1],
+    plot_confusion_matrix(test_conf_matrix_avg_bestepoch/5,
                           title="Average Test Confusion Matrix",
                           save_path="Results/MicroKPNN_encoder_confounder_free_plots/average_test_conf_matrix.png",
                           class_names=["Class 0", "Class 1"])
