@@ -1,8 +1,25 @@
 import torch
 import math
-from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+from torch.utils.data import DataLoader, Dataset
 
-def create_stratified_dataloader(x_train, y_train, batch_size):
+class StratifiedDataset(Dataset):
+    """Custom dataset that includes sample IDs"""
+    def __init__(self, x_data, y_data, sample_ids=None):
+        self.x_data = x_data
+        self.y_data = y_data
+        self.sample_ids = sample_ids
+        
+    def __len__(self):
+        return len(self.x_data)
+    
+    def __getitem__(self, idx):
+        if self.sample_ids is not None:
+            return self.x_data[idx], self.y_data[idx], self.sample_ids[idx]
+        else:
+            return self.x_data[idx], self.y_data[idx]
+
+def create_stratified_dataloader(x_train, y_train, batch_size, sampleid=None):
     """
     Create a stratified DataLoader so that each batch reflects the overall 
     class distribution.
@@ -11,17 +28,26 @@ def create_stratified_dataloader(x_train, y_train, batch_size):
       x_train (torch.Tensor): Input features.
       y_train (torch.Tensor): Target labels.
       batch_size (int): Desired batch size.
+      sampleid (numpy.ndarray, optional): String sample IDs for each data point (used to record predictions results).
 
     Returns:
-      DataLoader: A DataLoader that yields stratified batches.
+      DataLoader: A PyTorch DataLoader that returns (x_batch, y_batch) if sampleid is None,Add commentMore actions
+                  or (x_batch, y_batch, sampleid_batch) if sampleid is provided.
     
     Note:
       If the number of distinct classes exceeds the batch size, not all classes 
       can be present in every batch. In that case, consider increasing the batch size.
     """
+
+
     # Remove extra dimensions if necessary.
     labels = y_train.squeeze()
     unique_labels = labels.unique()
+
+    # Handle sampleid - convert numpy array to list of stringsAdd commentMore actions
+    if sampleid is not None:
+        assert len(sampleid) == len(labels), "sampleid must have the same length as y_train"
+        sampleid = sampleid.tolist()  # Convert numpy array to list
 
     # Count samples per class.
     class_counts = {label.item(): (labels == label).sum().item() for label in unique_labels}
@@ -75,7 +101,8 @@ def create_stratified_dataloader(x_train, y_train, batch_size):
                     class_cursors[label] += count
             if batch:
                 # Shuffle the batch indices.
-                batch = torch.tensor(batch)[torch.randperm(len(batch))].tolist()
+                shuffle_order = torch.randperm(len(batch))
+                batch = torch.tensor(batch)[shuffle_order].tolist()
                 batches.append(batch)
         return batches
 
@@ -93,10 +120,10 @@ def create_stratified_dataloader(x_train, y_train, batch_size):
         def __len__(self):
             return len(self.batches)
 
-    dataset = TensorDataset(x_train, y_train)
+    dataset = StratifiedDataset(x_train, y_train, sampleid)
     sampler = StratifiedBatchSampler(batches)
     g = torch.Generator()
     g.manual_seed(42)
-    loader = DataLoader(dataset, batch_sampler=sampler, shuffle=False, num_workers=4,worker_init_fn=lambda wid: torch.manual_seed(42 + wid), generator=g)
-
+    loader = DataLoader(dataset, batch_sampler=sampler, shuffle=False, num_workers=4, 
+                            worker_init_fn=lambda wid: torch.manual_seed(42 + wid), generator=g)
     return loader

@@ -65,7 +65,14 @@ def train_model(
             "precision": [],
             "recall": [],
             "confusion_matrix": []
-        }
+        }, 
+        "best_test": { 
+            "epoch": None, 
+            "sample_id": [], 
+            "pred_probs": [],
+            "labels": [],
+            "accuracy": 0.0,  
+        },  # DELONG: Store best predictions for test set
     }
 
     # Move model and loss functions to device.
@@ -219,7 +226,7 @@ def train_model(
         val_targets_list = []
 
         with torch.no_grad():
-            for x_batch, y_batch in data_all_val_loader:
+            for x_batch, y_batch in data_all_val_loader: 
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
                 predicted_disease = model.disease_classifier(encoded_features)
@@ -230,6 +237,7 @@ def train_model(
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_val_preds.append(pred_tag.cpu())
                 epoch_val_labels.append(y_batch.cpu())
+
             for x_batch, y_batch in data_val_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
@@ -266,9 +274,10 @@ def train_model(
         epoch_test_probs = []
         test_hidden_activations_list = []
         test_targets_list = []
+        epoch_test_sample_ids = []  # DELONG: Store sample IDs for test set
 
         with torch.no_grad():
-            for x_batch, y_batch in data_all_test_loader:
+            for x_batch, y_batch, id_batch in data_all_test_loader: # DELONG: Get sample IDs for test set
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
                 predicted_disease = model.disease_classifier(encoded_features)
@@ -279,6 +288,8 @@ def train_model(
                 pred_tag = (pred_prob > 0.5).float()
                 epoch_test_preds.append(pred_tag.cpu())
                 epoch_test_labels.append(y_batch.cpu())
+                epoch_test_sample_ids.extend(id_batch) # DELONG: Store sample IDs for test set
+                
             for x_batch, y_batch in data_test_loader:
                 x_batch, y_batch = x_batch.to(device), y_batch.to(device)
                 encoded_features = model.encoder(x_batch)
@@ -307,6 +318,13 @@ def train_model(
         results["test"]["recall"].append(test_recall)
         test_conf_matrix = confusion_matrix(epoch_test_labels, epoch_test_preds)
         results["test"]["confusion_matrix"].append(test_conf_matrix)
+
+        if test_acc > results["best_test"]["accuracy"]: # DELONG: Update best test results
+            results["best_test"]["epoch"] = epoch + 1
+            results["best_test"]["pred_probs"] = epoch_test_probs
+            results["best_test"]["labels"] = epoch_test_labels
+            results["best_test"]["accuracy"] = test_acc
+            results["best_test"]["sample_id"] = epoch_test_sample_ids
 
         if (epoch + 1) % 50 == 0:
             print(

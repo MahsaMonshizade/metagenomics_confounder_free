@@ -99,6 +99,9 @@ def main():
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
     y_test_all = torch.tensor(merged_test_data_all[disease_col].values, dtype=torch.float32).unsqueeze(1)
 
+    idx_test_all = merged_test_data_all["SampleID"].values # DELONG: Save the SampleID for test data.Add commentMore actions
+    assert len(idx_test_all) == len(y_test_all), "Mismatch in test data SampleID and labels length."
+
     # Stratified k-fold cross-validation.
     n_splits = 5
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
@@ -106,6 +109,10 @@ def main():
     train_metrics_per_fold = []
     val_metrics_per_fold = []
     test_metrics_per_fold = []
+    pred_probs = [] # DELONG: Save the predicted probabilities of the best epoch.Add commentMore actions
+    labels = [] # DELONG: Save all the labels.
+    sample_ids = [] # DELONG: Save the test IDs for each fold.
+    best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
 
     # Optionally, recalculate input size from feature columns.
     input_size = len(feature_columns)
@@ -136,8 +143,8 @@ def main():
         # Create stratified DataLoaders.
         train_loader = create_stratified_dataloader(x_train, y_train, train_cfg["batch_size"])
         val_loader = create_stratified_dataloader(x_val, y_val, train_cfg["batch_size"])
-        test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"])
-
+        test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"],  sampleid=idx_test_all) # DELONG: Include SampleID in the test 
+        
         # Compute positive class weight for BCE loss.
         num_pos = y_train.sum().item()
         num_neg = len(y_train) - num_pos
@@ -172,6 +179,11 @@ def main():
         train_metrics_per_fold.append(Results["train"])
         val_metrics_per_fold.append(Results["val"])
         test_metrics_per_fold.append(Results["test"])
+
+        pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.
+        labels.append(Results["best_test"]["labels"]) # DELONG: Save the labels for this fold.
+        sample_ids.append(Results["best_test"]["sample_id"]) # DELONG: Save the test IDs for this fold.
+        best_epoch.append(Results["best_test"]["epoch"]-1) # DELONG: Save the best epoch for this fold.
 
         # Plot confusion matrices for final epoch of each fold.
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
@@ -440,6 +452,16 @@ def main():
 
     metrics_df.to_csv("Results/MicroKPNN_plots/metrics_summary.csv", index=False)
     print("Average metrics, plots, and metrics summary saved.")
+
+    # DELONG: Save all the predicted probabilities and labels.
+    pred_probs = np.concatenate(pred_probs)
+    labels = np.concatenate(labels)
+    sample_ids = np.concatenate(sample_ids) 
+    np.savez("Results/MicroKPNN_plots/test_results.npz", 
+         pred_probs=pred_probs,
+         labels=labels,
+         sample_ids=sample_ids)
+    print("Test results saved to 'Results/MicroKPNN_plots/test_results.npz'.")
 
 if __name__ == "__main__":
     main()

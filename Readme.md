@@ -102,6 +102,12 @@ We provide scripts to perform hyperparameter tuning:
 
 Currently, the scripts are set to run all trials in parallel. 
 
+## Significance test
+
+* Accuracy: `acc_mcnemar_test.py`
+* AUC-ROC score: `auc_delong_test.py`
+* F1 score: `f1_bootstrap_test.py`
+
 ## TODO List
 
 **Mahsa**

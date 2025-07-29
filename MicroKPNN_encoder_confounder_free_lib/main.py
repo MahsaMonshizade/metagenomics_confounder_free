@@ -102,6 +102,8 @@ def main():
     # Prepare test data (for overall disease prediction).
     x_test_all = torch.tensor(merged_test_data_all[feature_columns].values, dtype=torch.float32)
     y_test_all = torch.tensor(merged_test_data_all[disease_col].values, dtype=torch.float32).unsqueeze(1)
+    idx_test_all = merged_test_data_all["SampleID"].values # DELONG: Save the SampleID for test data.
+    assert len(idx_test_all) == len(y_test_all), "Mismatch in test data SampleID and labels length."
 
     # In the confounder-free setup, we further use a “drug” (or confounder) classification branch.
     # Here, we select test patients with disease==1 and use their 'sex' as the confounder label.
@@ -117,6 +119,10 @@ def main():
     train_metrics_per_fold = []
     val_metrics_per_fold = []
     test_metrics_per_fold = []
+    pred_probs = [] # DELONG: Save the predicted probabilities of the best epoch.Add commentMore actions
+    labels = [] # DELONG: Save all the labels.
+    sample_ids = [] # DELONG: Save the test IDs for each fold.
+    best_epoch = [] # DELONG: We can get best epoch from training, rather than picking it from all the epochs' results.
 
     ###############added
 
@@ -157,7 +163,8 @@ def main():
         data_val_loader = create_stratified_dataloader(x_disease_val, y_disease_val, train_cfg["batch_size"])
         data_all_val_loader = create_stratified_dataloader(x_all_val, y_all_val, train_cfg["batch_size"])
         data_test_loader = create_stratified_dataloader(x_test_disease, y_test_disease, train_cfg["batch_size"])
-        data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"])
+        data_all_test_loader = create_stratified_dataloader(x_test_all, y_test_all, train_cfg["batch_size"], 
+                                    sampleid=idx_test_all) # DELONG: Include SampleID in the test DataLoader.
 
         # Compute class weights.
         num_pos_disease = y_all_train.sum().item()
@@ -218,6 +225,11 @@ def main():
         train_metrics_per_fold.append(Results["train"])
         val_metrics_per_fold.append(Results["val"])
         test_metrics_per_fold.append(Results["test"])
+
+        pred_probs.append(Results["best_test"]["pred_probs"]) # DELONG: Save the best epoch for this fold.Add commentMore actions
+        labels.append(Results["best_test"]["labels"]) # DELONG: Save the labels for this fold.
+        sample_ids.append(Results["best_test"]["sample_id"]) # DELONG: Save the test IDs for this fold.
+        best_epoch.append(Results["best_test"]["epoch"]) # DELONG: Save the best epoch for this fold.
         
         # Plot per-fold confusion matrices.
         plot_confusion_matrix(Results["train"]["confusion_matrix"][-1],
@@ -523,6 +535,16 @@ def main():
 
     metrics_df.to_csv("Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv", index=False)
     print("Metrics summary saved to 'Results/MicroKPNN_encoder_confounder_free_plots/metrics_summary.csv'.")
+
+    # DELONG: Save all the predicted probabilities and labels.
+    pred_probs = np.concatenate(pred_probs)
+    labels = np.concatenate(labels)
+    sample_ids = np.concatenate(sample_ids) 
+    np.savez("Results/MicroKPNN_encoder_confounder_free_plots/test_results.npz", 
+         pred_probs=pred_probs,
+         labels=labels,
+         sample_ids=sample_ids)
+    print("Test results saved to 'Results/MicroKPNN_encoder_confounder_free_plots/test_results.npz'.")
 
 if __name__ == "__main__":
     main()

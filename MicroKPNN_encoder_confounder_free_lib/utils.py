@@ -1,8 +1,25 @@
 import torch
 import math
-from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+from torch.utils.data import DataLoader, Dataset
 
-def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=True):
+class StratifiedDataset(Dataset):
+    """Custom dataset that includes sample IDs"""
+    def __init__(self, x_data, y_data, sample_ids=None):
+        self.x_data = x_data
+        self.y_data = y_data
+        self.sample_ids = sample_ids
+        
+    def __len__(self):
+        return len(self.x_data)
+    
+    def __getitem__(self, idx):
+        if self.sample_ids is not None:
+            return self.x_data[idx], self.y_data[idx], self.sample_ids[idx]
+        else:
+            return self.x_data[idx], self.y_data[idx]
+
+def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=True, sampleid=None):
     """
     Create a stratified DataLoader ensuring that each batch maintains the overall class distribution.
     
@@ -11,13 +28,20 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
       y_train (Tensor): Target labels.
       batch_size (int): Desired number of samples per batch.
       pad_incomplete (bool): If True, pad batches to reach the batch_size by repeating random samples.
+      sampleid (numpy.ndarray, optional): String sample IDs for each data point (used to record predictions results).
     
     Returns:
-      DataLoader: A PyTorch DataLoader that returns stratified batches.
+      DataLoader: A PyTorch DataLoader that returns (x_batch, y_batch) if sampleid is None,
+                  or (x_batch, y_batch, sampleid_batch) if sampleid is provided.
     """
     # Squeeze y_train to ensure it is a 1D tensor.
     labels = y_train.squeeze()
     unique_labels = labels.unique()
+    
+    # Handle sampleid - convert numpy array to list of strings
+    if sampleid is not None:
+        assert len(sampleid) == len(labels), "sampleid must have the same length as y_train"
+        sampleid = sampleid.tolist()  # Convert numpy array to list
     
     # Count and compute proportions for each unique label.
     class_counts = {label.item(): (labels == label).sum().item() for label in unique_labels}
@@ -52,6 +76,7 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
 
     def stratified_batches(class_indices, samples_per_class, batch_size):
         batches = []
+        
         # Set up cursors for each label.
         class_cursors = {label: 0 for label in class_indices}
         num_samples = sum([len(indices) for indices in class_indices.values()])
@@ -60,6 +85,7 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
         # Build each batch.
         for _ in range(num_batches):
             batch = []
+            
             for label, indices in class_indices.items():
                 cursor = class_cursors[label]
                 samples = samples_per_class[label]
@@ -71,14 +97,21 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
                 batch_indices = indices[cursor:cursor+samples]
                 batch.extend(batch_indices.tolist())
                 class_cursors[label] += samples
-            # Optionally pad the batch if it is smaller than batch_size.
+            
+            # # Optionally pad the batch if it is smaller than batch_size.
             # if pad_incomplete and len(batch) < batch_size:
             #     missing = batch_size - len(batch)
-            #     extra_samples = torch.tensor(batch)[torch.randperm(len(batch))].tolist()[:missing]
+            #     extra_indices = torch.tensor(batch)[torch.randperm(len(batch))][:missing]
+            #     extra_samples = extra_indices.tolist()
             #     batch.extend(extra_samples)
-            # Shuffle within the batch.
-            batch = torch.tensor(batch)[torch.randperm(len(batch))].tolist()
+            
+            # Shuffle within the batch
+            if len(batch) > 0:
+                shuffle_order = torch.randperm(len(batch))
+                batch = torch.tensor(batch)[shuffle_order].tolist()
+            
             batches.append(batch)
+                
         return batches
 
     batches = stratified_batches(class_indices, samples_per_class, batch_size)
@@ -94,11 +127,13 @@ def create_stratified_dataloader(x_train, y_train, batch_size, pad_incomplete=Tr
         def __len__(self):
             return len(self.batches)
 
-    dataset = TensorDataset(x_train, y_train)
+    # Create dataset with sample IDs integrated
+    dataset = StratifiedDataset(x_train, y_train, sampleid)
+    
     batch_sampler = StratifiedBatchSampler(batches)
     g = torch.Generator()
     g.manual_seed(42)
-    data_loader = DataLoader(dataset, batch_sampler=batch_sampler, shuffle=False, num_workers=4,worker_init_fn=lambda wid: torch.manual_seed(42 + wid), generator=g)
-
+    data_loader = DataLoader(dataset, batch_sampler=batch_sampler, shuffle=False, num_workers=4, 
+                            worker_init_fn=lambda wid: torch.manual_seed(42 + wid), generator=g)
 
     return data_loader
