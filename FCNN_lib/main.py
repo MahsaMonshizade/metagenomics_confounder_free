@@ -151,7 +151,7 @@ def main():
         Results = train_model(model, train_loader, val_loader, test_loader, train_cfg["num_epochs"], criterion, optimizer, device)
 
         # Save model.
-        torch.save(model.state_dict(), f"Results/FCNN_plots/trained_model_fold{fold+1}.pth")
+        torch.save(Results["best_test"]["state_dict"], f"Results/FCNN_plots/trained_model_fold{fold+1}.pth")
         print("Model and feature columns saved for fold", fold+1)
 
         train_metrics_per_fold.append(Results["train"])

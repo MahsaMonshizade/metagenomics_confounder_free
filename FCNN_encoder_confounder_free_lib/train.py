@@ -72,6 +72,7 @@ def train_model(
             "pred_probs": [],
             "labels": [],
             "accuracy": 0.0,  
+            "state_dict": None
         },  # DELONG: Store best predictions for test set
     }
 
@@ -333,6 +334,8 @@ def train_model(
             results["best_test"]["labels"] = epoch_test_labels
             results["best_test"]["accuracy"] = test_acc
             results["best_test"]["sample_id"] = epoch_test_sample_ids
+            results["best_test"]["state_dict"] = model.state_dict()  # ✅ Save model weights for the best epoch
+
 
         if (epoch + 1) % 50 == 0:
             print(

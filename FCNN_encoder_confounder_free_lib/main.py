@@ -192,7 +192,7 @@ def main():
         )
 
         # Save model and features.
-        torch.save(model.state_dict(), f"Results/FCNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
+        torch.save(Results["best_test"]["state_dict"], f"Results/FCNN_encoder_confounder_free_plots/trained_model_fold{fold+1}.pth")
         pd.Series(feature_columns).to_csv("Results/FCNN_encoder_confounder_free_plots/feature_columns.csv", index=False)
         print("Model and feature columns saved for fold", fold+1)
 

@@ -39,7 +39,8 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
             "sample_id": [], 
             "pred_probs": [],
             "labels": [],
-            "accuracy": 0.0,  
+            "accuracy": 0.0,
+            "state_dict": None,  
         },  # DELONG: Store best predictions for test set
     }
 
@@ -198,6 +199,8 @@ def train_model(model, data_all_loader, data_all_val_loader, data_all_test_loade
             results["best_test"]["labels"] = epoch_test_labels
             results["best_test"]["accuracy"] = test_acc
             results["best_test"]["sample_id"] = epoch_test_sample_ids
+            results["best_test"]["state_dict"] = model.state_dict()  # ✅ Save model weights for the best epoch
+
         
         if (epoch + 1) % 50 == 0 or (epoch + 1) == num_epochs:
             print(f"Epoch [{epoch+1}/{num_epochs}]  Train Loss: {avg_train_loss:.4f}, Acc: {train_acc:.4f}, F1: {train_f1:.4f}")
